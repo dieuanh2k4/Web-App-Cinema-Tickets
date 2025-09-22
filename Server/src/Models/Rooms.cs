@@ -14,7 +14,7 @@ namespace Server.src.Models
         public int TheaterId { get; set; }
 
         public Theater? Theater { get; set; }
-        public Showtimes? Showtimes { get; set; }
+        public ICollection<Showtimes>? Showtimes { get; set; }
         public ICollection<Seats>? Seats { get; set; }
     }
 }

@@ -12,7 +12,7 @@ namespace Server.src.Models
         public string? Name { get; set; }
         public DateOnly Birth { get; set; }
         public string? gender { get; set; }
-        public MailAddress? Email { get; set; }
+        public string? Email { get; set; }
         public string? Avatar { get; set; }
         public string? Phone { get; set; }
         public string? Address { get; set; }

@@ -12,7 +12,7 @@ namespace Server.src.Models
         public string? Thumbnail { get; set; } // poster phim
         public double Duration { get; set; } // thời lượng
         public string? Genre { get; set; } // thể loại
-        public int RealeaseYear { get; set; } // năm phát hành
+        public int ReleaseYear { get; set; } // năm phát hành
         public string? Description { get; set; } // mô tả
         public string? Director { get; set; } // đạo diễn
         public List<string>? Actors { get; set; } // diễn viên

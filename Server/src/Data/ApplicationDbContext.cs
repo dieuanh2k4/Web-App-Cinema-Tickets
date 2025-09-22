@@ -89,7 +89,7 @@ namespace Server.src.Data
 
                 entity.Property(m => m.Genre)
                     .HasMaxLength(10);
-                entity.Property(m => m.RealeaseYear)
+                entity.Property(m => m.ReleaseYear)
                     .IsRequired();
                 entity.Property(m => m.Description)
                     .HasMaxLength(1000)
@@ -209,8 +209,8 @@ namespace Server.src.Data
                     .IsRequired();
 
                 entity.HasOne(s => s.Rooms)
-                    .WithOne(r => r.Showtimes)
-                    .HasForeignKey<Showtimes>(s => s.RoomId)
+                    .WithMany(r => r.Showtimes)
+                    .HasForeignKey(s => s.RoomId)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(s => s.Movies)
@@ -232,14 +232,14 @@ namespace Server.src.Data
                     .HasDefaultValue("Trống");
 
                 entity.HasOne(s => s.Seats)
-                    .WithOne(ss => ss.StatusSeat)
-                    .HasForeignKey<StatusSeat>(s => s.SeatId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .WithMany(ss => ss.StatusSeat)
+                    .HasForeignKey(s => s.SeatId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(s => s.Showtimes)
-                    .WithOne(sh => sh.StatusSeat)
-                    .HasForeignKey<StatusSeat>(s => s.ShowtimeId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .WithMany(sh => sh.StatusSeat)
+                    .HasForeignKey(s => s.ShowtimeId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<Theater>(entity =>

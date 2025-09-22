@@ -15,7 +15,8 @@ namespace Server.src.Models
 
         public Rooms? Rooms { get; set; }
         public Movies? Movies { get; set; }
-        public StatusSeat? StatusSeat { get; set; }
+        // public StatusSeat? StatusSeat { get; set; }
+        public ICollection<StatusSeat>? StatusSeat { get; set; }
         
     }
 }
