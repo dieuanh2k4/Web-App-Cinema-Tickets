@@ -219,6 +219,29 @@ namespace Server.src.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
+            modelBuilder.Entity<StatusSeat>(entity =>
+            {
+                entity.HasKey(s => s.Id);
+                entity.Property(s => s.SeatId)
+                    .IsRequired();
+                entity.Property(s => s.ShowtimeId)
+                    .IsRequired();
+                entity.Property(s => s.Status)
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .HasDefaultValue("Trống");
+
+                entity.HasOne(s => s.Seats)
+                    .WithOne(ss => ss.StatusSeat)
+                    .HasForeignKey<StatusSeat>(s => s.SeatId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(s => s.Showtimes)
+                    .WithOne(sh => sh.StatusSeat)
+                    .HasForeignKey<StatusSeat>(s => s.ShowtimeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             modelBuilder.Entity<Theater>(entity =>
             {
                 // entity.ToTable(r =>

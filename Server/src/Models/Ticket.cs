@@ -18,5 +18,10 @@ namespace Server.src.Models
         public int TotalPrice { get; set; }
 
         public Payment? Payment { get; set; }
+        public Showtimes? Showtimes { get; set; }
+        public Customer? Customer { get; set; }
+        public Seats? Seats { get; set; }
+        public Rooms? Rooms { get; set; }
+        public Movies? Movies { get; set; }
     }
 }

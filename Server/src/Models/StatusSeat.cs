@@ -12,6 +12,7 @@ namespace Server.src.Models
         public int SeatId { get; set; }
         public string? Status { get; set; }
 
-        // public int MyProperty { get; set; }
+        public Showtimes? Showtimes { get; set; }
+        public Seats? Seats { get; set; }
     }
 }
