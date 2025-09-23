@@ -95,15 +95,12 @@ namespace Server.src.Data
                     .HasMaxLength(1000)
                     .IsUnicode(true)
                     .IsRequired(false);
-                entity.Property(m => m.Description)
-                    .HasMaxLength(100)
-                    .IsUnicode(true)
-                    .IsRequired();
+
                 entity.Ignore(m => m.Actors);
                 entity.Property(m => m.Rating)
                     .HasDefaultValue(0)
                     .IsRequired();
-
+                
             });
 
             modelBuilder.Entity<Payment>(entity =>
