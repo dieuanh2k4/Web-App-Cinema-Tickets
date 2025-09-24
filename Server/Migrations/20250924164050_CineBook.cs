@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Server.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class CineBook : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -38,12 +38,14 @@ namespace Server.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Thumbnail = table.Column<string>(type: "varchar(255)", unicode: false, maxLength: 255, nullable: true),
+                    Thumbnail = table.Column<string>(type: "varchar(1000)", unicode: false, maxLength: 1000, nullable: false),
                     Duration = table.Column<double>(type: "float", nullable: false),
-                    Genre = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
-                    ReleaseYear = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Director = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Genre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Language = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    AgeLimit = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    StartDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(3000)", maxLength: 3000, nullable: false),
+                    Director = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Rating = table.Column<double>(type: "float", nullable: false, defaultValue: 0.0)
                 },
                 constraints: table =>
@@ -51,7 +53,6 @@ namespace Server.Migrations
                     table.PrimaryKey("PK_Movies", x => x.Id);
                     table.CheckConstraint("CK_Movie_Duration", "Duration > 0");
                     table.CheckConstraint("CK_Movie_Rating", "Rating >= 0 AND Rating <= 10");
-                    table.CheckConstraint("CK_Movie_ReleaseYear", "ReleaseYear <= YEAR(GETDATE())");
                 });
 
             migrationBuilder.CreateTable(

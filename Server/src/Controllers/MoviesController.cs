@@ -22,7 +22,7 @@ namespace Server.Controllers
             _movieService = movieService;
         }
 
-        [HttpGet]
+        [HttpGet("get-all-movies")]
         public async Task<IActionResult> GetMovies()
         {
             try
@@ -38,16 +38,22 @@ namespace Server.Controllers
         }
 
         [HttpPost("create-movie")]
-        public async Task<IActionResult> CreateMovie([FromBody] CreateMovieDto movieDto)
+        public async Task<IActionResult> CreateMovie([FromForm] CreateMovieDto movieDto, IFormFile? imageFile)
         {
             try
             {
-                var createdMovie = _movieService.AddMovie(movieDto);
+                if (imageFile != null)
+                {
+                    var uploadResult = await _movieService.UploadImage(imageFile);
+                    movieDto.Thumbnail = uploadResult.SecureUrl.ToString();
+                }
+
+                var createdMovie = await _movieService.AddMovie(movieDto);
 
                 await _context.Movies.AddAsync(createdMovie);
                 await _context.SaveChangesAsync();
-
-                return Ok();
+                
+                return Ok(createdMovie);
             }
             catch (Exception ex)
             {

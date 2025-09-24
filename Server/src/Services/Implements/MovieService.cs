@@ -9,6 +9,10 @@ using Server.src.Mapper;
 using Server.src.Data;
 using Server.src.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Microsoft.Extensions.Options;
+using Server.src.Utils;
 
 namespace Server.src.Services.Implements
 {
@@ -18,8 +22,16 @@ namespace Server.src.Services.Implements
 
         private readonly ApplicationDbContext _context;
 
-        public MovieService(ApplicationDbContext context)
+        private readonly Cloudinary _cloudinary;
+
+        public MovieService(ApplicationDbContext context, IOptions<CloudinarySettings> config)
         {
+            var acc = new Account(
+                config.Value.CloudName,
+                config.Value.ApiKey,
+                config.Value.ApiSecret
+            );
+            _cloudinary = new Cloudinary(acc);
             _context = context;
         }
 
@@ -28,7 +40,26 @@ namespace Server.src.Services.Implements
             return _context.Movies.ToListAsync();
         }
 
-        public Movies AddMovie(CreateMovieDto movieDto)
+        // up ảnh lên cloudinary
+        public async Task<ImageUploadResult> UploadImage(IFormFile file)
+        {
+            var uploadResult = new ImageUploadResult();
+
+            if (file.Length > 0)
+            {
+                // mỏ stream của file bằng OpenReadStream là để xử lý dl nhị phân, tối ưu hóa bộ nhớ và hiệu suất...
+                using var stream = file.OpenReadStream();
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Transformation = new Transformation().Crop("fill")
+                };
+                uploadResult = await _cloudinary.UploadAsync(uploadParams);
+            }
+            return uploadResult;
+        }
+
+        public async Task<Movies> AddMovie(CreateMovieDto movieDto)
         {
             if (movieDto.Title == null)
             {
@@ -42,7 +73,9 @@ namespace Server.src.Services.Implements
                 throw new Result($"Phim {movieDto.Title} đã tồn tại trong hệ thống");
             }
 
-            var newMovie = movieDto.ToMovieFromCreateDto();
+            var newMovie = await movieDto.ToMovieFromCreateDto();
+
+            newMovie.Thumbnail = movieDto.Thumbnail;
 
             return newMovie;
         }

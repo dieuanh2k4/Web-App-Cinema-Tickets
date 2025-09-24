@@ -20,13 +20,9 @@ namespace Server.src.Data
         public DbSet<Ticket> Ticket { get; set; }
         public DbSet<User> User { get; set; }
 
-        public ApplicationDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions)
-        {
-        }
+        public ApplicationDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions) {}
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-        }
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {}
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -70,7 +66,7 @@ namespace Server.src.Data
                 entity.ToTable(m =>
                 {
                     m.HasCheckConstraint("CK_Movie_Duration", "Duration > 0");
-                    m.HasCheckConstraint("CK_Movie_ReleaseYear", "ReleaseYear <= YEAR(GETDATE())");
+                    // m.HasCheckConstraint("CK_Movie_StartDate", "StartDate <= GETDATE()");
                     m.HasCheckConstraint("CK_Movie_Rating", "Rating >= 0 AND Rating <= 10");
                 });
                 entity.HasKey(m => m.Id);
@@ -82,25 +78,33 @@ namespace Server.src.Data
                     .HasMaxLength(100)
                     .IsRequired();
                 entity.Property(m => m.Thumbnail)
-                    .HasMaxLength(255)
-                    .IsUnicode(false);
+                    .HasMaxLength(1000)
+                    .IsUnicode(false)
+                    .IsRequired();
                 entity.Property(m => m.Duration)
                     .IsRequired();
-
                 entity.Property(m => m.Genre)
-                    .HasMaxLength(10);
-                entity.Property(m => m.ReleaseYear)
+                    .HasMaxLength(50)
+                    .IsRequired();
+                entity.Property(m => m.Language)
+                    .HasMaxLength(100)
+                    .IsRequired();
+                entity.Property(m => m.AgeLimit)
+                    .HasMaxLength(20)
+                    .IsRequired();
+                entity.Property(m => m.StartDate)
                     .IsRequired();
                 entity.Property(m => m.Description)
-                    .HasMaxLength(1000)
+                    .HasMaxLength(3000)
                     .IsUnicode(true)
-                    .IsRequired(false);
-
+                    .IsRequired();
+                entity.Property(m => m.Director)
+                    .HasMaxLength(20)
+                    .IsRequired();
                 entity.Ignore(m => m.Actors);
                 entity.Property(m => m.Rating)
                     .HasDefaultValue(0)
-                    .IsRequired();
-                
+                    .IsRequired(); 
             });
 
             modelBuilder.Entity<Payment>(entity =>

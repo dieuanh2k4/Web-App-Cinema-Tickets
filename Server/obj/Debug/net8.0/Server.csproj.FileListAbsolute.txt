@@ -143,3 +143,5 @@ D:\4-1\chuyên đề tổng hợp\PROJECT\Server\obj\Debug\net8.0\refint\Server.
 D:\4-1\chuyên đề tổng hợp\PROJECT\Server\obj\Debug\net8.0\Server.pdb
 D:\4-1\chuyên đề tổng hợp\PROJECT\Server\obj\Debug\net8.0\Server.genruntimeconfig.cache
 D:\4-1\chuyên đề tổng hợp\PROJECT\Server\obj\Debug\net8.0\ref\Server.dll
+D:\4-1\chuyên đề tổng hợp\PROJECT\Server\bin\Debug\net8.0\CloudinaryDotNet.dll
+D:\4-1\chuyên đề tổng hợp\PROJECT\Server\bin\Debug\net8.0\Newtonsoft.Json.dll

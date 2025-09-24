@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
 using Server.src.Services.Implements;
 using Server.src.Services.Interfaces;
+using Server.src.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IMovieService, MovieService>();
+
+builder.Services.Configure<CloudinarySettings>(
+    builder.Configuration.GetSection("CloudinarySettings")
+);
 
 var app = builder.Build();
 
