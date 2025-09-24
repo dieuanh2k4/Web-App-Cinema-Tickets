@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
+using Server.src.Services.Implements;
+using Server.src.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +18,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 //Controller
 builder.Services.AddControllers();
+
+builder.Services.AddScoped<IMovieService, MovieService>();
 
 var app = builder.Build();
 
