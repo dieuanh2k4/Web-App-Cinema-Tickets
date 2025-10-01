@@ -3,17 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Server.src.Models
+namespace Server.src.Dtos.Rooms
 {
-    public class Seats
+    public class CreateSeatDto
     {
         public int Id { get; set; }
         public string? Name { get; set; }
         public int Price { get; set; }
         public string? Type { get; set; }
-        public int RoomId { get; set; }
-
-        public Rooms? Rooms { get; set; }
-        public List<StatusSeat>? StatusSeat { get; set; }
     }
 }

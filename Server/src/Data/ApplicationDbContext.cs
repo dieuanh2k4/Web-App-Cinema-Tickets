@@ -58,7 +58,6 @@ namespace Server.src.Data
                     .HasMaxLength(225);
                 entity.Property(c => c.Avatar)
                     .HasMaxLength(255);
-
             });
 
             modelBuilder.Entity<Movies>(entity =>
@@ -183,6 +182,7 @@ namespace Server.src.Data
                     .HasMaxLength(20);
                 entity.Property(s => s.RoomId)
                     .IsRequired();
+                entity.Ignore(s => s.Rooms);
 
                 entity.HasOne(s => s.Rooms)
                     .WithMany(r => r.Seats)
