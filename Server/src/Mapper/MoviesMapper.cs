@@ -37,10 +37,6 @@ namespace Server.src.Mapper
         }
         public static async Task<Movies> ToMovieFromCreateDto(this CreateMovieDto movieDto)
         {
-            // var service = new MovieService();
-            // var Thumbnail = movieDto.Thumbnail != null
-            //                 ? await service.UploadImage(movieDto.Thumbnail)
-            //                 : null;
             return new Movies
             {
                 Title = movieDto.Title,

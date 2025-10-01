@@ -126,9 +126,9 @@ namespace Server.src.Data
                 entity.Property(p => p.Date)
                     .IsRequired();
                 entity.Property(p => p.Status)
-                    .HasMaxLength(20);
+                    .HasMaxLength(50);
                 entity.Property(p => p.paymentMethod)
-                    .HasMaxLength(20);
+                    .HasMaxLength(50);
 
                 entity.HasOne(p => p.Ticket)
                     .WithOne(t => t.Payment)
@@ -148,7 +148,7 @@ namespace Server.src.Data
                     .IsRequired();
                 entity.Property(r => r.Name)
                     .IsRequired()
-                    .HasMaxLength(10);
+                    .HasMaxLength(20);
                 entity.Property(r => r.Capacity)
                     .IsRequired();
                 entity.Property(r => r.Status)
@@ -229,7 +229,7 @@ namespace Server.src.Data
                     .IsRequired();
                 entity.Property(s => s.Status)
                     .IsRequired()
-                    .HasMaxLength(10)
+                    .HasMaxLength(20)
                     .HasDefaultValue("Trống");
 
                 entity.HasOne(s => s.Seats)
@@ -255,13 +255,13 @@ namespace Server.src.Data
                     .IsRequired();
                 entity.Property(t => t.Name)
                     .IsRequired()
-                    .HasMaxLength(20);
+                    .HasMaxLength(200);
                 entity.Property(t => t.Address)
                     .IsRequired()
-                    .HasMaxLength(200);
+                    .HasMaxLength(1000);
                 entity.Property(t => t.City)
                     .IsRequired()
-                    .HasMaxLength(20);
+                    .HasMaxLength(100);
             });
 
             modelBuilder.Entity<User>(entity =>
