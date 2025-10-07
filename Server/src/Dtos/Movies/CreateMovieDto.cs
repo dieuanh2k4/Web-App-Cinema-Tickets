@@ -9,7 +9,7 @@ namespace Server.src.Dtos.Movies
     {
         public string? Title { get; set; }
         public string? Thumbnail { get; set; } // poster phim
-        public double Duration { get; set; } // thời lượng
+        public int Duration { get; set; } // thời lượng
         public string? Genre { get; set; } // thể loại
         public string? Language { get; set; } // ngôn ngữ
         public string? AgeLimit { get; set; } // giới hạn tuổi

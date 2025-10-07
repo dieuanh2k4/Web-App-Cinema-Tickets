@@ -145,3 +145,7 @@ D:\4-1\chuyên đề tổng hợp\PROJECT\Server\obj\Debug\net8.0\Server.genrunt
 D:\4-1\chuyên đề tổng hợp\PROJECT\Server\obj\Debug\net8.0\ref\Server.dll
 D:\4-1\chuyên đề tổng hợp\PROJECT\Server\bin\Debug\net8.0\CloudinaryDotNet.dll
 D:\4-1\chuyên đề tổng hợp\PROJECT\Server\bin\Debug\net8.0\Newtonsoft.Json.dll
+D:\4-1\chuyên đề tổng hợp\PROJECT\Server\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Relational.Design.dll
+D:\4-1\chuyên đề tổng hợp\PROJECT\Server\bin\Debug\net8.0\Npgsql.dll
+D:\4-1\chuyên đề tổng hợp\PROJECT\Server\bin\Debug\net8.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
+D:\4-1\chuyên đề tổng hợp\PROJECT\Server\bin\Debug\net8.0\Npgsql.EntityFrameworkCore.PostgreSQL.Design.dll

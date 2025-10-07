@@ -44,7 +44,7 @@ namespace Server.src.Data
                     .HasColumnType("date")
                     .IsRequired();
                 entity.Property(c => c.gender)
-                    .HasMaxLength(1)
+                    .HasMaxLength(5)
                     .IsUnicode(false);
                 entity.Property(c => c.Address)
                     .HasMaxLength(255);
@@ -54,8 +54,6 @@ namespace Server.src.Data
                     .IsRequired();
                 entity.HasIndex(c => c.Phone)
                     .IsUnique();
-                entity.Property(c => c.Address)
-                    .HasMaxLength(225);
                 entity.Property(c => c.Avatar)
                     .HasMaxLength(255);
             });
@@ -64,9 +62,8 @@ namespace Server.src.Data
             {
                 entity.ToTable(m =>
                 {
-                    m.HasCheckConstraint("CK_Movie_Duration", "Duration > 0");
-                    // m.HasCheckConstraint("CK_Movie_StartDate", "StartDate <= GETDATE()");
-                    m.HasCheckConstraint("CK_Movie_Rating", "Rating >= 0 AND Rating <= 10");
+                    m.HasCheckConstraint("CK_Movie_Duration", "\"Duration\" > 0");
+                    m.HasCheckConstraint("CK_Movie_Rating", "\"Rating\" >= 0 AND \"Rating\" <= 10");
                 });
                 entity.HasKey(m => m.Id);
                 entity.Property(c => c.Id)
@@ -100,7 +97,9 @@ namespace Server.src.Data
                 entity.Property(m => m.Director)
                     .HasMaxLength(20)
                     .IsRequired();
-                entity.Ignore(m => m.Actors);
+                entity.Property(m => m.Actors)
+                    .HasColumnType("Text[]")
+                    .IsRequired();
                 entity.Property(m => m.Rating)
                     .HasDefaultValue(0)
                     .IsRequired(); 
@@ -110,9 +109,9 @@ namespace Server.src.Data
             {
                 entity.ToTable(p =>
                 {
-                    p.HasCheckConstraint("CK_Payment_TotalPrice", "TotalPrice > 0");
-                    p.HasCheckConstraint("CK_Payment_Status", "Status IN('Đã Thanh toán', 'Chưa Thanh toán', 'Thanh toán thất bại')");
-                    p.HasCheckConstraint("CK_Payment_paymentMethod", "paymentMethod IN('Momo', 'Banking', 'Cash')");
+                    p.HasCheckConstraint("CK_Payment_TotalPrice", "\"TotalPrice\" > 0");
+                    p.HasCheckConstraint("CK_Payment_Status", "\"Status\" IN('Đã Thanh toán', 'Chưa Thanh toán', 'Thanh toán thất bại')");
+                    p.HasCheckConstraint("CK_Payment_paymentMethod", "\"paymentMethod\" IN('Momo', 'Banking', 'Cash')");
                 });
                 entity.HasKey(p => p.Id);
                 entity.Property(p => p.Id)
@@ -166,7 +165,7 @@ namespace Server.src.Data
             {
                 entity.ToTable(r =>
                 {
-                    r.HasCheckConstraint("CK_Seats_Price", "Price > 0");
+                    r.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
                 });
                 entity.HasKey(s => s.Id);
                 entity.Property(s => s.Id)
