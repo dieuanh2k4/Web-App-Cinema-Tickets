@@ -9,7 +9,7 @@ namespace Server.src.Mapper
 {
     public static class RoomMapper
     {
-        public static RoomDto ToRoomDto(this Rooms rooms)
+        public static async Task<RoomDto> ToRoomDto(this Rooms rooms)
         {
             return new RoomDto
             {
@@ -17,6 +17,7 @@ namespace Server.src.Mapper
                 Capacity = rooms.Capacity,
                 Status = rooms.Status,
                 TheaterId = rooms.TheaterId,
+                Type = rooms.Type,
                 Seats = rooms.Seats.Select(s => s.ToNewSeats().Result).ToList()
             };
         }
@@ -27,8 +28,9 @@ namespace Server.src.Mapper
             {
                 Name = createRoomDto.Name,
                 Capacity = createRoomDto.Capacity,
-                Status = createRoomDto.Status,
+                Status = createRoomDto.Status ?? "Trống",
                 TheaterId = createRoomDto.TheaterId,
+                Type = createRoomDto.Type,
                 Seats = new List<Seats>()
             };
         }
@@ -39,7 +41,8 @@ namespace Server.src.Mapper
             {
                 Name = seats.Name,
                 Price = seats.Price,
-                Type = seats.Type
+                Type = seats.Type,
+                Status = seats.Status
             };
         }
 
@@ -47,24 +50,13 @@ namespace Server.src.Mapper
         {
             return new Seats
             {
-                Id = createSeatDto.Id,
+                // Id = createSeatDto.Id,
                 Name = createSeatDto.Name,
                 Price = createSeatDto.Price,
                 Type = createSeatDto.Type,
+                Status = createSeatDto.Status,
                 Rooms = room
             };
         }
-
-        // public static async Task<Rooms> ToRoomsFromCreateRoomDto(this CreateRoomDto createRoomDto, Seats seat)
-        // {
-        //     return new Rooms
-        //     {
-        //         Name = createRoomDto.Name,
-        //         Capacity = createRoomDto.Capacity,
-        //         Status = createRoomDto.Status,
-        //         TheaterId = createRoomDto.TheaterId,
-        //         Seats = seat
-        //     };
-        // }
     }
 }

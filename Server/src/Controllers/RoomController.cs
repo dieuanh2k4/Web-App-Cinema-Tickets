@@ -40,11 +40,11 @@ namespace Server.src.Controllers
         }
 
         [HttpPost("create-rooms")]
-        public async Task<IActionResult> CreateRoom([FromBody] CreateRoomDto createRoomDto, int row, int seatsInRow, int vipSeats)
+        public async Task<IActionResult> CreateRoom([FromBody] CreateRoomDto createRoomDto, int row, int seatsInRow, int normalSeats, int coupleRowsSeats)
         {
             try
             {
-                var newRoom = await _roomService.AddRooms(createRoomDto, row, seatsInRow, vipSeats);
+                var newRoom = await _roomService.AddRooms(createRoomDto, row, seatsInRow, normalSeats, coupleRowsSeats);
 
                 await _context.Rooms.AddAsync(newRoom);
                 await _context.SaveChangesAsync();
@@ -53,6 +53,7 @@ namespace Server.src.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 return ReturnException(ex);
             }
         }

@@ -10,6 +10,8 @@ namespace Server.src.Models
         public int Id { get; set; }
         public string? Name { get; set; }
         public int Capacity { get; set; } // sức chứa
+        public string? Type { get; set; } // loại phòng 
+        // public int TicketpriceId { get; set; }
 
         private string _status = "Trống";
         public string Status
@@ -20,6 +22,7 @@ namespace Server.src.Models
         public int TheaterId { get; set; }
 
         public Theater? Theater { get; set; }
+        // public TicketPrice? TicketPrice { get; set; }
         public List<Showtimes>? Showtimes { get; set; }
         public List<Seats>? Seats { get; set; }
     }

@@ -31,6 +31,7 @@ builder.Services.AddControllers()
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<ITheaterService, TheaterService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<ITicketPriceService, TicketPriceService>();
 
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("CloudinarySettings")

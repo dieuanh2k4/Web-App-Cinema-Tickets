@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Server.src.Data;
@@ -12,9 +13,11 @@ using Server.src.Data;
 namespace Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251007193932_UpdateDb2")]
+    partial class UpdateDb2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -209,9 +212,6 @@ namespace Server.Migrations
                     b.Property<int>("TheaterId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Type")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("TheaterId");
@@ -252,7 +252,10 @@ namespace Server.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Seats");
+                    b.ToTable("Seats", t =>
+                        {
+                            t.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
+                        });
                 });
 
             modelBuilder.Entity("Server.src.Models.Showtimes", b =>
@@ -403,35 +406,6 @@ namespace Server.Migrations
                     b.ToTable("Ticket");
                 });
 
-            modelBuilder.Entity("Server.src.Models.TicketPrice", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Price")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("RoomType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("SeatType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TicketPrices", t =>
-                        {
-                            t.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
-                        });
-                });
-
             modelBuilder.Entity("Server.src.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -516,7 +490,7 @@ namespace Server.Migrations
                         .HasForeignKey("SeatsId");
 
                     b.HasOne("Server.src.Models.Showtimes", "Showtimes")
-                        .WithMany()
+                        .WithMany("StatusSeat")
                         .HasForeignKey("ShowtimesId");
 
                     b.Navigation("Seats");
@@ -569,6 +543,11 @@ namespace Server.Migrations
                     b.Navigation("Seats");
 
                     b.Navigation("Showtimes");
+                });
+
+            modelBuilder.Entity("Server.src.Models.Showtimes", b =>
+                {
+                    b.Navigation("StatusSeat");
                 });
 
             modelBuilder.Entity("Server.src.Models.Theater", b =>

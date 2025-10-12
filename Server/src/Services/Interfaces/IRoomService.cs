@@ -10,6 +10,6 @@ namespace Server.src.Services.Interfaces
     public interface IRoomService
     {
         Task<List<Rooms>> GetAllRooms();
-        Task<Rooms> AddRooms(CreateRoomDto createRoomDto, int rows, int seatsInRow, int vipSeats);
+        Task<Rooms> AddRooms(CreateRoomDto createRoomDto, int rows, int seatsInRow, int normalSeats, int coupleRowsSeats);
     }
 }

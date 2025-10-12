@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Server.src.Data;
@@ -12,9 +13,11 @@ using Server.src.Data;
 namespace Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251007165228_UpdateDb")]
+    partial class UpdateDb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -209,9 +212,6 @@ namespace Server.Migrations
                     b.Property<int>("TheaterId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Type")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("TheaterId");
@@ -238,11 +238,6 @@ namespace Server.Migrations
                     b.Property<int>("RoomId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -252,7 +247,10 @@ namespace Server.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Seats");
+                    b.ToTable("Seats", t =>
+                        {
+                            t.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
+                        });
                 });
 
             modelBuilder.Entity("Server.src.Models.Showtimes", b =>
@@ -295,23 +293,23 @@ namespace Server.Migrations
                     b.Property<int>("SeatId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("SeatsId")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("ShowtimeId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ShowtimesId")
+                        .IsRequired()
                         .HasColumnType("integer");
 
                     b.Property<string>("Status")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Trống");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SeatsId");
+                    b.HasIndex("SeatId")
+                        .IsUnique();
 
-                    b.HasIndex("ShowtimesId");
+                    b.HasIndex("ShowtimeId");
 
                     b.ToTable("StatusSeat");
                 });
@@ -403,35 +401,6 @@ namespace Server.Migrations
                     b.ToTable("Ticket");
                 });
 
-            modelBuilder.Entity("Server.src.Models.TicketPrice", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Price")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("RoomType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("SeatType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TicketPrices", t =>
-                        {
-                            t.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
-                        });
-                });
-
             modelBuilder.Entity("Server.src.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -512,12 +481,16 @@ namespace Server.Migrations
             modelBuilder.Entity("Server.src.Models.StatusSeat", b =>
                 {
                     b.HasOne("Server.src.Models.Seats", "Seats")
-                        .WithMany()
-                        .HasForeignKey("SeatsId");
+                        .WithOne("StatusSeat")
+                        .HasForeignKey("Server.src.Models.StatusSeat", "SeatId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Server.src.Models.Showtimes", "Showtimes")
-                        .WithMany()
-                        .HasForeignKey("ShowtimesId");
+                        .WithMany("StatusSeat")
+                        .HasForeignKey("ShowtimeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Seats");
 
@@ -569,6 +542,16 @@ namespace Server.Migrations
                     b.Navigation("Seats");
 
                     b.Navigation("Showtimes");
+                });
+
+            modelBuilder.Entity("Server.src.Models.Seats", b =>
+                {
+                    b.Navigation("StatusSeat");
+                });
+
+            modelBuilder.Entity("Server.src.Models.Showtimes", b =>
+                {
+                    b.Navigation("StatusSeat");
                 });
 
             modelBuilder.Entity("Server.src.Models.Theater", b =>
