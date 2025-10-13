@@ -16,7 +16,7 @@ export default function WelcomeScreen() {
 
   return (
     <ImageBackground
-      source={require("../../assets/images/welcome.png")}
+      source={require("../../assets/images/background.png")}
       style={[styles.background, { width, height }]}
       resizeMode="cover"
     >
@@ -25,7 +25,13 @@ export default function WelcomeScreen() {
         <Image
           source={require("../../assets/icons/logo.png")}
           style={styles.logo}
+          resizeMode="contain"
         />
+        <Text style={styles.title}>Chào mừng đến với CineBook</Text>
+        <Text style={styles.subtitle}>
+          Đặt vé xem phim dễ dàng và nhanh chóng
+        </Text>
+
         <View style={styles.buttonContainer}>
           <Pressable
             style={styles.loginButton}
@@ -37,7 +43,9 @@ export default function WelcomeScreen() {
             style={styles.registerButton}
             onPress={() => router.push("/(auth)/register")}
           >
-            <Text style={styles.buttonText}>Đăng ký</Text>
+            <Text style={[styles.buttonText, styles.registerText]}>
+              Đăng ký
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -53,37 +61,56 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: 20,
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    marginBottom: 30,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 32,
     color: "#fff",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#fff",
+    textAlign: "center",
+    marginBottom: 40,
+    opacity: 0.8,
   },
   buttonContainer: {
-    width: "80%",
+    width: "100%",
+    maxWidth: 320,
     gap: 16,
   },
   loginButton: {
-    backgroundColor: "#5B3BB4",
-    paddingVertical: 12,
+    backgroundColor: "#6C47DB",
+    paddingVertical: 15,
     paddingHorizontal: 24,
     borderRadius: 8,
     alignItems: "center",
+    elevation: 2,
   },
   registerButton: {
-    backgroundColor: "#5B3BB4",
-    paddingVertical: 12,
+    backgroundColor: "transparent",
+    paddingVertical: 15,
     paddingHorizontal: 24,
     borderRadius: 8,
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
   },
   buttonText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: "bold",
   },
-  logo: {
-    marginBottom: 50,
+  registerText: {
+    opacity: 0.9,
   },
 });

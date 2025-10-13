@@ -4,7 +4,6 @@
     "slug": "ClientApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/splash.png",
     "scheme": "clientapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

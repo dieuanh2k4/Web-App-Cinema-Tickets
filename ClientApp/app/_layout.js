@@ -6,11 +6,11 @@ export default function RootLayout() {
       <Stack.Screen name="(auth)/welcome" options={{ headerShown: false }} />
       <Stack.Screen
         name="(auth)/login"
-        options={{ headerShown: true, title: "Đăng nhập" }}
+        options={{ headerShown: false, title: "Đăng nhập" }}
       />
       <Stack.Screen
         name="(auth)/register"
-        options={{ headerShown: true, title: "Đăng ký" }}
+        options={{ headerShown: false, title: "Đăng ký" }}
       />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
     </Stack>
