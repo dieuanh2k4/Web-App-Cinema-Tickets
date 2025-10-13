@@ -12,7 +12,11 @@ namespace Server.src.Models
         public int Price { get; set; }
         public string? Type { get; set; }
         public int RoomId { get; set; }
+        public string? Status { get; set; }
 
         public Rooms? Rooms { get; set; }
+        // public TicketPrice? TicketPrice { get; set; }
+        // public List<StatusSeat>? StatusSeat { get; set; }
+        // public StatusSeat? StatusSeat { get; set; }
     }
 }
