@@ -1,10 +1,10 @@
 import React from "react";
 import { Text, View, StyleSheet } from "react-native";
 
-export default function ScheduleScreen() {
+export default function AccountScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Schedule Screen</Text>
+      <Text style={styles.text}>Account Screen</Text>
     </View>
   );
 }

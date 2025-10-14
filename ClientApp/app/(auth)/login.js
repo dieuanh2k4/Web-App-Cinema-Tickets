@@ -16,7 +16,7 @@ export default function Login() {
 
   const handleLogin = () => {
     // TODO: Implement login logic
-    router.push("/(tabs)");
+    router.push("/(tabs)/home");
   };
 
   return (
@@ -72,6 +72,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     fontSize: 16,
+    color: "#FFFFFF",
   },
   button: {
     backgroundColor: "#6C47DB",
