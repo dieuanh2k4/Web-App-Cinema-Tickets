@@ -1,0 +1,16 @@
+# Thư mục build và output
+/bin/
+/obj/
+**/packages/
+
+# Thư mục cấu hình IDE (VS Code)
+.vscode/
+
+# Thư mục và file của Entity Framework Core Migrations
+# Thường bạn không muốn commit tất cả các file Migration đã tạo,
+# trừ khi bạn cần chúng để người khác có thể tự update database.
+# TÙY CHỌN: Nếu bạn muốn bỏ qua các snapshot (thường nên bỏ qua)
+**/Migrations/*Snapshot.cs
+
+# TÙY CHỌN: File cấu hình database cục bộ (nếu có)
+appsettings.Development.json
