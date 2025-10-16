@@ -202,10 +202,10 @@ namespace Server.src.Data
 
             modelBuilder.Entity<Showtimes>(entity =>
             {
-                // entity.ToTable(r =>
-                // {
-                //     r.HasCheckConstraint("CK_Seats_Price", "Price > 0");
-                // });
+                entity.ToTable(r =>
+                {
+                    r.HasCheckConstraint("CK_Showtimes_Date", "\"Date\" > CURRENT_DATE");
+                });
                 entity.HasKey(s => s.Id);
                 entity.Property(s => s.Id)
                     .ValueGeneratedOnAdd()
@@ -217,6 +217,8 @@ namespace Server.src.Data
                 entity.Property(s => s.MovieId)
                     .IsRequired();
                 entity.Property(s => s.RoomId)
+                    .IsRequired();
+                entity.Property(s => s.Date)
                     .IsRequired();
 
                 entity.HasOne(s => s.Rooms)

@@ -1,0 +1,68 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Server.src.Data;
+using Server.src.Dtos.ShowTimes;
+using Server.src.Exceptions;
+using Server.src.Mapper;
+using Server.src.Models;
+using Server.src.Services.Interfaces;
+
+namespace Server.src.Services.Implements
+{
+    public class ShowtimeService : IShowtimeService
+    {
+        private static readonly List<Showtimes> _showtimes = new List<Showtimes>();
+        private readonly ApplicationDbContext _context;
+
+        public ShowtimeService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<List<ShowtimeDto>> GetAllShowtimes()
+        {
+            return await _context.Showtimes
+                .Include(s => s.Movies)
+                .Include(s => s.Rooms)
+                .Include(s => s.Rooms.Theater)
+                .Select(s => new ShowtimeDto
+                {
+                    Id = s.Id,
+                    Start = s.Start,
+                    End = s.End,
+                    Date = s.Date,
+                    MovieTitle = s.Movies.Title,
+                    RoomType = s.Rooms.Type,
+                    RooomName = s.Rooms.Name,
+                    TheaterName = s.Rooms.Theater.Name
+                }).ToListAsync();
+        }
+
+        // public async Task<Showtimes> CreateShowtime(CreateShowtimeDto createShowtimeDto, int roomId)
+        // {
+        //     var checkroom = await _context.Rooms
+        //         .Include(r => r.Theater)
+        //         .FirstOrDefaultAsync(r => r.Id == roomId);
+            
+        //     if (checkroom == null)
+        //     {
+        //         throw new Result("Phòng không tồn tại");
+        //     };
+
+        //     var duration = await _context.Movies
+        //         .Where(m => m.Id == createShowtimeDto.MovieId)
+        //         .Select(m => m.Duration)
+        //         .FirstOrDefaultAsync();
+
+        //     var showtime = await createShowtimeDto.ToNewShowtime();
+        //     showtime.End = showtime.Start.Add(TimeSpan.FromMinutes(duration)); // chuyển duration sang timespan, sau đó cộng vào start để ra end
+
+            
+
+
+        // }
+    }
+}
