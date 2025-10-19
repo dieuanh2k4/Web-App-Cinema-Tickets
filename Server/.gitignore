@@ -1,4 +1,25 @@
+# Build folders
+bin/
+obj/
 
-*.env
-appsettings.json
-appsettings.Development.json
+# VS & VSCode
+.vs/
+.vscode/
+
+# User files
+*.user
+*.suo
+
+# Build outputs
+*.exe
+*.dll
+*.pdb
+*.cache
+*.log
+
+# NuGet
+*.nupkg
+*.nuget.*
+
+# Others
+*.deps.json
