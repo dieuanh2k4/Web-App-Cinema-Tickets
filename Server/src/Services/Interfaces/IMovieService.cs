@@ -14,5 +14,6 @@ namespace Server.src.Services.Interfaces
         Task<ImageUploadResult> UploadImage(IFormFile file);
         Task<Movies> AddMovie(CreateMovieDto movieDto);
         Task<Movies> UpdateMovie(UpdateMovieDto updateMovieDto);
+        Task<Movies> GetMovieById(int id);
     }
 }

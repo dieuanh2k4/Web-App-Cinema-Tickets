@@ -41,28 +41,53 @@ namespace Server.src.Services.Implements
                 }).ToListAsync();
         }
 
-        // public async Task<Showtimes> CreateShowtime(CreateShowtimeDto createShowtimeDto, int roomId)
-        // {
-        //     var checkroom = await _context.Rooms
-        //         .Include(r => r.Theater)
-        //         .FirstOrDefaultAsync(r => r.Id == roomId);
+        public async Task<Showtimes> CreateShowtime(CreateShowtimeDto createShowtimeDto, int roomId)
+        {
+            var checkroom = await _context.Rooms
+                .Include(r => r.Theater)
+                .FirstOrDefaultAsync(r => r.Id == roomId);
             
-        //     if (checkroom == null)
-        //     {
-        //         throw new Result("Phòng không tồn tại");
-        //     };
+            if (checkroom == null)
+            {
+                throw new Result("Phòng không tồn tại");
+            };
 
-        //     var duration = await _context.Movies
-        //         .Where(m => m.Id == createShowtimeDto.MovieId)
-        //         .Select(m => m.Duration)
-        //         .FirstOrDefaultAsync();
+            var duration = await _context.Movies
+                .Where(m => m.Id == createShowtimeDto.MovieId)
+                .Select(m => m.Duration)
+                .FirstOrDefaultAsync();
 
-        //     var showtime = await createShowtimeDto.ToNewShowtime();
-        //     showtime.End = showtime.Start.Add(TimeSpan.FromMinutes(duration)); // chuyển duration sang timespan, sau đó cộng vào start để ra end
+            createShowtimeDto.End = createShowtimeDto.Start.Add(TimeSpan.FromMinutes(duration)); // chuyển duration sang timespan, sau đó cộng vào start để ra end
 
-            
+            var checkRoom = await _context.Showtimes
+                .Where(s => s.RoomId == roomId)
+                .FirstOrDefaultAsync();
 
+            if (checkRoom == null)
+            {
+                var showtime = await createShowtimeDto.ToNewShowtime();
 
-        // }
+                return showtime;
+            }
+            else
+            {
+                bool checkShowtime = await _context.Showtimes
+                    .Where(s => s.RoomId == roomId)
+                    .AnyAsync(s =>
+                        (createShowtimeDto.Start >= s.Start && createShowtimeDto.Start < s.End) ||
+                        (createShowtimeDto.End > s.Start && createShowtimeDto.End <= s.End) ||
+                        (createShowtimeDto.Start <= s.Start && createShowtimeDto.End >= s.End)
+                    );
+
+                if (checkShowtime)
+                {
+                    throw new Result("Phòng đã có suất chiếu trùng thời gian");
+                }
+
+                var showtime = await createShowtimeDto.ToNewShowtime();
+                
+                return showtime;
+            }
+        }
     }
 }

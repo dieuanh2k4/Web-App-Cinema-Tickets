@@ -39,6 +39,13 @@ namespace Server.src.Controllers
             }
         }
 
+        [HttpGet("get-theater-by-id/{id}")]
+        public async Task<IActionResult> GetTheaterById([FromQuery] int id)
+        {
+            var theater = _theaterService.GetById(id);
+            return Ok(theater);
+        }
+
         [HttpPost("create-theater")]
         public async Task<IActionResult> CreateTheater([FromBody] CreateTheaterDto createTheaterDto)
         {

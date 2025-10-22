@@ -27,6 +27,12 @@ namespace Server.src.Services.Implements
             return _context.Theater.ToListAsync();
         }
 
+        public async Task<Theater> GetById(int id)
+        {
+            var theater = await _context.Theater.FirstOrDefaultAsync(t => t.Id == id);
+            return theater;
+        }
+
         public async Task<Theater> AddTheater(CreateTheaterDto createTheaterDto)
         {
             if (createTheaterDto.Name == null)

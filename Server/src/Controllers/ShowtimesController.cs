@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Server.src.Data;
+using Server.src.Dtos.ShowTimes;
 using Server.src.Services.Interfaces;
 
 namespace Server.src.Controllers
@@ -36,6 +37,24 @@ namespace Server.src.Controllers
 
                 return Ok(showtimes);
             }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpPost("create-showtimes")]
+        public async Task<IActionResult> CreateShowtime([FromBody] CreateShowtimeDto createShowtimeDto, int roomId)
+        {
+            try
+            {
+                var showtime = await _showtimeService.CreateShowtime(createShowtimeDto, roomId);
+
+                await _context.AddAsync(showtime);
+                await _context.SaveChangesAsync();
+
+                return Ok(showtime);
+            } 
             catch (Exception ex)
             {
                 return ReturnException(ex);

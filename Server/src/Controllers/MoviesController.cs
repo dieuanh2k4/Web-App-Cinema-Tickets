@@ -37,6 +37,20 @@ namespace Server.Controllers
             }
         }
 
+        [HttpGet("get-movie-by-id/{id}")]
+        public async Task<IActionResult> GetMovieById([FromQuery] int id)
+        {
+            try
+            {
+                var student = _movieService.GetMovieById(id);
+                return Ok(student);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
         [HttpPost("create-movie")]
         public async Task<IActionResult> CreateMovie([FromForm] CreateMovieDto movieDto, IFormFile? imageFile)
         {

@@ -40,6 +40,12 @@ namespace Server.src.Services.Implements
             return _context.Movies.ToListAsync();
         }
 
+        public async Task<Movies> GetMovieById(int id)
+        {
+            var movie = await _context.Movies.FirstOrDefaultAsync(m => m.Id == id);
+            return movie;
+        }
+
         // up ảnh lên cloudinary
         public async Task<ImageUploadResult> UploadImage(IFormFile file)
         {
