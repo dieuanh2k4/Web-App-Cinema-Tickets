@@ -8841,24 +8841,26 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Dieu Anh\\.nuget\\packages\\": {}
+    "C:\\Users\\Admin\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\4-1\\chuyên đề tổng hợp\\PROJECT\\Server\\Server.csproj",
+      "projectUniqueName": "D:\\cinebook\\Web-App-Cinema-Tickets\\Server\\Server.csproj",
       "projectName": "Server",
-      "projectPath": "D:\\4-1\\chuyên đề tổng hợp\\PROJECT\\Server\\Server.csproj",
-      "packagesPath": "C:\\Users\\Dieu Anh\\.nuget\\packages\\",
-      "outputPath": "D:\\4-1\\chuyên đề tổng hợp\\PROJECT\\Server\\obj\\",
+      "projectPath": "D:\\cinebook\\Web-App-Cinema-Tickets\\Server\\Server.csproj",
+      "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
+      "outputPath": "D:\\cinebook\\Web-App-Cinema-Tickets\\Server\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Dieu Anh\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -8871,11 +8873,6 @@
         "warnAsError": [
           "NU1605"
         ]
-      },
-      "restoreAuditProperties": {
-        "enableAudit": "true",
-        "auditLevel": "low",
-        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -8942,7 +8939,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.407/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.121/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

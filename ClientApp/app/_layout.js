@@ -13,6 +13,12 @@ export default function RootLayout() {
         options={{ headerShown: false, title: "Đăng ký" }}
       />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="movies/now-playing"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen name="movies" options={{ headerShown: false }} />
+      <Stack.Screen name="movies/detail" options={{ headerShown: false }} />
     </Stack>
   );
 }

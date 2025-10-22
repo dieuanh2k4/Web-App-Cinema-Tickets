@@ -28,6 +28,20 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
 
+// CORS (development): allow requests from Expo/Emulators and local web
+const string DevCorsPolicy = "DevCorsPolicy";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(DevCorsPolicy, policy =>
+    {
+        policy
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .SetIsOriginAllowed(_ => true)
+            .AllowCredentials();
+    });
+});
+
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<ITheaterService, TheaterService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
@@ -49,6 +63,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // Map route cho Controller
+app.UseCors(DevCorsPolicy);
 app.MapControllers();
 
 app.Run();

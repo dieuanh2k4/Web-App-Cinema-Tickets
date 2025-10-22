@@ -32,6 +32,7 @@ const styles = StyleSheet.create({
   poster: {
     width: "100%",
     height: 240,
+    borderRadius: 12,
   },
   info: {
     padding: 8,

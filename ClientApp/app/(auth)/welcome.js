@@ -62,12 +62,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    padding: 20,
+    paddingHorizontal: 20,
   },
   logo: {
     width: 150,
     height: 150,
-    marginBottom: 30,
+    marginBottom: 10,
   },
   title: {
     fontSize: 28,

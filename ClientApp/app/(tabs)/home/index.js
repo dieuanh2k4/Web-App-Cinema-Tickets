@@ -5,14 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  RefreshControl,
   TouchableOpacity,
   Image,
   FlatList,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { MovieCard } from "../../../components/MovieCard";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MovieCard } from "../../../components/MovieCard";
 import {
   NOW_PLAYING_MOVIES,
   UPCOMING_MOVIES,
@@ -24,16 +23,14 @@ export default function HomeScreen() {
     nowPlaying: [],
     upcoming: [],
   });
-  const [refreshing, setRefreshing] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const flatListRef = useRef(null);
   const router = useRouter();
   const windowWidth = Dimensions.get("window").width;
 
   useEffect(() => {
-    loadMovies();
+    loadMockData();
 
-    // auto scroll
     const interval = setInterval(() => {
       if (movies.featured.length > 0) {
         const nextSlide = (activeSlide + 1) % movies.featured.length;
@@ -48,23 +45,38 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, [activeSlide]);
 
-  const loadMovies = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  const loadMockData = () => {
+    // TODO: Thay thế bằng API calls thực
+    // const featuredResponse = await fetch('/api/movies/featured');
+    // const nowPlayingResponse = await fetch('/api/movies/now-playing');
+    // const upcomingResponse = await fetch('/api/movies/upcoming');
+    // const featured = await featuredResponse.json();
+    // const nowPlaying = await nowPlayingResponse.json();
+    // const upcoming = await upcomingResponse.json();
+    // setMovies({ featured, nowPlaying, upcoming });
+
+    // Mock data
     setMovies({
-      featured: NOW_PLAYING_MOVIES.slice(0, 5),
+      featured: NOW_PLAYING_MOVIES.slice(0, 3),
       nowPlaying: NOW_PLAYING_MOVIES,
       upcoming: UPCOMING_MOVIES,
     });
-    setRefreshing(false);
   };
 
-  const renderFeaturedItem = ({ item, index }) => (
+  const handleMoviePress = (movieId) => {
+    router.push({
+      pathname: "/movies/detail",
+      params: { id: movieId },
+    });
+  };
+
+  const renderFeaturedItem = ({ item }) => (
     <TouchableOpacity
-      style={[styles.featuredItem, { width: windowWidth }]}
+      style={[styles.featuredItem, { width: windowWidth - 32 }]}
       onPress={() => handleMoviePress(item.id)}
     >
       <Image
-        source={{ uri: item.poster }}
+        source={{ uri: item.posterUrl }}
         style={styles.featuredImage}
         resizeMode="cover"
       />
@@ -88,31 +100,26 @@ export default function HomeScreen() {
     </View>
   );
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    loadMovies();
-  };
-
-  const handleMoviePress = (movieId) => {
-    router.push({
-      pathname: "/movie/[id]",
-      params: { id: movieId },
-    });
-  };
-
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          tintColor="#E31C25"
-          colors={["#E31C25"]}
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.header}>
+        <View style={styles.headerSpacer} />
+        <Image
+          source={require("../../../assets/icons/logo.png")}
+          style={styles.logo}
         />
-      }
-    >
+        <TouchableOpacity
+          style={styles.accountIcon}
+          onPress={() => router.push("/(tabs)/account")}
+        >
+          <MaterialCommunityIcons
+            name="account-circle"
+            size={32}
+            color="#FFFFFF"
+          />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.featuredContainer}>
         <FlatList
           ref={flatListRef}
@@ -123,7 +130,7 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={(event) => {
             const slideIndex = Math.round(
-              event.nativeEvent.contentOffset.x / windowWidth
+              event.nativeEvent.contentOffset.x / (windowWidth - 32)
             );
             setActiveSlide(slideIndex);
           }}
@@ -144,7 +151,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Đang Chiếu */}
+      {/* now playing */}
       <View style={styles.section}>
         {renderSectionHeader("Đang Chiếu", () =>
           router.push("/movies/now-playing")
@@ -157,14 +164,15 @@ export default function HomeScreen() {
           {movies.nowPlaying.map((movie) => (
             <MovieCard
               key={movie.id}
-              movie={movie}
+              title={movie.title}
+              poster={movie.posterUrl}
               onPress={() => handleMoviePress(movie.id)}
             />
           ))}
         </ScrollView>
       </View>
 
-      {/* sắp chiếu */}
+      {/* upcoming */}
       <View style={styles.section}>
         {renderSectionHeader("Sắp Chiếu", () =>
           router.push("/movies/upcoming")
@@ -177,7 +185,8 @@ export default function HomeScreen() {
           {movies.upcoming.map((movie) => (
             <MovieCard
               key={movie.id}
-              movie={movie}
+              title={movie.title}
+              poster={movie.posterUrl}
               onPress={() => handleMoviePress(movie.id)}
             />
           ))}
@@ -192,16 +201,41 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#1A1A1A",
   },
+
   featuredContainer: {
-    height: 300,
+    height: 250,
+    marginTop: 20,
     marginBottom: 20,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: "#1A1A1A",
+  },
+  headerSpacer: {
+    width: 32,
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    resizeMode: "contain",
+  },
+  accountIcon: {
+    padding: 4,
   },
   featuredItem: {
-    height: 300,
+    height: 250,
   },
   featuredImage: {
     width: "100%",
     height: "100%",
+    borderRadius: 12,
   },
   featuredOverlay: {
     position: "absolute",
@@ -215,11 +249,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 8,
-  },
-  featuredRating: {
-    color: "#FFFFFF",
-    fontSize: 16,
   },
   paginationDots: {
     flexDirection: "row",
