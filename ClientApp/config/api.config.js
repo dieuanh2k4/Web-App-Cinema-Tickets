@@ -1,5 +1,6 @@
+import { BASE_URL } from "@env";
 export const API_CONFIG = {
-  BASE_URL: "http://192.168.1.102:5079/api",
+  BASE_URL: BASE_URL,
   ENDPOINTS: {
     MOVIES: {
       NOW_PLAYING: "/movies/now-playing",
