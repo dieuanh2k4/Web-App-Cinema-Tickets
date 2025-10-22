@@ -1,8 +1,4 @@
-// API Service - Quản lý tất cả API calls
-// TODO: Cập nhật base URL khi có backend thực
-
-const BASE_URL = "http://localhost:5000/api"; // Thay đổi theo backend thực
-
+import BASE_URL from "@env";
 class ApiService {
   // Lấy danh sách phim đang chiếu
   async getNowPlayingMovies() {

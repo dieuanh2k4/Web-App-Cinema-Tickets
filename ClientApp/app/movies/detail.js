@@ -12,14 +12,11 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { NOW_PLAYING_MOVIES, UPCOMING_MOVIES } from "../../constants/mockData";
-import { movieService } from "../../services/movieService";
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
 
 export default function MovieDetailScreen() {
   const [movie, setMovie] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
@@ -27,48 +24,11 @@ export default function MovieDetailScreen() {
     loadMovieDetail();
   }, [id]);
 
-  const mapMovieDtoToView = (dto) => {
-    return {
-      id: dto.id,
-      title: dto.title,
-      posterUrl: dto.thumbnail,
-      backdropUrl: dto.thumbnail,
-      duration: dto.duration ? `${dto.duration} phút` : "",
-      genre: dto.genre,
-      language: dto.language,
-      ageLimit: dto.ageLimit,
-      releaseDate: dto.startDate,
-      description: dto.description,
-      director: dto.director,
-      cast: Array.isArray(dto.actors) ? dto.actors.join(", ") : dto.actors,
-      rating: dto.rating,
-      country: dto.country,
-    };
-  };
-
-  const loadMovieDetail = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      // Ưu tiên gọi API theo id, fallback mock nếu lỗi
-      if (id) {
-        const response = await movieService.getMovieById(id);
-        const dto = response?.data || response; // axios vs fetch compatibility
-        if (dto) {
-          setMovie(mapMovieDtoToView(dto));
-          return;
-        }
-      }
-    } catch (e) {
-      setError("Không tải được thông tin phim");
-      // Fallback mock data nếu có
-      const allMovies = [...NOW_PLAYING_MOVIES, ...UPCOMING_MOVIES];
-      const foundMovie = allMovies.find((m) => m.id.toString() === id);
-      if (foundMovie) {
-        setMovie(foundMovie);
-      }
-    } finally {
-      setLoading(false);
+  const loadMovieDetail = () => {
+    const allMovies = [...NOW_PLAYING_MOVIES, ...UPCOMING_MOVIES];
+    const foundMovie = allMovies.find((m) => m.id.toString() === id);
+    if (foundMovie) {
+      setMovie(foundMovie);
     }
   };
 
@@ -76,10 +36,10 @@ export default function MovieDetailScreen() {
     router.push("/booking/select_cinema");
   };
 
-  if (loading || !movie) {
+  if (!movie) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>{error || "Đang tải..."}</Text>
+        <Text style={styles.loadingText}>Đang tải...</Text>
       </View>
     );
   }
