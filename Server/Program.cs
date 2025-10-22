@@ -70,21 +70,21 @@ builder.Configuration.GetSection("CloudinarySettings")
 // ==========================
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
-{
-options.TokenValidationParameters = new TokenValidationParameters
-{
-ValidateIssuer = true,
-ValidateAudience = true,
-ValidateLifetime = true,
-ValidateIssuerSigningKey = true,
-
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")
-        )
-    };
-});
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")
+            )
+        };
+    }
+);
 
 
 // ==========================
@@ -103,7 +103,7 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-// 🔒 Thêm Authentication & Authorization cho JWT
+// Thêm Authentication & Authorization cho JWT
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -79,5 +79,33 @@ namespace Server.src.Services.Implements
 
             return newMovie;
         }
+
+        public async Task<Movies> UpdateMovie(UpdateMovieDto updateMovieDto) 
+        {
+            var movie = await _context.Movies.FirstOrDefaultAsync(m => m.Id == updateMovieDto.Id);
+
+            if (movie == null)
+            {
+                throw new Result($"Không tìm thấy phim cần chỉnh sửa");
+            }
+
+            // var updateMovie = await updateMovieDto.ToMoviesFromUpdateDto();
+            
+            movie.Title = updateMovieDto.Title;
+            movie.Thumbnail = updateMovieDto.Thumbnail;
+            movie.Duration = updateMovieDto.Duration;
+            movie.Genre = updateMovieDto.Genre;
+            movie.Language = updateMovieDto.Language;
+            movie.AgeLimit = updateMovieDto.AgeLimit;
+            movie.StartDate = updateMovieDto.StartDate;
+            movie.Description = updateMovieDto.Description;
+            movie.Director = updateMovieDto.Director;
+            movie.Actors = updateMovieDto.Actors;
+            movie.Rating = updateMovieDto.Rating;
+
+            // await _context.SaveChangesAsync();
+
+            return movie;
+        }
     }
 }

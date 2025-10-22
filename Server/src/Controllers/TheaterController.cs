@@ -56,5 +56,23 @@ namespace Server.src.Controllers
                 return ReturnException(ex);
             }
         }
+
+        [HttpPut("update-theater")]
+        public async Task<IActionResult> UpdateTheater([FromBody] UpdateTheaterDto updateTheaterDto)
+        {
+            try
+            {
+                var updateTheater = await _theaterService.UpdateTheater(updateTheaterDto);
+
+                await _context.Theater.AddAsync(updateTheater);
+                await _context.SaveChangesAsync();
+
+                return Ok(updateTheater);
+            } 
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
     }
 }

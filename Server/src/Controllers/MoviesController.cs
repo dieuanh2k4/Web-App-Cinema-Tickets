@@ -52,8 +52,32 @@ namespace Server.Controllers
 
                 await _context.Movies.AddAsync(createdMovie);
                 await _context.SaveChangesAsync();
-                
+
                 return Ok(createdMovie);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpPut("add-subject")]
+        public async Task<IActionResult> UpdateMovie([FromForm] UpdateMovieDto updateMovieDto, IFormFile? imageFile)
+        {
+            try
+            {
+                if (imageFile != null)
+                {
+                    var uploadResult = await _movieService.UploadImage(imageFile);
+                    updateMovieDto.Thumbnail = uploadResult.SecureUrl.ToString();
+                }
+
+                var updateMovie = await _movieService.UpdateMovie(updateMovieDto);
+
+                await _context.Movies.AddAsync(updateMovie);
+                await _context.SaveChangesAsync();
+
+                return Ok(updateMovie);
             }
             catch (Exception ex)
             {
