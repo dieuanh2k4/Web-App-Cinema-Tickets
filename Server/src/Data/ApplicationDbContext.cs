@@ -91,6 +91,8 @@ namespace Server.src.Data
                     .IsRequired();
                 entity.Property(m => m.StartDate)
                     .IsRequired();
+                entity.Property(m => m.EndDate)
+                    .IsRequired();
                 entity.Property(m => m.Description)
                     .HasMaxLength(3000)
                     .IsUnicode(true)

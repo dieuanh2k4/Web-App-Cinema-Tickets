@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 
 namespace Server.src.Dtos.Theater
 {
-    public class UpdateTheaterDto : CreateTheaterDto
+    public class UpdateTheaterDto 
     {
-        public int Id { get; set; }
+        public string? Name { get; set; }
+        public string? Address { get; set; }
+        public string? City { get; set; }
     }
 }

@@ -42,7 +42,7 @@ namespace Server.Controllers
         {
             try
             {
-                var student = _movieService.GetMovieById(id);
+                var student = await _movieService.GetMovieById(id);
                 return Ok(student);
             }
             catch (Exception ex)
@@ -75,8 +75,8 @@ namespace Server.Controllers
             }
         }
 
-        [HttpPut("add-subject")]
-        public async Task<IActionResult> UpdateMovie([FromForm] UpdateMovieDto updateMovieDto, IFormFile? imageFile)
+        [HttpPut("update-subject/{id}")]
+        public async Task<IActionResult> UpdateMovie([FromForm] UpdateMovieDto updateMovieDto, IFormFile? imageFile, int id)
         {
             try
             {
@@ -86,10 +86,7 @@ namespace Server.Controllers
                     updateMovieDto.Thumbnail = uploadResult.SecureUrl.ToString();
                 }
 
-                var updateMovie = await _movieService.UpdateMovie(updateMovieDto);
-
-                await _context.Movies.AddAsync(updateMovie);
-                await _context.SaveChangesAsync();
+                var updateMovie = await _movieService.UpdateMovie(updateMovieDto, id);
 
                 return Ok(updateMovie);
             }

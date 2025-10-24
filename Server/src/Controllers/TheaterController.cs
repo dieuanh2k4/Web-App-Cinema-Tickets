@@ -42,7 +42,7 @@ namespace Server.src.Controllers
         [HttpGet("get-theater-by-id/{id}")]
         public async Task<IActionResult> GetTheaterById([FromQuery] int id)
         {
-            var theater = _theaterService.GetById(id);
+            var theater = await _theaterService.GetById(id);
             return Ok(theater);
         }
 
@@ -64,12 +64,12 @@ namespace Server.src.Controllers
             }
         }
 
-        [HttpPut("update-theater")]
-        public async Task<IActionResult> UpdateTheater([FromBody] UpdateTheaterDto updateTheaterDto)
+        [HttpPut("update-theater/{id}")]
+        public async Task<IActionResult> UpdateTheater([FromBody] UpdateTheaterDto updateTheaterDto, int id)
         {
             try
             {
-                var updateTheater = await _theaterService.UpdateTheater(updateTheaterDto);
+                var updateTheater = await _theaterService.UpdateTheater(updateTheaterDto, id);
 
                 await _context.Theater.AddAsync(updateTheater);
                 await _context.SaveChangesAsync();

@@ -86,17 +86,78 @@ namespace Server.src.Services.Implements
             return newMovie;
         }
 
-        public async Task<Movies> UpdateMovie(UpdateMovieDto updateMovieDto) 
+        public async Task<Movies> UpdateMovie(UpdateMovieDto updateMovieDto, int id) 
         {
-            var movie = await _context.Movies.FirstOrDefaultAsync(m => m.Id == updateMovieDto.Id);
+            var movie = await _context.Movies.FindAsync(id);
 
             if (movie == null)
             {
                 throw new Result($"Không tìm thấy phim cần chỉnh sửa");
             }
 
+            if (updateMovieDto.EndDate < updateMovieDto.StartDate)
+            {
+                throw new Result("Ngày kết thúc phải nhỏ hơn ngày khởi chiếu");
+            }
+
+            if (updateMovieDto.Duration <= 0)
+            {
+                throw new Result("Thời lượng phim phải lớn hơn 0");
+                // updateMovieDto.Duration = movie.Duration;
+            }
+
+            if (updateMovieDto.Rating < 0 || updateMovieDto.Rating > 10)
+            {
+                throw new Result("Đánh giá trong khoảng 0-10");
+                // updateMovieDto.Rating = movie.Rating;
+            }
+
             // var updateMovie = await updateMovieDto.ToMoviesFromUpdateDto();
-            
+
+
+            // if (movie.Title != null)
+            // {
+            //     movie.Title = updateMovieDto.Title;
+            // }
+            // if (movie.Thumbnail != null)
+            // {
+            //     movie.Thumbnail = updateMovieDto.Thumbnail;
+            // }
+            // if (movie.Duration != 0)
+            // {
+            //     movie.Duration = updateMovieDto.Duration;
+            // }
+            // if (movie.Genre != null)
+            // {
+            //     movie.Genre = updateMovieDto.Genre;
+            // }
+            // if (movie.Language != null)
+            // {
+            //     movie.Language = updateMovieDto.Language;
+            // }
+            // if (movie.AgeLimit != null)
+            // {
+            //     movie.AgeLimit = updateMovieDto.AgeLimit;
+            // }
+            // movie.StartDate = updateMovieDto.StartDate;
+            // movie.EndDate = updateMovieDto.EndDate;
+            // if (movie.Description != null)
+            // {
+            //     movie.Description = updateMovieDto.Description;
+            // }
+            // if (movie.Director != null)
+            // {
+            //     movie.Director = updateMovieDto.Director;
+            // }
+            // if (movie.Actors != null) 
+            // {
+            //     movie.Actors = updateMovieDto.Actors;
+            // }
+            // if (movie.Rating >= 0 && movie.Rating <= 10)
+            // {
+            //     movie.Rating = updateMovieDto.Rating;
+            // }
+
             movie.Title = updateMovieDto.Title;
             movie.Thumbnail = updateMovieDto.Thumbnail;
             movie.Duration = updateMovieDto.Duration;
@@ -109,7 +170,7 @@ namespace Server.src.Services.Implements
             movie.Actors = updateMovieDto.Actors;
             movie.Rating = updateMovieDto.Rating;
 
-            // await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
             return movie;
         }

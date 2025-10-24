@@ -13,7 +13,7 @@ namespace Server.src.Services.Interfaces
         Task<List<Movies>> GetAllMovies();
         Task<ImageUploadResult> UploadImage(IFormFile file);
         Task<Movies> AddMovie(CreateMovieDto movieDto);
-        Task<Movies> UpdateMovie(UpdateMovieDto updateMovieDto);
+        Task<Movies> UpdateMovie(UpdateMovieDto updateMovieDto, int id);
         Task<Movies> GetMovieById(int id);
     }
 }

@@ -52,9 +52,9 @@ namespace Server.src.Services.Implements
             return newTheater;
         }
 
-        public async Task<Theater> UpdateTheater(UpdateTheaterDto updateTheaterDto)
+        public async Task<Theater> UpdateTheater(UpdateTheaterDto updateTheaterDto, int id)
         {
-            var theater = await _context.Theater.FirstOrDefaultAsync(t => t.Id == updateTheaterDto.Id);
+            var theater = await _context.Theater.FindAsync(id);
 
             if (theater == null)
             {
