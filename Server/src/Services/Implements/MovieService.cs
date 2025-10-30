@@ -65,28 +65,43 @@ namespace Server.src.Services.Implements
             return uploadResult;
         }
 
-        public async Task<Movies> AddMovie(CreateMovieDto movieDto)
+        public async Task<Movies> AddMovie(CreateMovieDto createmovieDto)
         {
-            if (movieDto.Title == null)
+            if (createmovieDto.Title == null)
             {
                 throw new Result("Tiêu đề phim không được để trống");
             }
 
-            var checkMovie = _movies.FirstOrDefault(m => m.Title.Equals(movieDto.Title, StringComparison.OrdinalIgnoreCase));
+            var checkMovie = _movies.FirstOrDefault(m => m.Title.Equals(createmovieDto.Title, StringComparison.OrdinalIgnoreCase));
 
             if (checkMovie != null)
             {
-                throw new Result($"Phim {movieDto.Title} đã tồn tại trong hệ thống");
+                throw new Result($"Phim {createmovieDto.Title} đã tồn tại trong hệ thống");
             }
 
-            var newMovie = await movieDto.ToMovieFromCreateDto();
+            if (createmovieDto.EndDate < createmovieDto.StartDate)
+            {
+                throw new Result("Ngày kết thúc phải nhỏ hơn ngày khởi chiếu");
+            }
 
-            newMovie.Thumbnail = movieDto.Thumbnail;
+            if (createmovieDto.Duration <= 0)
+            {
+                throw new Result("Thời lượng phim phải lớn hơn 0");
+            }
+
+            if (createmovieDto.Rating < 0 || createmovieDto.Rating > 10)
+            {
+                throw new Result("Đánh giá trong khoảng 0-10");
+            }
+
+            var newMovie = await createmovieDto.ToMovieFromCreateDto();
+
+            newMovie.Thumbnail = createmovieDto.Thumbnail;
 
             return newMovie;
         }
 
-        public async Task<Movies> UpdateMovie(UpdateMovieDto updateMovieDto, int id) 
+        public async Task<Movies> UpdateMovie(UpdateMovieDto updateMovieDto, int id)
         {
             var movie = await _context.Movies.FindAsync(id);
 
@@ -125,6 +140,18 @@ namespace Server.src.Services.Implements
             movie.Rating = updateMovieDto.Rating;
 
             await _context.SaveChangesAsync();
+
+            return movie;
+        }
+        
+        public async Task<Movies> DeleteMovie(int id)
+        {
+            var movie = await _context.Movies.FindAsync(id);
+
+            if (movie == null)
+            {
+                throw new Result("Phim không tồn tại");
+            }
 
             return movie;
         }

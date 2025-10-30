@@ -54,7 +54,42 @@ namespace Server.src.Controllers
                 await _context.SaveChangesAsync();
 
                 return Ok(showtime);
-            } 
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpPut("update-showtime/{id}")]
+        public async Task<IActionResult> UpdateShowtime([FromBody] UpdateShowtimeDto updateShowtimeDto, int roomId, int id)
+        {
+            try
+            {
+                var showtime = await _showtimeService.UpdateShowtime(updateShowtimeDto, roomId, id);
+
+                await _context.SaveChangesAsync();
+
+                return Ok(showtime);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpDelete("delete-showtime/{id}")]
+        public async Task<IActionResult> DeleteShowtime(int id)
+        {
+            try
+            {
+                var showtime = await _showtimeService.DeleteShowtime(id);
+
+                _context.Showtimes.Remove(showtime);
+                await _context.SaveChangesAsync();
+
+                return Ok(_showtimeService);
+            }
             catch (Exception ex)
             {
                 return ReturnException(ex);

@@ -75,7 +75,25 @@ namespace Server.src.Controllers
                 await _context.SaveChangesAsync();
 
                 return Ok(updateTheater);
-            } 
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpDelete("delete-theater/{id}")]
+        public async Task<IActionResult> DeleteTheater(int id)
+        {
+            try
+            {
+                var theater = await _theaterService.DeleteTheater(id);
+
+                _context.Theater.Remove(theater);
+                await _context.SaveChangesAsync();
+
+                return Ok(_theaterService);
+            }
             catch (Exception ex)
             {
                 return ReturnException(ex);

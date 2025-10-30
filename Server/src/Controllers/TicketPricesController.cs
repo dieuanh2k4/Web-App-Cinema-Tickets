@@ -57,5 +57,40 @@ namespace Server.src.Controllers
                 return ReturnException(ex);
             }
         }
+
+        [HttpPut("update-ticket-price/{id}")]
+        public async Task<IActionResult> UpdateTicketPrice([FromBody] UpdateTicketPriceDto updateTicketPriceDto, int id)
+        {
+            try
+            {
+                var ticketprice = await _ticketpriceService.UpdateTicketPrice(updateTicketPriceDto, id);
+
+                await _context.SaveChangesAsync();
+
+                return Ok(ticketprice);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpDelete("delete-ticket-price/{id}")]
+        public async Task<IActionResult> DeleteTicketPrice(int id)
+        {
+            try
+            {
+                var ticketprice = await _ticketpriceService.DeleteTicketPrice(id);
+
+                _context.TicketPrices.Remove(ticketprice);
+                await _context.SaveChangesAsync();
+
+                return Ok(ticketprice);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
     }
 }

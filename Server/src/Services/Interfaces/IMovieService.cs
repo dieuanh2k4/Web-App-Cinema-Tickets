@@ -15,5 +15,6 @@ namespace Server.src.Services.Interfaces
         Task<Movies> AddMovie(CreateMovieDto movieDto);
         Task<Movies> UpdateMovie(UpdateMovieDto updateMovieDto, int id);
         Task<Movies> GetMovieById(int id);
+        Task<Movies> DeleteMovie(int id);
     }
 }

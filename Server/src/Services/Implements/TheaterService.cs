@@ -67,5 +67,17 @@ namespace Server.src.Services.Implements
 
             return theater;
         }
+
+        public async Task<Theater> DeleteTheater(int id)
+        {
+            var theater = await _context.Theater.FindAsync(id);
+
+            if (theater == null)
+            {
+                throw new Result("Rạp cần xóa không tồn tại");
+            }
+
+            return theater;
+        }
     }
 }
