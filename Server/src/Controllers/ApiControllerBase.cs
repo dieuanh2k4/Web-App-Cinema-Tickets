@@ -18,19 +18,42 @@ namespace Server.src.Controllers
 
         protected IActionResult ReturnException(Exception ex)
         {
-            if (ex is Result)
+            if (ex is Result userEx)
             {
-                var userEx = ex as Result;
                 return StatusCode(StatusCodes.Status400BadRequest, new ExceptionBody
                 {
                     Message = userEx.Message
                 });
             }
 
-            _logger.LogError(ex, ex.Message);
-            return StatusCode(StatusCodes.Status205ResetContent, new ExceptionBody
+            if (ex is KeyNotFoundException)
             {
-                Message = ex.Message
+                return StatusCode(StatusCodes.Status404NotFound, new ExceptionBody
+                {
+                    Message = ex.Message
+                });
+            }
+
+            if (ex is UnauthorizedAccessException)
+            {
+                return StatusCode(StatusCodes.Status401Unauthorized, new ExceptionBody
+                {
+                    Message = ex.Message
+                });
+            }
+            
+            if (ex is ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new ExceptionBody
+                {
+                    Message = ex.Message
+                });
+            }
+
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, new ExceptionBody
+            {
+                Message = "An unexpected error occurred."
             });
         }
     }

@@ -53,7 +53,7 @@ namespace Server.src.Services.Implements
 
             if (file.Length > 0)
             {
-                // mỏ stream của file bằng OpenReadStream là để xử lý dl nhị phân, tối ưu hóa bộ nhớ và hiệu suất...
+                // mở 1 luồng stream của file bằng OpenReadStream là để xử lý dl nhị phân, tối ưu hóa bộ nhớ và hiệu suất...
                 using var stream = file.OpenReadStream();
                 var uploadParams = new ImageUploadParams
                 {
@@ -111,52 +111,6 @@ namespace Server.src.Services.Implements
                 throw new Result("Đánh giá trong khoảng 0-10");
                 // updateMovieDto.Rating = movie.Rating;
             }
-
-            // var updateMovie = await updateMovieDto.ToMoviesFromUpdateDto();
-
-
-            // if (movie.Title != null)
-            // {
-            //     movie.Title = updateMovieDto.Title;
-            // }
-            // if (movie.Thumbnail != null)
-            // {
-            //     movie.Thumbnail = updateMovieDto.Thumbnail;
-            // }
-            // if (movie.Duration != 0)
-            // {
-            //     movie.Duration = updateMovieDto.Duration;
-            // }
-            // if (movie.Genre != null)
-            // {
-            //     movie.Genre = updateMovieDto.Genre;
-            // }
-            // if (movie.Language != null)
-            // {
-            //     movie.Language = updateMovieDto.Language;
-            // }
-            // if (movie.AgeLimit != null)
-            // {
-            //     movie.AgeLimit = updateMovieDto.AgeLimit;
-            // }
-            // movie.StartDate = updateMovieDto.StartDate;
-            // movie.EndDate = updateMovieDto.EndDate;
-            // if (movie.Description != null)
-            // {
-            //     movie.Description = updateMovieDto.Description;
-            // }
-            // if (movie.Director != null)
-            // {
-            //     movie.Director = updateMovieDto.Director;
-            // }
-            // if (movie.Actors != null) 
-            // {
-            //     movie.Actors = updateMovieDto.Actors;
-            // }
-            // if (movie.Rating >= 0 && movie.Rating <= 10)
-            // {
-            //     movie.Rating = updateMovieDto.Rating;
-            // }
 
             movie.Title = updateMovieDto.Title;
             movie.Thumbnail = updateMovieDto.Thumbnail;

@@ -22,5 +22,5 @@ obj/
 *.nuget.*
 
 # Others
-*.deps.json
-*.json
+# *.deps.json
+# *.json

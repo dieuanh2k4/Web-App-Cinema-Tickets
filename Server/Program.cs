@@ -24,7 +24,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
 // Dùng PostgreSQL thật:
-options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 
 // 👉 Nếu bạn chưa cài PostgreSQL, có thể tạm dùng InMemory để test:
 // options.UseInMemoryDatabase("TestDB");
@@ -36,11 +36,11 @@ options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")
 // Cấu hình JSON tránh lỗi vòng tham chiếu
 // ==========================
 builder.Services.AddControllers()
-.AddJsonOptions(options =>
-{
-options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-});
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    });
 
 // ==========================
 // Đăng ký các Service (DI)
@@ -62,7 +62,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 // Cấu hình Cloudinary
 // ==========================
 builder.Services.Configure<CloudinarySettings>(
-builder.Configuration.GetSection("CloudinarySettings")
+    builder.Configuration.GetSection("CloudinarySettings")
 );
 
 // ==========================

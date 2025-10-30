@@ -26,6 +26,7 @@ namespace Server.src.Mapper
             {
                 Start = createShowtimeDto.Start,
                 End = createShowtimeDto.End,
+                Date = createShowtimeDto.Date,
                 MovieId = createShowtimeDto.MovieId,
                 RoomId = createShowtimeDto.RoomId
             };

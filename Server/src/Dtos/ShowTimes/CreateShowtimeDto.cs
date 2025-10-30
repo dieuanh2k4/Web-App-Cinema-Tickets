@@ -7,7 +7,7 @@ namespace Server.src.Dtos.ShowTimes
 {
     public class CreateShowtimeDto
     {
-        public int Id { get; set; }
+        // public int Id { get; set; }
         public TimeOnly Start { get; set; }
         public TimeOnly End { get; set; }
         public DateOnly Date { get; set; }

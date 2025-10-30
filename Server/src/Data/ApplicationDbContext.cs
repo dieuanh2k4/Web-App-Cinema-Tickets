@@ -204,10 +204,10 @@ namespace Server.src.Data
 
             modelBuilder.Entity<Showtimes>(entity =>
             {
-                entity.ToTable(r =>
-                {
-                    r.HasCheckConstraint("CK_Showtimes_Date", "\"Date\" > CURRENT_DATE");
-                });
+                // entity.ToTable(r =>
+                // {
+                //     r.HasCheckConstraint("CK_Showtimes_Date", "\"Date\" >= CURRENT_DATE");
+                // });
                 entity.HasKey(s => s.Id);
                 entity.Property(s => s.Id)
                     .ValueGeneratedOnAdd()
