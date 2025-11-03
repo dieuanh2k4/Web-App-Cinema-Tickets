@@ -41,7 +41,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="schedule/index"
+        name="schedule"
         options={{
           title: "Lịch chiếu",
           tabBarIcon: ({ color, size }) => (
@@ -49,6 +49,7 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="tickets/index"
         options={{
@@ -67,6 +68,18 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* <Tabs.Screen
+        name="schedule/theater_detail"
+        options={{
+          href: null,
+          headerShown: true,
+          headerTitle: "Chi Tiết Rạp",
+          headerStyle: { backgroundColor: "#1a1a1a" },
+          headerTintColor: "#6C47DB",
+          headerTitleStyle: { color: "#fff", fontWeight: "bold" },
+        }}
+      /> */}
     </Tabs>
   );
 }
