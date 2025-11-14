@@ -14,5 +14,6 @@ namespace Server.src.Services.Interfaces
         Task<Theater> UpdateTheater(UpdateTheaterDto updateTheaterDto, int id);
         Task<Theater> GetById(int id);
         Task<Theater> DeleteTheater(int id);
+        Task<List<Theater>> GetTheaterByCity(string city);
     }
 }

@@ -179,7 +179,7 @@ namespace Server.src.Services.Implements
                 }
             }
         }
-        
+
         public async Task<Showtimes> DeleteShowtime(int id)
         {
             var showtime = await _context.Showtimes.FindAsync(id);
@@ -190,6 +190,39 @@ namespace Server.src.Services.Implements
             }
 
             return showtime;
+        }
+        
+        public async Task<List<Showtimes>> GetShowtimeByMovie(int theaterId, int movieId, DateOnly date)
+        {
+            // lấy roomid theo theaterid
+            var rooms = await _context.Rooms
+                .Where(r => r.TheaterId == theaterId)
+                .ToListAsync();
+
+            if (rooms == null || !rooms.Any())
+            {
+                throw new Result($"Không có phòng nào tại rạp {theaterId}");
+            }
+
+            // Lấy danh sách roomId
+            var roomIds = rooms.Select(r => r.Id).ToList();
+
+            // Lấy các showtime có date bằng với date truyền vào, 
+            // có roomId nằm trong list roomIds và có movieId tương ứng
+            var showtimes = await _context.Showtimes
+                .Include(s => s.Movies)
+                .Include(s => s.Rooms)
+                .Where(s => s.Date == date && 
+                           roomIds.Contains(s.RoomId) && 
+                           s.MovieId == movieId)
+                .ToListAsync();
+
+            if (!showtimes.Any())
+            {
+                throw new Result($"Không có suất chiếu nào cho phim {movieId} tại rạp {theaterId} vào ngày {date}");
+            }
+
+            return showtimes;
         }
     }
 }

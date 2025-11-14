@@ -143,7 +143,7 @@ namespace Server.src.Services.Implements
 
             return movie;
         }
-        
+
         public async Task<Movies> DeleteMovie(int id)
         {
             var movie = await _context.Movies.FindAsync(id);
@@ -155,5 +155,10 @@ namespace Server.src.Services.Implements
 
             return movie;
         }
+        
+        // public async Task<Movies> GetMovieByCity(string city)
+        // {
+        //     var checkCity = await _context.
+        // }
     }
 }

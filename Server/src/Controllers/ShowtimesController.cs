@@ -95,5 +95,20 @@ namespace Server.src.Controllers
                 return ReturnException(ex);
             }
         }
+
+        [HttpGet("get-showtime-by-movieId")]
+        public async Task<IActionResult> GetShowtimeByMovie(int theaterId, int movieId, DateOnly date)
+        {
+             try
+            {
+                var showtimes = await _showtimeService.GetShowtimeByMovie(theaterId, movieId, date);
+
+                return Ok(showtimes);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
     }
 }
