@@ -19,8 +19,12 @@ namespace Server.src.Services.Implements
 
         public async Task<AuthResult> LoginAsync(LoginRequestDto request)
         {
+            // Hash password người dùng nhập vào
+            var hashedPassword = PasswordHelper.HashPassword(request.Password);
+
+            // Tìm user với username và password đã hash
             var user = await _context.User
-                .FirstOrDefaultAsync(u => u.username == request.Username && u.password == request.Password);
+                .FirstOrDefaultAsync(u => u.username == request.Username && u.password == hashedPassword);
 
             if (user == null)
                 return AuthResult.Fail("Sai tài khoản hoặc mật khẩu");
