@@ -2,6 +2,7 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #1a0a2e 0%, #0f0520 50%, #16213e 100%);
   background-attachment: fixed;
+  padding-top: 0; /* Xóa padding-top nếu có */
 }
 
 .content-wrapper {
