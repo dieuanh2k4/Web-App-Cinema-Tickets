@@ -193,3 +193,8 @@
     padding: 15px;
   }
 }
+.movie-card {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
