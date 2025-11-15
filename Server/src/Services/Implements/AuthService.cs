@@ -31,7 +31,7 @@ namespace Server.src.Services.Implements
 
             string role = user.userType == 0 ? "Admin" : "Staff";
 
-            var token = _jwtHelper.GenerateToken(user.username, role);
+            var token = _jwtHelper.GenerateToken(user.username, role, user.Id);
 
             var response = new LoginResponseDto
             {

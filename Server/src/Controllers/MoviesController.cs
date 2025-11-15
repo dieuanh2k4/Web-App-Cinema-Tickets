@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
@@ -22,6 +23,7 @@ namespace Server.Controllers
             _movieService = movieService;
         }
 
+        [AllowAnonymous]
         [HttpGet("get-all-movies")]
         public async Task<IActionResult> GetMovies()
         {
@@ -51,6 +53,7 @@ namespace Server.Controllers
             }
         }
 
+        [Authorize(Policy = "StaffOrAdmin")]
         [HttpPost("create-movie")]
         public async Task<IActionResult> CreateMovie([FromForm] CreateMovieDto movieDto, IFormFile? imageFile)
         {
@@ -96,7 +99,8 @@ namespace Server.Controllers
             }
         }
 
-        [HttpDelete("delete-movies/{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        [HttpDelete("delete-movie/{id}")]
         public async Task<IActionResult> DeleteMovie(int id)
         {
             try

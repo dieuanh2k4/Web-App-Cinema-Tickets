@@ -14,6 +14,6 @@ namespace Server.src.Dtos.Rooms
         public int TheaterId { get; set; }
         public string? Type { get; set; }
         // public TicketPrice? TicketPrice { get; set; }
-        public List<Seats>? Seats { get; set; }
+        public List<Server.src.Models.Seats>? Seats { get; set; }
     }
 }
