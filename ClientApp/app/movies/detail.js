@@ -26,7 +26,8 @@ export default function MovieDetailScreen() {
 
   const loadMovieDetail = () => {
     const allMovies = [...NOW_PLAYING_MOVIES, ...UPCOMING_MOVIES];
-    const foundMovie = allMovies.find((m) => m.id.toString() === id);
+    const foundMovie = allMovies.find((movie) => movie.id.toString() === id);
+
     if (foundMovie) {
       setMovie(foundMovie);
     }
@@ -150,7 +151,6 @@ export default function MovieDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Nút đặt vé */}
       <View style={styles.bookButtonContainer}>
         <TouchableOpacity style={styles.bookButton} onPress={handleBookTicket}>
           <MaterialCommunityIcons name="ticket" size={20} color="#FFFFFF" />

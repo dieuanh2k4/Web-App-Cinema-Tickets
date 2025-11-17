@@ -3,12 +3,12 @@ import { View, Image, ImageBackground, StyleSheet } from "react-native";
 export default function AuthLayout({ children }) {
   return (
     <ImageBackground
-      source={require("../../ClientApp/assets/images/background.png")}
+      source={require("../../../ClientApp/assets/images/background.png")}
       style={styles.background}
     >
       <View style={styles.container}>
         <Image
-          source={require("../../ClientApp/assets/icons/logo.png")}
+          source={require("../../../ClientApp/assets/icons/logo.png")}
           style={styles.logo}
           resizeMode="contain"
         />

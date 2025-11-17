@@ -3,6 +3,7 @@
     "name": "ClientApp",
     "slug": "ClientApp",
     "version": "1.0.0",
+    "entryPoint": "./node_modules/expo-router/entry",
     "orientation": "portrait",
     "scheme": "clientapp",
     "userInterfaceStyle": "automatic",

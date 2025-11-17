@@ -8,11 +8,13 @@ import {
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import AuthLayout from "../../components/auth_layout";
+import AuthLayout from "../../components/AuthLayout/auth_layout";
 import { authService } from "../../services/authService";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function Login() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
@@ -21,7 +23,11 @@ export default function Login() {
     try {
       const result = await authService.login(email, password);
       if (result.success) {
-        router.push("/(tabs)/home");
+        // Lưu thông tin user và chuyển hướng thông qua AuthContext
+        await login({
+          token: result.data.token,
+          user: result.data.user,
+        });
       } else {
         Alert.alert("Lỗi đăng nhập", result.error);
       }
