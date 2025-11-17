@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
 using Server.src.Dtos.TicketPrices;
@@ -57,6 +58,34 @@ namespace Server.src.Services.Implements
             var newTicketPrice = await createTicketPriceDto.ToTicketPriceFromDto();
 
             return newTicketPrice;
+        }
+
+        public async Task<TicketPrice> UpdateTicketPrice([FromBody] UpdateTicketPriceDto updateTicketPriceDto, int id)
+        {
+            var ticketprice = await _context.TicketPrices.FindAsync(id);
+
+            if (ticketprice == null)
+            {
+                throw new Result("Không tìm thấy giá vé cần chỉnh sửa");
+            }
+
+            ticketprice.Price = updateTicketPriceDto.Price;
+            ticketprice.RoomType = updateTicketPriceDto.RoomType;
+            ticketprice.SeatType = updateTicketPriceDto.SeatType;
+
+            return ticketprice;
+        }
+
+        public async Task<TicketPrice> DeleteTicketPrice(int id)
+        {
+            var ticketprice = await _context.TicketPrices.FindAsync(id);
+
+            if (ticketprice == null)
+            {
+                throw new Result("Không tìm thấy giá phim cần xóa");
+            }
+
+            return ticketprice;
         }
     }
 }

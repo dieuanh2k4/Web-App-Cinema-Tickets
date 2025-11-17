@@ -39,6 +39,13 @@ namespace Server.src.Controllers
             }
         }
 
+        [HttpGet("get-theater-by-id/{id}")]
+        public async Task<IActionResult> GetTheaterById([FromQuery] int id)
+        {
+            var theater = await _theaterService.GetById(id);
+            return Ok(theater);
+        }
+
         [HttpPost("create-theater")]
         public async Task<IActionResult> CreateTheater([FromBody] CreateTheaterDto createTheaterDto)
         {
@@ -50,6 +57,42 @@ namespace Server.src.Controllers
                 await _context.SaveChangesAsync();
 
                 return Ok(createTheater);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpPut("update-theater/{id}")]
+        public async Task<IActionResult> UpdateTheater([FromBody] UpdateTheaterDto updateTheaterDto, int id)
+        {
+            try
+            {
+                var updateTheater = await _theaterService.UpdateTheater(updateTheaterDto, id);
+
+                await _context.Theater.AddAsync(updateTheater);
+                await _context.SaveChangesAsync();
+
+                return Ok(updateTheater);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpDelete("delete-theater/{id}")]
+        public async Task<IActionResult> DeleteTheater(int id)
+        {
+            try
+            {
+                var theater = await _theaterService.DeleteTheater(id);
+
+                _context.Theater.Remove(theater);
+                await _context.SaveChangesAsync();
+
+                return Ok(_theaterService);
             }
             catch (Exception ex)
             {

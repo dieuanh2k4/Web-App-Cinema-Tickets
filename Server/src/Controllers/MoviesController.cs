@@ -37,6 +37,20 @@ namespace Server.Controllers
             }
         }
 
+        [HttpGet("get-movie-by-id/{id}")]
+        public async Task<IActionResult> GetMovieById([FromQuery] int id)
+        {
+            try
+            {
+                var student = await _movieService.GetMovieById(id);
+                return Ok(student);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
         [HttpPost("create-movie")]
         public async Task<IActionResult> CreateMovie([FromForm] CreateMovieDto movieDto, IFormFile? imageFile)
         {
@@ -52,8 +66,47 @@ namespace Server.Controllers
 
                 await _context.Movies.AddAsync(createdMovie);
                 await _context.SaveChangesAsync();
-                
+
                 return Ok(createdMovie);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpPut("update-subject/{id}")]
+        public async Task<IActionResult> UpdateMovie([FromForm] UpdateMovieDto updateMovieDto, IFormFile? imageFile, int id)
+        {
+            try
+            {
+                if (imageFile != null)
+                {
+                    var uploadResult = await _movieService.UploadImage(imageFile);
+                    updateMovieDto.Thumbnail = uploadResult.SecureUrl.ToString();
+                }
+
+                var updateMovie = await _movieService.UpdateMovie(updateMovieDto, id);
+
+                return Ok(updateMovie);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpDelete("delete-movies/{id}")]
+        public async Task<IActionResult> DeleteMovie(int id)
+        {
+            try
+            {
+                var movie = await _movieService.DeleteMovie(id);
+
+                _context.Movies.Remove(movie);
+                await _context.SaveChangesAsync();
+
+                return Ok(_movieService);
             }
             catch (Exception ex)
             {

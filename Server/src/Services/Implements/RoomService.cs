@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
 using Server.src.Dtos.Rooms;
@@ -63,7 +64,7 @@ namespace Server.src.Services.Implements
             {
                 for (int seatNum = 1; seatNum <= seatsInRow; seatNum++)
                 {
-                    var seatType = row <= normalSeats 
+                    var seatType = row <= normalSeats
                         ? "Thường"
                         : (row > normalSeats && row <= numberOfCoupleSeat)
                             ? "Vip"
@@ -93,6 +94,88 @@ namespace Server.src.Services.Implements
                     room.Seats.Add(seat);
                 }
             }
+            return room;
+        }
+
+        public async Task<Rooms> UpdateRoom([FromBody] UpdateRoomDto updateRoomDto, int row, int seatsInRow, int normalSeats, int coupleRowsSeats, int id)
+        {
+            var roomToUpdate = await _context.Rooms.Include(r => r.Seats).FirstOrDefaultAsync(r => r.Id == id);
+
+            if (roomToUpdate == null)
+            {
+                throw new Result("Không tìm thấy phòng cần chỉnh sửa");
+            }
+
+            // Kiểm tra xem tên phòng mới có trùng với phòng nào khác trong cùng rạp không
+            var existingRoomWithSameName = await _context.Rooms
+                .FirstOrDefaultAsync(r => r.Name == updateRoomDto.Name && r.TheaterId == roomToUpdate.TheaterId && r.Id != id);
+
+            if (existingRoomWithSameName != null)
+            {
+                throw new Result($"Tên phòng '{updateRoomDto.Name}' đã tồn tại trong rạp này.");
+            }
+
+            // Cập nhật thông tin phòng
+            roomToUpdate.Name = updateRoomDto.Name;
+            roomToUpdate.Type = updateRoomDto.Type;
+            roomToUpdate.Capacity = row * seatsInRow;
+
+            // Xóa ghế cũ
+            _context.Seats.RemoveRange(roomToUpdate.Seats);
+            roomToUpdate.Seats = new List<Seats>();
+
+            var numberOfCoupleSeat = row - coupleRowsSeats;
+
+            // Tạo lại ghế mới
+            for (int r = 1; r <= row; r++)
+            {
+                for (int seatNum = 1; seatNum <= seatsInRow; seatNum++)
+                {
+                    var seatType = r <= normalSeats
+                        ? "Thường"
+                        : (r > normalSeats && r <= numberOfCoupleSeat)
+                            ? "Vip"
+                            : (r > numberOfCoupleSeat)
+                                ? "Đôi"
+                                : "";
+
+                    var ticketPrice = await _context.TicketPrices
+                                .FirstOrDefaultAsync(t => t.RoomType == roomToUpdate.Type
+                                                        && t.SeatType == seatType);
+
+                    if (ticketPrice == null)
+                    {
+                        throw new Result($"Chưa có giá vé cho loại ghế {seatType} trong loại phòng {roomToUpdate.Type}");
+                    }
+
+                    var seatDto = new CreateSeatDto
+                    {
+                        Name = $"{(char)(64 + r)}{seatNum}",
+                        Type = seatType,
+                        Price = ticketPrice.Price,
+                        Status = "Trống"
+                    };
+
+                    var seat = await seatDto.ToSeatsOfRoom(roomToUpdate);
+                    roomToUpdate.Seats.Add(seat);
+                }
+            }
+
+            // await _context.SaveChangesAsync();
+            return roomToUpdate;
+        }
+
+        public async Task<Rooms> DeleteRoom(int id)
+        {
+            var room = await _context.Rooms.FindAsync(id);
+
+            if (room == null)
+            {
+                throw new Result("Không tìm thấy phòng cần xóa");
+            }
+
+            _context.Seats.RemoveRange(room.Seats);
+
             return room;
         }
     }

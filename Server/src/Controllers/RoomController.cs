@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Server.src.Data;
 using Server.src.Dtos.Rooms;
 using Server.src.Mapper;
+using Server.src.Models;
 using Server.src.Services.Interfaces;
 
 namespace Server.src.Controllers
@@ -54,6 +55,41 @@ namespace Server.src.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpPut("update-room/{id}")]
+        public async Task<IActionResult> UpdateRoom([FromBody] UpdateRoomDto updateRoomDto, int row, int seatsInRow, int normalSeats, int coupleRowsSeats, int id)
+        {
+            try
+            {
+                var updateRoom = await _roomService.UpdateRoom(updateRoomDto, row, seatsInRow, normalSeats, coupleRowsSeats, id);
+
+                await _context.SaveChangesAsync();
+
+                return Ok(updateRoom);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [HttpDelete("delete-room/{id}")]
+        public async Task<IActionResult> DeleteRoom(int id)
+        {
+            try
+            {
+                var deleteroom = await _roomService.DeleteRoom(id);
+
+                _context.Rooms.Remove(deleteroom);
+                await _context.SaveChangesAsync();
+
+                return Ok(_roomService);
+            }
+            catch (Exception ex)
+            {
                 return ReturnException(ex);
             }
         }

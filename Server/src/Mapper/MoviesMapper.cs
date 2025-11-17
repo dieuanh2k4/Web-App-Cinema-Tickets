@@ -52,5 +52,23 @@ namespace Server.src.Mapper
                 Rating = movieDto.Rating
             };
         }
+
+        // public static async Task<Movies> ToMoviesFromUpdateDto(this UpdateMovieDto updateMovieDto)
+        // {
+        //     return new Movies
+        //     {
+        //         Title = updateMovieDto.Title,
+        //         Thumbnail = updateMovieDto.Thumbnail,
+        //         Duration = updateMovieDto.Duration,
+        //         Genre = updateMovieDto.Genre,
+        //         Language = updateMovieDto.Language,
+        //         AgeLimit = updateMovieDto.AgeLimit,
+        //         StartDate = updateMovieDto.StartDate,
+        //         Description = updateMovieDto.Description,
+        //         Director = updateMovieDto.Director,
+        //         Actors = updateMovieDto.Actors,
+        //         Rating = updateMovieDto.Rating
+        //     };
+        // }
     }
 }

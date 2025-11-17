@@ -91,6 +91,8 @@ namespace Server.src.Data
                     .IsRequired();
                 entity.Property(m => m.StartDate)
                     .IsRequired();
+                entity.Property(m => m.EndDate)
+                    .IsRequired();
                 entity.Property(m => m.Description)
                     .HasMaxLength(3000)
                     .IsUnicode(true)
@@ -204,7 +206,7 @@ namespace Server.src.Data
             {
                 // entity.ToTable(r =>
                 // {
-                //     r.HasCheckConstraint("CK_Seats_Price", "Price > 0");
+                //     r.HasCheckConstraint("CK_Showtimes_Date", "\"Date\" >= CURRENT_DATE");
                 // });
                 entity.HasKey(s => s.Id);
                 entity.Property(s => s.Id)
@@ -217,6 +219,8 @@ namespace Server.src.Data
                 entity.Property(s => s.MovieId)
                     .IsRequired();
                 entity.Property(s => s.RoomId)
+                    .IsRequired();
+                entity.Property(s => s.Date)
                     .IsRequired();
 
                 entity.HasOne(s => s.Rooms)

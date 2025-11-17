@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Server.src.Models
+namespace Server.src.Dtos.Movies
 {
-    public class Movies
+    public class UpdateMovieDto 
     {
-        public int Id { get; set; }
+        // public int Id { get; set; }
         public string? Title { get; set; }
         public string? Thumbnail { get; set; } // poster phim
         public int Duration { get; set; } // thời lượng
@@ -20,18 +20,5 @@ namespace Server.src.Models
         public string? Director { get; set; } // đạo diễn
         public List<string>? Actors { get; set; } // diễn viên
         public double Rating { get; set; } // đánh giá
-        
-        public ICollection<Showtimes>? Showtimes { get; set; }
-
-        public string Status
-        {
-            get
-            {
-                var today = DateTime.Today;
-                if (today < StartDate) return "Sắp chiếu";
-                if (today > EndDate) return "Ngừng chiếu";
-                return "Đang chiếu";
-            }
-        }
     }
 }

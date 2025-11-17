@@ -27,6 +27,12 @@ namespace Server.src.Services.Implements
             return _context.Theater.ToListAsync();
         }
 
+        public async Task<Theater> GetById(int id)
+        {
+            var theater = await _context.Theater.FirstOrDefaultAsync(t => t.Id == id);
+            return theater;
+        }
+
         public async Task<Theater> AddTheater(CreateTheaterDto createTheaterDto)
         {
             if (createTheaterDto.Name == null)
@@ -44,6 +50,34 @@ namespace Server.src.Services.Implements
             var newTheater = await createTheaterDto.ToTheaterFromTheaterDto();
 
             return newTheater;
+        }
+
+        public async Task<Theater> UpdateTheater(UpdateTheaterDto updateTheaterDto, int id)
+        {
+            var theater = await _context.Theater.FindAsync(id);
+
+            if (theater == null)
+            {
+                throw new Result($"Không tìm thấy rạp cần chỉnh sửa");
+            }
+
+            theater.Name = updateTheaterDto.Name;
+            theater.Address = updateTheaterDto.Address;
+            theater.City = updateTheaterDto.City;
+
+            return theater;
+        }
+
+        public async Task<Theater> DeleteTheater(int id)
+        {
+            var theater = await _context.Theater.FindAsync(id);
+
+            if (theater == null)
+            {
+                throw new Result("Rạp cần xóa không tồn tại");
+            }
+
+            return theater;
         }
     }
 }
