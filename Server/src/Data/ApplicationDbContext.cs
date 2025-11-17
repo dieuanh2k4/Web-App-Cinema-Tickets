@@ -9,7 +9,7 @@ namespace Server.src.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public DbSet<Customer> Customer { get; set; }
+        public DbSet<Customer> Customers { get; set; }
         public DbSet<Movies> Movies { get; set; }
         public DbSet<Payment> Payment { get; set; }
         public DbSet<Rooms> Rooms { get; set; }
@@ -17,7 +17,7 @@ namespace Server.src.Data
         public DbSet<Showtimes> Showtimes { get; set; }
         public DbSet<StatusSeat> StatusSeat { get; set; }
         public DbSet<Theater> Theater { get; set; }
-        public DbSet<Ticket> Ticket { get; set; }
+        public DbSet<Ticket> Tickets { get; set; }
         public DbSet<TicketPrice> TicketPrices { get; set; }
         public DbSet<User> User { get; set; }
 

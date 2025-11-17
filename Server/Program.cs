@@ -48,6 +48,7 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ITicketPriceService, TicketPriceService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<JwtTokenHelper>();
 
 // ==========================

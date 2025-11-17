@@ -14,5 +14,6 @@ namespace Server.src.Services.Interfaces
         Task<Showtimes> CreateShowtime(CreateShowtimeDto createShowtimeDto, int roomId);
         Task<Showtimes> UpdateShowtime([FromBody] UpdateShowtimeDto updateShowtimeDto, int roomId, int id);
         Task<Showtimes> DeleteShowtime(int id);
+        Task<List<Showtimes>> GetShowtimeByMovie(int theaterId, int movieId, DateOnly date);
     }
 }

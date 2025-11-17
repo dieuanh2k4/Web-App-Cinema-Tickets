@@ -79,5 +79,19 @@ namespace Server.src.Services.Implements
 
             return theater;
         }
+
+        public async Task<List<Theater>> GetTheaterByCity(string city)
+        {
+            var checkCity = await _context.Theater
+                .Where(t => t.City == city)
+                .ToListAsync();
+
+            if (checkCity == null)
+            {
+                throw new Result($"Không có rạp tại thành phố {city}");
+            }
+
+            return checkCity;
+        }
     }
 }
