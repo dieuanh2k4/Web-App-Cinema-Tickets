@@ -8,20 +8,26 @@ import {
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { NOW_PLAYING_MOVIES, UPCOMING_MOVIES } from "../../constants/mockData";
+import { showtimeService } from "../../services/showtimeService";
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
 
 export default function MovieDetailScreen() {
   const [movie, setMovie] = useState(null);
+  const [showtimes, setShowtimes] = useState([]);
+  const [theaters, setTheaters] = useState([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
   useEffect(() => {
     loadMovieDetail();
+    loadShowtimes();
   }, [id]);
 
   const loadMovieDetail = () => {
@@ -30,6 +36,20 @@ export default function MovieDetailScreen() {
 
     if (foundMovie) {
       setMovie(foundMovie);
+    }
+  };
+
+  const loadShowtimes = async () => {
+    try {
+      setLoading(true);
+      const data = await showtimeService.getShowtimesByMovie(id);
+      setShowtimes(data);
+      const groupedByTheater = showtimeService.groupShowtimesByTheater(data);
+      setTheaters(groupedByTheater);
+    } catch (error) {
+      console.error('Error loading showtimes:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -118,6 +138,57 @@ export default function MovieDetailScreen() {
                 "Câu chuyện hấp dẫn về những nhân vật đầy cá tính trong một thế giới đầy màu sắc. Phim mang đến những trải nghiệm thị giác tuyệt vời và cốt truyện lôi cuốn."}
             </Text>
           </View>
+
+          {theaters.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Suất chiếu</Text>
+              {loading ? (
+                <ActivityIndicator size="large" color="#6C47DB" />
+              ) : (
+                theaters.map((theater) => (
+                  <View key={theater.id} style={styles.theaterCard}>
+                    <View style={styles.theaterHeader}>
+                      <MaterialCommunityIcons
+                        name="movie-open"
+                        size={20}
+                        color="#6C47DB"
+                      />
+                      <View style={styles.theaterInfo}>
+                        <Text style={styles.theaterName}>{theater.name}</Text>
+                        <Text style={styles.theaterAddress}>
+                          {theater.address}, {theater.city}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.showtimesContainer}>
+                      {theater.showtimes.map((showtime) => (
+                        <TouchableOpacity
+                          key={showtime.id}
+                          style={styles.showtimeButton}
+                          onPress={() =>
+                            router.push({
+                              pathname: "/booking/select_seat",
+                              params: {
+                                showtimeId: showtime.id,
+                                movieId: id,
+                              },
+                            })
+                          }
+                        >
+                          <Text style={styles.showtimeTime}>
+                            {showtime.start}
+                          </Text>
+                          <Text style={styles.showtimeRoom}>
+                            {showtime.roomName}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Thông tin phim</Text>
@@ -337,5 +408,55 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginLeft: 8,
+  },
+  theaterCard: {
+    backgroundColor: "#2A2A2A",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  theaterHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  },
+  theaterInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  theaterName: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  theaterAddress: {
+    color: "#999999",
+    fontSize: 14,
+  },
+  showtimesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  showtimeButton: {
+    backgroundColor: "#1A1A1A",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#6C47DB",
+    minWidth: 80,
+    alignItems: "center",
+  },
+  showtimeTime: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  showtimeRoom: {
+    color: "#999999",
+    fontSize: 12,
   },
 });

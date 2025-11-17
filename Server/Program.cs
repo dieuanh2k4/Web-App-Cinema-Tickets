@@ -46,19 +46,7 @@ builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<ITheaterService, TheaterService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ITicketPriceService, TicketPriceService>();
-builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ITicketService, TicketService>();
-builder.Services.AddScoped<JwtTokenHelper>();
 
-// ==========================
-// Thêm Repository
-// ==========================
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-
-// ==========================
-// Cấu hình Cloudinary
-// ==========================
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("CloudinarySettings")
 );
