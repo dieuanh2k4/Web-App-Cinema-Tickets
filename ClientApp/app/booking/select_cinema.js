@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   View,
   Text,
@@ -9,116 +8,102 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MOCK_THEATERS } from "../../constants/mockData";
+
+const findFirstShowtime = (theater) => {
+  const daySchedule = theater.showtimes?.[0];
+  if (!daySchedule) {
+    return null;
+  }
+  for (const movie of daySchedule.movies) {
+    if (movie.showtimes?.length) {
+      return {
+        movieId: movie.movieId,
+        showtime: movie.showtimes[0],
+      };
+    }
+  }
+  return null;
+};
 
 export default function SelectCinemaScreen() {
   const router = useRouter();
 
-  const cinemas = [
-    {
-      id: 1,
-      name: "CGV Vincom Center",
-      address: "72 Lê Thánh Tôn, Quận 1, TP.HCM",
-      distance: "0.5 km",
-    },
-    {
-      id: 2,
-      name: "Lotte Cinema Landmark",
-      address: "Vinhomes Central Park, Quận Bình Thạnh, TP.HCM",
-      distance: "1.2 km",
-    },
-    {
-      id: 3,
-      name: "Galaxy Cinema Nguyễn Du",
-      address: "116 Nguyễn Du, Quận 1, TP.HCM",
-      distance: "0.8 km",
-    },
-    {
-      id: 4,
-      name: "CGV Crescent Mall",
-      address: "101 Tôn Dật Tiên, Quận 7, TP.HCM",
-      distance: "2.1 km",
-    },
-  ];
+  const handleCinemaSelect = (theater) => {
+    const found = findFirstShowtime(theater);
+    if (!found) {
+      return;
+    }
 
-  const handleCinemaSelect = (cinema) => {
-    console.log("Selected cinema:", cinema);
+    router.push({
+      pathname: "/booking/select_seat",
+      params: {
+        theaterId: theater.theaterId.toString(),
+        movieId: found.movieId.toString(),
+        showtimeId: found.showtime.id,
+      },
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chọn rạp chiếu</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentGap}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Rạp chiếu gần bạn</Text>
+          <Text style={styles.sectionTitle}>Chọn rạp chiếu</Text>
           <Text style={styles.sectionSubtitle}>
-            Chọn rạp chiếu phù hợp để xem phim
+            Chạm vào rạp để đến bước chọn ghế phù hợp
           </Text>
         </View>
 
-        <View style={styles.cinemaList}>
-          {cinemas.map((cinema) => (
-            <TouchableOpacity
-              key={cinema.id}
-              style={styles.cinemaItem}
-              onPress={() => handleCinemaSelect(cinema)}
-            >
-              <View style={styles.cinemaIcon}>
+        {MOCK_THEATERS.map((theater) => (
+          <TouchableOpacity
+            key={theater.theaterId}
+            style={styles.cinemaItem}
+            onPress={() => handleCinemaSelect(theater)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.cinemaIcon}>
+              <MaterialCommunityIcons
+                name="movie-open"
+                size={24}
+                color="#6C47DB"
+              />
+            </View>
+            <View style={styles.cinemaInfo}>
+              <View style={styles.cinemaHeader}>
+                <Text style={styles.cinemaName}>{theater.name}</Text>
                 <MaterialCommunityIcons
-                  name="movie-open"
-                  size={24}
-                  color="#6C47DB"
+                  name="chevron-right"
+                  size={22}
+                  color="#666666"
                 />
               </View>
-              <View style={styles.cinemaInfo}>
-                <Text style={styles.cinemaName}>{cinema.name}</Text>
-                <Text style={styles.cinemaAddress}>{cinema.address}</Text>
-                <View style={styles.cinemaMeta}>
-                  <MaterialCommunityIcons
-                    name="map-marker"
-                    size={14}
-                    color="#999999"
-                  />
-                  <Text style={styles.cinemaDistance}>{cinema.distance}</Text>
-                </View>
+              <Text style={styles.cinemaAddress}>{theater.address}</Text>
+              <View style={styles.metaRow}>
+                <MaterialCommunityIcons
+                  name="map-marker"
+                  size={14}
+                  color="#999999"
+                />
+                <Text style={styles.metaText}>{theater.distance}</Text>
+                <View style={styles.dot} />
+                <MaterialCommunityIcons name="star" size={14} color="#F5B301" />
+                <Text style={styles.metaText}>{theater.rating.toFixed(1)}</Text>
               </View>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={20}
-                color="#666666"
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.placeholderSection}>
-          <Text style={styles.placeholderTitle}>Tính năng sắp có</Text>
-          <View style={styles.placeholderItem}>
-            <MaterialCommunityIcons name="calendar" size={20} color="#666666" />
-            <Text style={styles.placeholderText}>Chọn suất chiếu</Text>
-          </View>
-          <View style={styles.placeholderItem}>
-            <MaterialCommunityIcons name="seat" size={20} color="#666666" />
-            <Text style={styles.placeholderText}>Chọn ghế ngồi</Text>
-          </View>
-          <View style={styles.placeholderItem}>
-            <MaterialCommunityIcons
-              name="credit-card"
-              size={20}
-              color="#666666"
-            />
-            <Text style={styles.placeholderText}>Thanh toán</Text>
-          </View>
-        </View>
+              <View style={styles.badgeRow}>
+                {theater.features.slice(0, 3).map((feature) => (
+                  <View key={feature} style={styles.badge}>
+                    <Text style={styles.badgeText}>{feature}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -127,62 +112,42 @@ export default function SelectCinemaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1A1A1A",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: "#1A1A1A",
-    borderBottomWidth: 1,
-    borderBottomColor: "#333333",
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  headerSpacer: {
-    width: 40,
+    backgroundColor: "#0A0A0A",
   },
   content: {
     flex: 1,
     padding: 20,
   },
+  contentGap: {
+    gap: 16,
+    paddingBottom: 40,
+  },
   section: {
-    marginBottom: 24,
+    gap: 4,
   },
   sectionTitle: {
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 8,
   },
   sectionSubtitle: {
-    color: "#CCCCCC",
-    fontSize: 16,
-  },
-  cinemaList: {
-    marginBottom: 32,
+    color: "#9CA3AF",
+    fontSize: 15,
   },
   cinemaItem: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#2A2A2A",
-    borderRadius: 12,
+    backgroundColor: "#141414",
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#1F1F1F",
+    alignItems: "center",
   },
   cinemaIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#333333",
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: "#1F1F1F",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
@@ -190,45 +155,55 @@ const styles = StyleSheet.create({
   cinemaInfo: {
     flex: 1,
   },
+  cinemaHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   cinemaName: {
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 4,
+    flex: 1,
+    marginRight: 8,
   },
   cinemaAddress: {
-    color: "#CCCCCC",
+    color: "#9CA3AF",
     fontSize: 14,
-    marginBottom: 8,
+    marginVertical: 6,
   },
-  cinemaMeta: {
+  metaRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
   },
-  cinemaDistance: {
-    color: "#999999",
-    fontSize: 12,
-    marginLeft: 4,
+  metaText: {
+    color: "#9CA3AF",
+    fontSize: 13,
   },
-  placeholderSection: {
-    backgroundColor: "#2A2A2A",
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#444",
+  },
+  badgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 10,
+  },
+  badge: {
     borderRadius: 12,
-    padding: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#1F1F1F",
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
   },
-  placeholderTitle: {
+  badgeText: {
     color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 16,
-  },
-  placeholderItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  placeholderText: {
-    color: "#999999",
-    fontSize: 14,
-    marginLeft: 12,
+    fontSize: 12,
+    fontWeight: "600",
   },
 });

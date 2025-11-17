@@ -186,8 +186,11 @@ export const MOCK_THEATERS = [
     name: "CGV Vincom Hà Nội",
     address: "Số 2 Phạm Ngọc Thạch, Đống Đa, Hà Nội",
     city: "Hà Nội",
-    distance: "2.5km", // Giả sử từ vị trí user
-    imageUrl: "https://example.com/cgv-hanoi.jpg",
+    distance: "2.5 km",
+    description: "Rạp CGV trung tâm với phòng chiếu IMAX và 4DX hiện đại.",
+    features: ["IMAX", "4DX", "Gold Class"],
+    rating: 4.8,
+    imageUrl: "https://images.cgv.vn/media/cgv-vincom-hn.jpg",
     showtimes: [
       {
         date: "2025-10-30",
@@ -195,47 +198,43 @@ export const MOCK_THEATERS = [
           {
             movieId: 1,
             movieTitle: "Người Vợ Cuối Cùng",
+            posterUrl:
+              "https://images.vietnamplus.vn/Images/2023/11/07/1341341_nguoi-vo-cuoi-cung.jpg",
+            genre: "Tâm Lý, Tình Cảm",
+            duration: 132,
+            rating: "T16",
             showtimes: [
               {
                 id: "st1",
                 start: "10:30",
                 roomType: "IMAX",
+                roomName: "IMAX 1",
                 price: "180.000đ",
-                seatsAvailable: 45,
               },
               {
                 id: "st2",
                 start: "13:45",
                 roomType: "Standard",
+                roomName: "Phòng 2",
                 price: "120.000đ",
-                seatsAvailable: 60,
-              },
-              {
-                id: "st3",
-                start: "16:15",
-                roomType: "4DX",
-                price: "200.000đ",
-                seatsAvailable: 30,
               },
             ],
           },
           {
             movieId: 2,
             movieTitle: "Mai",
+            posterUrl:
+              "https://assets.glxplay.io/images/w400/title/mai_main_poster_v6_1704788056.jpg",
+            genre: "Tâm Lý, Gia Đình",
+            duration: 131,
+            rating: "T13",
             showtimes: [
               {
-                id: "st4",
-                start: "11:00",
-                roomType: "Standard",
-                price: "120.000đ",
-                seatsAvailable: 55,
-              },
-              {
-                id: "st5",
-                start: "14:30",
-                roomType: "IMAX",
-                price: "180.000đ",
-                seatsAvailable: 40,
+                id: "st3",
+                start: "16:15",
+                roomType: "4DX",
+                roomName: "4DX Hall",
+                price: "210.000đ",
               },
             ],
           },
@@ -246,12 +245,13 @@ export const MOCK_THEATERS = [
   {
     theaterId: 2,
     name: "CGV Landmark 81",
-    cityId: 1,
-    address: "Landmark 81, Quận Bình Thạnh, TP.HCM",
-    description: "Rạp phim sang trọng tại tòa nhà cao nhất Việt Nam",
-    features: ["IMAX", "Gold Class", "ScreenX"],
-    rating: 4.8,
-    facilities: ["Parking", "Restaurant", "VIP Lounge", "Gaming Zone"],
+    address: "Tòa Landmark 81, Quận Bình Thạnh, TP.HCM",
+    city: "TP. Hồ Chí Minh",
+    distance: "1.2 km",
+    description: "Rạp phim sang trọng tại tòa nhà cao nhất Việt Nam.",
+    features: ["IMAX", "ScreenX", "Gold Class"],
+    rating: 4.9,
+    imageUrl: "https://images.cgv.vn/media/cgv-landmark-81.jpg",
     showtimes: [
       {
         date: "2025-10-30",
@@ -259,20 +259,35 @@ export const MOCK_THEATERS = [
           {
             movieId: 1,
             movieTitle: "Người Vợ Cuối Cùng",
+            posterUrl:
+              "https://images.vietnamplus.vn/Images/2023/11/07/1341341_nguoi-vo-cuoi-cung.jpg",
+            genre: "Tâm Lý, Tình Cảm",
+            duration: 132,
+            rating: "T16",
             showtimes: [
               {
-                id: "st6",
+                id: "st4",
                 start: "09:30",
                 roomType: "Gold Class",
+                roomName: "Gold 1",
                 price: "250.000đ",
-                seatsAvailable: 20,
               },
+            ],
+          },
+          {
+            movieId: 3,
+            movieTitle: "Đất Rừng Phương Nam",
+            posterUrl: "https://i.imgur.com/dA3Jf.jpg",
+            genre: "Phiêu Lưu",
+            duration: 120,
+            rating: "T13",
+            showtimes: [
               {
-                id: "st7",
-                start: "12:45",
+                id: "st5",
+                start: "13:15",
                 roomType: "IMAX",
-                price: "180.000đ",
-                seatsAvailable: 50,
+                roomName: "IMAX 2",
+                price: "190.000đ",
               },
             ],
           },
@@ -282,13 +297,14 @@ export const MOCK_THEATERS = [
   },
   {
     theaterId: 3,
-    name: "BHD Star Vincom Thảo Điền",
-    cityId: 1,
-    address: "Vincom Thảo Điền, Quận 2, TP.HCM",
-    description: "Chuỗi rạp BHD Star cao cấp",
-    features: ["Dolby Atmos", "Digital 2D/3D"],
-    rating: 4.3,
-    facilities: ["Parking", "Snack Bar"],
+    name: "Galaxy Cinema Nguyễn Du",
+    address: "116 Nguyễn Du, Quận 1, TP.HCM",
+    city: "TP. Hồ Chí Minh",
+    distance: "0.8 km",
+    description: "Rạp Galaxy tại trung tâm Quận 1 với nhiều suất chiếu.",
+    features: ["Dolby Atmos", "3D"],
+    rating: 4.5,
+    imageUrl: "https://images.galaxycine.vn/Media/galaxy-nguyen-du.jpg",
     showtimes: [
       {
         date: "2025-10-30",
@@ -296,20 +312,106 @@ export const MOCK_THEATERS = [
           {
             movieId: 2,
             movieTitle: "Mai",
+            posterUrl:
+              "https://assets.glxplay.io/images/w400/title/mai_main_poster_v6_1704788056.jpg",
+            genre: "Tâm Lý, Gia Đình",
+            duration: 131,
+            rating: "T13",
+            showtimes: [
+              {
+                id: "st6",
+                start: "10:00",
+                roomType: "Standard",
+                roomName: "Room A",
+                price: "110.000đ",
+              },
+            ],
+          },
+          {
+            movieId: 3,
+            movieTitle: "Đất Rừng Phương Nam",
+            posterUrl: "https://i.imgur.com/dA3Jf.jpg",
+            genre: "Phiêu Lưu",
+            duration: 120,
+            rating: "T13",
+            showtimes: [
+              {
+                id: "st7",
+                start: "13:30",
+                roomType: "Premium",
+                roomName: "Premium 1",
+                price: "150.000đ",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    theaterId: 4,
+    name: "BHD Star Huế",
+    address: "50A Hùng Vương, TP. Huế",
+    city: "Huế",
+    distance: "3.2 km",
+    description: "Rạp BHD Star đầu tiên tại miền Trung.",
+    features: ["Digital 2D", "3D"],
+    rating: 4.2,
+    imageUrl: "https://images.bhdstar.vn/bhd-hue.jpg",
+    showtimes: [
+      {
+        date: "2025-10-30",
+        movies: [
+          {
+            movieId: 1,
+            movieTitle: "Người Vợ Cuối Cùng",
+            posterUrl:
+              "https://images.vietnamplus.vn/Images/2023/11/07/1341341_nguoi-vo-cuoi-cung.jpg",
+            genre: "Tâm Lý, Tình Cảm",
+            duration: 132,
+            rating: "T16",
             showtimes: [
               {
                 id: "st8",
-                start: "10:00",
+                start: "19:00",
                 roomType: "Standard",
-                price: "120.000đ",
-                seatsAvailable: 65,
+                roomName: "Hall 2",
+                price: "100.000đ",
               },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    theaterId: 5,
+    name: "Beta Cinemas Đà Nẵng",
+    address: "30 Thái Phiên, Hải Châu, Đà Nẵng",
+    city: "Đà Nẵng",
+    distance: "2.1 km",
+    description: "Rạp Beta Cinemas trẻ trung, giá vé dễ chịu.",
+    features: ["2D", "3D", "Sweetbox"],
+    rating: 4.4,
+    imageUrl: "https://images.betacinemas.vn/beta-danang.jpg",
+    showtimes: [
+      {
+        date: "2025-10-30",
+        movies: [
+          {
+            movieId: 3,
+            movieTitle: "Đất Rừng Phương Nam",
+            posterUrl: "https://i.imgur.com/dA3Jf.jpg",
+            genre: "Phiêu Lưu",
+            duration: 120,
+            rating: "T13",
+            showtimes: [
               {
                 id: "st9",
-                start: "13:15",
-                roomType: "Premium",
-                price: "150.000đ",
-                seatsAvailable: 35,
+                start: "20:30",
+                roomType: "Sweetbox",
+                roomName: "Sweetbox 1",
+                price: "160.000đ",
               },
             ],
           },
@@ -319,6 +421,334 @@ export const MOCK_THEATERS = [
   },
 ];
 
+const BASE_SEAT_TEMPLATE = [
+  {
+    label: "A",
+    seats: [
+      { code: "A1", type: "vip" },
+      { code: "A2", type: "vip" },
+      { code: "A3", type: "vip" },
+      { code: "A4", type: "vip" },
+      { code: "A5", type: "vip" },
+      { code: "A6", type: "vip" },
+      { code: "A7", type: "vip" },
+      { code: "A8", type: "vip" },
+    ],
+  },
+  {
+    label: "B",
+    seats: [
+      { code: "B1", type: "vip" },
+      { code: "B2", type: "vip" },
+      { code: "B3", type: "vip" },
+      { code: "B4", type: "vip" },
+      { code: "B5", type: "vip" },
+      { code: "B6", type: "vip" },
+      { code: "B7", type: "vip" },
+      { code: "B8", type: "vip" },
+    ],
+  },
+  {
+    label: "C",
+    seats: [
+      { code: "C1", type: "standard" },
+      { code: "C2", type: "standard" },
+      { code: "C3", type: "standard" },
+      { code: "C4", type: "standard" },
+      null,
+      { code: "C5", type: "standard" },
+      { code: "C6", type: "standard" },
+      { code: "C7", type: "standard" },
+      { code: "C8", type: "standard" },
+    ],
+  },
+  {
+    label: "D",
+    seats: [
+      { code: "D1", type: "standard" },
+      { code: "D2", type: "standard" },
+      { code: "D3", type: "standard" },
+      { code: "D4", type: "standard" },
+      null,
+      { code: "D5", type: "standard" },
+      { code: "D6", type: "standard" },
+      { code: "D7", type: "standard" },
+      { code: "D8", type: "standard" },
+    ],
+  },
+  {
+    label: "E",
+    seats: [
+      { code: "E1-E2", type: "couple", span: 2 },
+      null,
+      { code: "E3-E4", type: "couple", span: 2 },
+      null,
+      { code: "E5-E6", type: "couple", span: 2 },
+      null,
+      { code: "E7-E8", type: "couple", span: 2 },
+    ],
+  },
+  {
+    label: "F",
+    seats: [
+      { code: "F1", type: "standard" },
+      { code: "F2", type: "standard" },
+      { code: "F3", type: "standard" },
+      { code: "F4", type: "standard" },
+      { code: "F5", type: "standard" },
+      { code: "F6", type: "standard" },
+      { code: "F7", type: "standard" },
+      { code: "F8", type: "standard" },
+    ],
+  },
+];
+
+const createSeatRows = (bookedSeats = []) =>
+  BASE_SEAT_TEMPLATE.map((row) => ({
+    label: row.label,
+    seats: row.seats.map((seat) => {
+      if (!seat) {
+        return null;
+      }
+      return {
+        ...seat,
+        status: bookedSeats.includes(seat.code) ? "booked" : "available",
+      };
+    }),
+  }));
+
+const buildSeatLayout = ({
+  showtimeId,
+  theaterId,
+  theaterName,
+  roomName,
+  screenType,
+  movieId,
+  movieTitle,
+  posterUrl,
+  genre,
+  duration,
+  rating,
+  startTime,
+  date,
+  priceByType,
+  bookedSeats = [],
+}) => ({
+  showtimeId,
+  theaterId,
+  theaterName,
+  roomName,
+  screenType,
+  movieId,
+  movieTitle,
+  posterUrl,
+  genre,
+  duration,
+  rating,
+  startTime,
+  date,
+  priceByType,
+  rows: createSeatRows(bookedSeats),
+});
+
+export const MOCK_SEAT_LAYOUTS = {
+  st1: buildSeatLayout({
+    showtimeId: "st1",
+    theaterId: 1,
+    theaterName: "CGV Vincom Hà Nội",
+    roomName: "IMAX 1",
+    screenType: "IMAX",
+    movieId: 1,
+    movieTitle: "Người Vợ Cuối Cùng",
+    posterUrl:
+      "https://images.vietnamplus.vn/Images/2023/11/07/1341341_nguoi-vo-cuoi-cung.jpg",
+    genre: "Tâm Lý, Tình Cảm",
+    duration: 132,
+    rating: "T16",
+    startTime: "10:30",
+    date: "30/10/2025",
+    priceByType: {
+      standard: 120000,
+      vip: 180000,
+      couple: 260000,
+    },
+    bookedSeats: ["A3", "B4", "C5", "E5-E6"],
+  }),
+  st2: buildSeatLayout({
+    showtimeId: "st2",
+    theaterId: 1,
+    theaterName: "CGV Vincom Hà Nội",
+    roomName: "Phòng 2",
+    screenType: "Standard",
+    movieId: 1,
+    movieTitle: "Người Vợ Cuối Cùng",
+    posterUrl:
+      "https://images.vietnamplus.vn/Images/2023/11/07/1341341_nguoi-vo-cuoi-cung.jpg",
+    genre: "Tâm Lý, Tình Cảm",
+    duration: 132,
+    rating: "T16",
+    startTime: "13:45",
+    date: "30/10/2025",
+    priceByType: {
+      standard: 100000,
+      vip: 150000,
+      couple: 240000,
+    },
+    bookedSeats: ["A1", "B2", "D4", "F6"],
+  }),
+  st3: buildSeatLayout({
+    showtimeId: "st3",
+    theaterId: 1,
+    theaterName: "CGV Vincom Hà Nội",
+    roomName: "4DX Hall",
+    screenType: "4DX",
+    movieId: 2,
+    movieTitle: "Mai",
+    posterUrl:
+      "https://assets.glxplay.io/images/w400/title/mai_main_poster_v6_1704788056.jpg",
+    genre: "Tâm Lý, Gia Đình",
+    duration: 131,
+    rating: "T13",
+    startTime: "16:15",
+    date: "30/10/2025",
+    priceByType: {
+      standard: 130000,
+      vip: 190000,
+      couple: 280000,
+    },
+    bookedSeats: ["A5", "B6", "C2", "E1-E2"],
+  }),
+  st4: buildSeatLayout({
+    showtimeId: "st4",
+    theaterId: 2,
+    theaterName: "CGV Landmark 81",
+    roomName: "Gold 1",
+    screenType: "Gold Class",
+    movieId: 1,
+    movieTitle: "Người Vợ Cuối Cùng",
+    posterUrl:
+      "https://images.vietnamplus.vn/Images/2023/11/07/1341341_nguoi-vo-cuoi-cung.jpg",
+    genre: "Tâm Lý, Tình Cảm",
+    duration: 132,
+    rating: "T16",
+    startTime: "09:30",
+    date: "30/10/2025",
+    priceByType: {
+      standard: 150000,
+      vip: 230000,
+      couple: 320000,
+    },
+    bookedSeats: ["A2", "A3", "B7", "E7-E8"],
+  }),
+  st5: buildSeatLayout({
+    showtimeId: "st5",
+    theaterId: 2,
+    theaterName: "CGV Landmark 81",
+    roomName: "IMAX 2",
+    screenType: "IMAX",
+    movieId: 3,
+    movieTitle: "Đất Rừng Phương Nam",
+    posterUrl: "https://i.imgur.com/dA3Jf.jpg",
+    genre: "Phiêu Lưu",
+    duration: 120,
+    rating: "T13",
+    startTime: "13:15",
+    date: "30/10/2025",
+    priceByType: {
+      standard: 110000,
+      vip: 170000,
+      couple: 250000,
+    },
+    bookedSeats: ["B1", "C3", "D6", "F2"],
+  }),
+  st6: buildSeatLayout({
+    showtimeId: "st6",
+    theaterId: 3,
+    theaterName: "Galaxy Cinema Nguyễn Du",
+    roomName: "Room A",
+    screenType: "Standard",
+    movieId: 2,
+    movieTitle: "Mai",
+    posterUrl:
+      "https://assets.glxplay.io/images/w400/title/mai_main_poster_v6_1704788056.jpg",
+    genre: "Tâm Lý, Gia Đình",
+    duration: 131,
+    rating: "T13",
+    startTime: "10:00",
+    date: "30/10/2025",
+    priceByType: {
+      standard: 90000,
+      vip: 140000,
+      couple: 220000,
+    },
+    bookedSeats: ["C1", "C2", "D5", "F4"],
+  }),
+  st7: buildSeatLayout({
+    showtimeId: "st7",
+    theaterId: 3,
+    theaterName: "Galaxy Cinema Nguyễn Du",
+    roomName: "Premium 1",
+    screenType: "Premium",
+    movieId: 3,
+    movieTitle: "Đất Rừng Phương Nam",
+    posterUrl: "https://i.imgur.com/dA3Jf.jpg",
+    genre: "Phiêu Lưu",
+    duration: 120,
+    rating: "T13",
+    startTime: "13:30",
+    date: "30/10/2025",
+    priceByType: {
+      standard: 100000,
+      vip: 160000,
+      couple: 230000,
+    },
+    bookedSeats: ["A4", "B5", "E3-E4"],
+  }),
+  st8: buildSeatLayout({
+    showtimeId: "st8",
+    theaterId: 4,
+    theaterName: "BHD Star Huế",
+    roomName: "Hall 2",
+    screenType: "Standard",
+    movieId: 1,
+    movieTitle: "Người Vợ Cuối Cùng",
+    posterUrl:
+      "https://images.vietnamplus.vn/Images/2023/11/07/1341341_nguoi-vo-cuoi-cung.jpg",
+    genre: "Tâm Lý, Tình Cảm",
+    duration: 132,
+    rating: "T16",
+    startTime: "19:00",
+    date: "30/10/2025",
+    priceByType: {
+      standard: 85000,
+      vip: 130000,
+      couple: 200000,
+    },
+    bookedSeats: ["D2", "D3", "F1", "F8"],
+  }),
+  st9: buildSeatLayout({
+    showtimeId: "st9",
+    theaterId: 5,
+    theaterName: "Beta Cinemas Đà Nẵng",
+    roomName: "Sweetbox 1",
+    screenType: "Sweetbox",
+    movieId: 3,
+    movieTitle: "Đất Rừng Phương Nam",
+    posterUrl: "https://i.imgur.com/dA3Jf.jpg",
+    genre: "Phiêu Lưu",
+    duration: 120,
+    rating: "T13",
+    startTime: "20:30",
+    date: "30/10/2025",
+    priceByType: {
+      standard: 95000,
+      vip: 140000,
+      couple: 210000,
+    },
+    bookedSeats: ["A6", "B8", "C7", "E1-E2"],
+  }),
+};
+
 // Helper: Lấy suất chiếu theo phim
 export const getShowtimesByMovieId = (movieId) => {
   return MOCK_SHOWTIMES.filter((s) =>
@@ -327,10 +757,13 @@ export const getShowtimesByMovieId = (movieId) => {
 };
 
 export const getShowtimesByTheaterAndDate = (theaterId, selectedDate) => {
-  const theater = MOCK_THEATERS.find((t) => t.theaterId === theaterId);
-  return (
-    theater?.showtimes.find(
-      (s) => s.date.toDateString() === selectedDate.toDateString()
-    )?.movies || []
+  const theater = MOCK_THEATERS.find((t) => t.theaterId === Number(theaterId));
+  if (!theater) {
+    return [];
+  }
+  const normalizedDate = new Date(selectedDate).toDateString();
+  const schedule = theater.showtimes.find(
+    (s) => new Date(s.date).toDateString() === normalizedDate
   );
+  return schedule?.movies || [];
 };
