@@ -82,7 +82,7 @@ namespace Server.src.Services.Implements
                 {
                     CustomerId = customer.Id,
                     ShowtimeId = dto.ShowtimeId,
-                    SeatId = seats.First().Id, // ⚠️ Tạm thời
+                    SeatId = seats.First().Id, // Tạm thời
                     RoomId = showtime.RoomId,
                     MovieId = showtime.MovieId,
                     TotalPrice = totalAmount,
@@ -140,7 +140,7 @@ namespace Server.src.Services.Implements
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error in CreateGuestBookingAsync: {ex.Message}");
+                Console.WriteLine($"Error in CreateGuestBookingAsync: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 throw;
             }
@@ -208,7 +208,7 @@ namespace Server.src.Services.Implements
                 {
                     CustomerId = customer.Id,
                     ShowtimeId = dto.ShowtimeId,
-                    SeatId = seats.First().Id, // ⚠️ Tạm thời
+                    SeatId = seats.First().Id, // Tạm thời
                     RoomId = showtime.RoomId,
                     MovieId = showtime.MovieId,
                     TotalPrice = totalAmount,
@@ -271,7 +271,7 @@ namespace Server.src.Services.Implements
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error in CreateStaffBookingAsync: {ex.Message}");
+                Console.WriteLine($"Error in CreateStaffBookingAsync: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 throw;
             }
