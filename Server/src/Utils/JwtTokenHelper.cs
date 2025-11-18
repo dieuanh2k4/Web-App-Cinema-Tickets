@@ -17,12 +17,13 @@ namespace Server.src.Utils
             _config = config;
         }
 
-        public string GenerateToken(string username, string role)
+        public string GenerateToken(string username, string role, int userId)
         {
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.Role, role)
+                new Claim(ClaimTypes.Role, role),
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()) // Thêm UserId
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));

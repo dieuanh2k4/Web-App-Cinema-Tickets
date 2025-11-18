@@ -1,8 +1,7 @@
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Server.src.Models;
-using System.Security.Cryptography;
-using System.Text;
+using Server.src.Utils;
 
 namespace Server.src.Data
 {
@@ -21,13 +20,13 @@ namespace Server.src.Data
                     new User
                     {
                         username = "admin",
-                        password = HashPassword("admin123"), // hash password
+                        password = PasswordHelper.HashPassword("admin123"), // hash password
                         userType = 0 // Admin
                     },
                     new User
                     {
                         username = "staff",
-                        password = HashPassword("staff123"),
+                        password = PasswordHelper.HashPassword("staff123"),
                         userType = 1 // Staff
                     }
                 };
@@ -35,14 +34,6 @@ namespace Server.src.Data
                 context.User.AddRange(users);
                 context.SaveChanges();
             }
-        }
-
-        // Hàm hash mật khẩu đơn giản (MD5 hoặc SHA256)
-        private static string HashPassword(string password)
-        {
-            using var sha = SHA256.Create();
-            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return BitConverter.ToString(bytes).Replace("-", "").ToLower();
         }
     }
 }
