@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Server.src.Data;
@@ -23,6 +24,7 @@ namespace Server.src.Controllers
             _showtimeService = showtimeService;
         }
 
+        [AllowAnonymous]
         [HttpGet("get_all_showtime")]
         public async Task<IActionResult> GetShowtime()
         {
@@ -43,6 +45,7 @@ namespace Server.src.Controllers
             }
         }
 
+        [Authorize(Policy = "StaffOrAdmin")]
         [HttpPost("create-showtimes")]
         public async Task<IActionResult> CreateShowtime([FromBody] CreateShowtimeDto createShowtimeDto, int roomId)
         {
@@ -61,6 +64,7 @@ namespace Server.src.Controllers
             }
         }
 
+        [Authorize(Policy = "StaffOrAdmin")]
         [HttpPut("update-showtime/{id}")]
         public async Task<IActionResult> UpdateShowtime([FromBody] UpdateShowtimeDto updateShowtimeDto, int roomId, int id)
         {
@@ -78,6 +82,7 @@ namespace Server.src.Controllers
             }
         }
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpDelete("delete-showtime/{id}")]
         public async Task<IActionResult> DeleteShowtime(int id)
         {

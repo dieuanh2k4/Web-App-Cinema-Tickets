@@ -3,6 +3,7 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.src.Data;
 using Server.src.Dtos.TicketPrices;
@@ -24,6 +25,7 @@ namespace Server.src.Controllers
             _ticketpriceService = ticketPriceService;
         }
 
+        [AllowAnonymous]
         [HttpGet("get-all-ticket-price")]
         public async Task<IActionResult> GetTicketPrice()
         {
@@ -40,6 +42,7 @@ namespace Server.src.Controllers
             }
         }
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpPost("create-ticket-price")]
         public async Task<IActionResult> CreateTicketPrice([FromBody] CreateTicketPriceDto createTicketPriceDto)
         {
@@ -58,6 +61,7 @@ namespace Server.src.Controllers
             }
         }
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpPut("update-ticket-price/{id}")]
         public async Task<IActionResult> UpdateTicketPrice([FromBody] UpdateTicketPriceDto updateTicketPriceDto, int id)
         {
@@ -75,6 +79,7 @@ namespace Server.src.Controllers
             }
         }
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpDelete("delete-ticket-price/{id}")]
         public async Task<IActionResult> DeleteTicketPrice(int id)
         {
