@@ -104,5 +104,20 @@ namespace Server.src.Controllers
                 return ReturnException(ex);
             }
         }
+
+        [HttpGet("get-theater-by-city")]
+        public async Task<IActionResult> GetTheaterByCity(string city)
+        {
+            try
+            {
+                var theater = await _theaterService.GetTheaterByCity(city);
+
+                return Ok(theater);
+            } 
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
     }
 }

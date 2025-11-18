@@ -18,6 +18,5 @@ namespace Server.src.Models
         public Movies? Movies { get; set; }
         // public StatusSeat? StatusSeat { get; set; }
         // public ICollection<StatusSeat>? StatusSeat { get; set; }
-        
     }
 }

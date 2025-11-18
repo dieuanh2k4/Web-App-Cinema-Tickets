@@ -92,6 +92,9 @@ builder.Services.AddScoped<ITicketPriceService, TicketPriceService>();
 // Phase 2: Booking services
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<JwtTokenHelper>();
 
 // ==========================
 // Thêm Repository
@@ -152,19 +155,19 @@ builder.Services.AddAuthorization(options =>
 // ==========================
 var app = builder.Build();
 
-// 👉 **THÊM ĐOẠN NÀY: Chạy DataSeeder khi app khởi động**
+// **THÊM ĐOẠN NÀY: Chạy DataSeeder khi app khởi động**
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        DataSeeder.Seed(context); // ✅ Gọi DataSeeder
-        Console.WriteLine("✅ DataSeeder đã chạy thành công!");
+        DataSeeder.Seed(context); // Gọi DataSeeder
+        Console.WriteLine("DataSeeder đã chạy thành công!");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ Lỗi khi chạy DataSeeder: {ex.Message}");
+        Console.WriteLine($"Lỗi khi chạy DataSeeder: {ex.Message}");
     }
 }
 
