@@ -1,0 +1,23 @@
+import React from "react";
+import { Text, View, StyleSheet } from "react-native";
+
+export default function TicketsScreen() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.text}>Tickets Screen</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#1A1A1A",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  text: {
+    color: "#FFFFFF",
+    fontSize: 24,
+  },
+});

@@ -79,12 +79,11 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 
-// ==========================
-// Đăng ký các Service (DI)
-// ==========================
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<ITicketPriceService, TicketPriceService>();
+
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<ITheaterService, TheaterService>();
 builder.Services.AddScoped<ITicketPriceService, TicketPriceService>();
@@ -187,6 +186,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Map route cho Controller
+app.UseCors(DevCorsPolicy);
 app.MapControllers();
 
 app.Run();
