@@ -39,8 +39,9 @@ namespace Server.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpGet("get-movie-by-id/{id}")]
-        public async Task<IActionResult> GetMovieById([FromQuery] int id)
+        public async Task<IActionResult> GetMovieById([FromRoute] int id)
         {
             try
             {
@@ -53,7 +54,7 @@ namespace Server.Controllers
             }
         }
 
-        [Authorize(Policy = "StaffOrAdmin")]
+        [Authorize(Roles = "Staff,Admin")]
         [HttpPost("create-movie")]
         public async Task<IActionResult> CreateMovie([FromForm] CreateMovieDto movieDto, IFormFile? imageFile)
         {
@@ -99,7 +100,7 @@ namespace Server.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete-movie/{id}")]
         public async Task<IActionResult> DeleteMovie(int id)
         {

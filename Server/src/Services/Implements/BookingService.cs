@@ -90,7 +90,7 @@ namespace Server.src.Services.Implements
                     SumOfSeat = seats.Count
                 };
 
-                _context.Ticket.Add(ticket);
+                _context.Tickets.Add(ticket);
                 await _context.SaveChangesAsync();
 
                 // 7. Tạo Payment
@@ -216,7 +216,7 @@ namespace Server.src.Services.Implements
                     SumOfSeat = seats.Count
                 };
 
-                _context.Ticket.Add(ticket);
+                _context.Tickets.Add(ticket);
                 await _context.SaveChangesAsync();
 
                 // 8. Tạo Payment

@@ -42,7 +42,7 @@ namespace Server.src.Controllers
         /// <summary>
         /// Staff tạo vé tại quầy (thanh toán tiền mặt)
         /// </summary>
-        [Authorize(Policy = "StaffOrAdmin")]
+        [Authorize(Roles = "Staff,Admin")]
         [HttpPost("create-by-staff")]
         public async Task<IActionResult> CreateBookingByStaff([FromBody] StaffBookingDto dto)
         {

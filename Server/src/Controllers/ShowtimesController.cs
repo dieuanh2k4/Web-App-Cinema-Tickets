@@ -45,7 +45,7 @@ namespace Server.src.Controllers
             }
         }
 
-        [Authorize(Policy = "StaffOrAdmin")]
+        [Authorize(Roles = "Staff,Admin")]
         [HttpPost("create-showtimes")]
         public async Task<IActionResult> CreateShowtime([FromBody] CreateShowtimeDto createShowtimeDto, int roomId)
         {
@@ -64,7 +64,7 @@ namespace Server.src.Controllers
             }
         }
 
-        [Authorize(Policy = "StaffOrAdmin")]
+        [Authorize(Roles = "Staff,Admin")]
         [HttpPut("update-showtime/{id}")]
         public async Task<IActionResult> UpdateShowtime([FromBody] UpdateShowtimeDto updateShowtimeDto, int roomId, int id)
         {
@@ -82,7 +82,7 @@ namespace Server.src.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete-showtime/{id}")]
         public async Task<IActionResult> DeleteShowtime(int id)
         {
