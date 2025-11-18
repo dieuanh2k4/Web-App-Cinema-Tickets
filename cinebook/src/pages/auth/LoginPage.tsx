@@ -7,7 +7,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    username: '',  // ✅ Đổi từ email sang username
+    username: '',  //  Đổi từ email sang username
     password: ''
   });
   const [error, setError] = useState('');

@@ -5,7 +5,7 @@ export const mockMovies: Movie[] = [
   {
     id: 1,
     title: "Captain America: Brave New World",
-    thumbnail: "https://images.unsplash.com/photo-1635805737707-575885ab0820?w=500",
+    thumbnail: "https://images.moviesanywhere.com/26db65231238c8b9c1961fbb1c2bd461/06cdef23-92d4-468f-aa15-20bc7183ce15.jpg",
     duration: 140,
     genre: "Hành động, Khoa học viễn tưởng",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -17,12 +17,12 @@ export const mockMovies: Movie[] = [
     actors: ["Anthony Mackie", "Harrison Ford", "Liv Tyler", "Tim Blake Nelson"],
     rating: 8.5,
     status: "Đang chiếu",
-    trailer: "https://youtube.com/watch?v=demo1"
+    trailer: "https://www.youtube.com/watch?v=1pHDWnXmK7Y"
   },
   {
     id: 2,
     title: "Snow White",
-    thumbnail: "https://images.unsplash.com/photo-1574267432644-f74f8ec21d44?w=500",
+    thumbnail: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJTLJ9Dk0r3FOKAzHoJMfPS9SiHi2WSuViZQ&s",
     duration: 115,
     genre: "Phiêu lưu, Kỳ ảo, Nhạc kịch",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -38,7 +38,7 @@ export const mockMovies: Movie[] = [
   {
     id: 3,
     title: "Sinners",
-    thumbnail: "https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=500",
+    thumbnail: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDZ35ZtMalXPpw-jD69t4BHLI3YEIFZglkyw&s",
     duration: 125,
     genre: "Kinh dị, Bí ẩn",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -54,7 +54,7 @@ export const mockMovies: Movie[] = [
   {
     id: 4,
     title: "Thunderbolts",
-    thumbnail: "https://images.unsplash.com/photo-1608889335941-32ac5f2041b9?w=500",
+    thumbnail: "https://resizing.flixster.com/9GzvfSWe1iPtRk_vtcfpHIQGyCI=/ems.cHJkLWVtcy1hc3NldHMvbW92aWVzL2U2MzgyZDIyLWNjZmYtNGU5NS05ZjczLTYyZGE1ZGIyYzIxNC5qcGc=",
     duration: 130,
     genre: "Hành động, Phiêu lưu",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -70,7 +70,7 @@ export const mockMovies: Movie[] = [
   {
     id: 5,
     title: "Mission: Impossible - The Final Reckoning",
-    thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=500",
+    thumbnail: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSafalx_eWYqtyL60gkiDE61XXeEmyeuRBf8g&s",
     duration: 163,
     genre: "Hành động, Gián điệp, Phiêu lưu",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -86,7 +86,7 @@ export const mockMovies: Movie[] = [
   {
     id: 6,
     title: "Lilo & Stitch",
-    thumbnail: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500",
+    thumbnail: "https://upload.wikimedia.org/wikipedia/en/5/56/Lilo_%26_Stitch_2025_Theatrical_Poster.jpg",
     duration: 100,
     genre: "Gia đình, Hài, Khoa học viễn tưởng",
     language: "Tiếng Anh - Lồng tiếng Việt",
@@ -102,7 +102,7 @@ export const mockMovies: Movie[] = [
   {
     id: 7,
     title: "28 Years Later",
-    thumbnail: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500",
+    thumbnail: "https://m.media-amazon.com/images/M/MV5BNjgwYTI0YjctMWYzNS00MmI1LWI5YTctNmE1YjBkNDFlNWMxXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
     duration: 115,
     genre: "Kinh dị, Khoa học viễn tưởng",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -118,7 +118,7 @@ export const mockMovies: Movie[] = [
   {
     id: 8,
     title: "The Fantastic Four: First Steps",
-    thumbnail: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?w=500",
+    thumbnail: "https://m.media-amazon.com/images/S/pv-target-images/4c3b60c421dc73dd20bace682b1d68b2165fffcbeac63865a129addb85f31c0e.jpg",
     duration: 135,
     genre: "Hành động, Khoa học viễn tưởng",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -134,7 +134,7 @@ export const mockMovies: Movie[] = [
   {
     id: 9,
     title: "Jurassic World Rebirth",
-    thumbnail: "https://images.unsplash.com/photo-1594908900066-3f47337549d8?w=500",
+    thumbnail: "https://m.media-amazon.com/images/M/MV5BMGM3ZmI3NzQtNzU5Yi00ZWI1LTg3YTAtNmNmNWIyMWFjZTBkXkEyXkFqcGc@._V1_.jpg",
     duration: 145,
     genre: "Hành động, Phiêu lưu, Khoa học viễn tưởng",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -150,7 +150,7 @@ export const mockMovies: Movie[] = [
   {
     id: 10,
     title: "Superman",
-    thumbnail: "https://images.unsplash.com/photo-1535666669445-e8c15cd2e7d9?w=500",
+    thumbnail: "https://m.media-amazon.com/images/M/MV5BOGMwZGJiM2EtMzEwZC00YTYzLWIxNzYtMmJmZWNlZjgxZTMwXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
     duration: 140,
     genre: "Hành động, Khoa học viễn tưởng",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -166,7 +166,7 @@ export const mockMovies: Movie[] = [
   {
     id: 11,
     title: "The Black Phone 2",
-    thumbnail: "https://images.unsplash.com/photo-1509281373149-e957c6296406?w=500",
+    thumbnail: "https://upload.wikimedia.org/wikipedia/en/a/a9/Black_Phone_2_poster.jpg",
     duration: 110,
     genre: "Kinh dị, Bí ẩn",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -182,7 +182,7 @@ export const mockMovies: Movie[] = [
   {
     id: 12,
     title: "Tron: Ares",
-    thumbnail: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500",
+    thumbnail: "https://m.media-amazon.com/images/M/MV5BYzk0NjE4NzYtZjc5Ni00MTkxLTgyY2QtZjliOTA5N2U2YzM1XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
     duration: 130,
     genre: "Khoa học viễn tưởng, Hành động",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -200,7 +200,7 @@ export const mockMovies: Movie[] = [
   {
     id: 13,
     title: "Blade",
-    thumbnail: "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=500",
+    thumbnail: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSoPGr16LpOlBX_GCLuxQSD-2jepJbYnTSpqA&s",
     duration: 120,
     genre: "Hành động, Kinh dị",
     language: "Tiếng Anh - Phụ đề Việt",
@@ -216,7 +216,7 @@ export const mockMovies: Movie[] = [
   {
     id: 14,
     title: "Avengers: Doomsday",
-    thumbnail: "https://images.unsplash.com/photo-1611604548018-d56bbd85d681?w=500",
+    thumbnail: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRIq7k38WtGGn8Cq3IwZe7lLFMtZZb_3iY4pg&s",
     duration: 180,
     genre: "Hành động, Phiêu lưu, Khoa học viễn tưởng",
     language: "Tiếng Anh - Phụ đề Việt",
