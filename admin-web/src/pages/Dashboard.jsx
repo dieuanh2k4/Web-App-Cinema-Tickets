@@ -5,15 +5,15 @@ import { dashboardStats, movies } from '../data/mockData';
 import { formatCurrency } from '../utils/helpers';
 
 // StatCard Component
-function StatCard({ icon: IconComponent, title, value, color }) {
+function StatCard({ icon: IconComponent, title, value, gradient }) {
   return (
-    <div className="bg-secondary rounded-lg p-6 border border-gray-700 hover:border-accent transition-colors">
+    <div className="bg-gradient-to-br from-secondary via-secondary to-secondary/50 rounded-2xl p-6 border border-gray-700/50 hover:border-accent/50 transition-all hover:shadow-xl hover:shadow-accent/10 group">
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-gray-400 text-sm mb-1">{title}</p>
-          <h3 className="text-2xl font-bold text-white">{value}</h3>
+        <div className="flex-1">
+          <p className="text-gray-400 text-sm mb-2 group-hover:text-gray-300 transition-colors">{title}</p>
+          <h3 className="text-2xl lg:text-3xl font-bold text-white group-hover:scale-105 transition-transform origin-left">{value}</h3>
         </div>
-        <div className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center`}>
+        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}>
           {IconComponent && <IconComponent className="text-white" size={24} />}
         </div>
       </div>
@@ -77,30 +77,30 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         <StatCard
           icon={FaMoneyBillWave}
           title="Doanh thu trong ngày (15/5/2024)"
           value={formatCurrency(stats.todayRevenue)}
-          color="bg-blue-600"
+          gradient="from-blue-500 to-blue-600"
         />
         <StatCard
           icon={FaUserPlus}
           title="Khách hàng mới (T5/2024)"
           value={stats.newCustomers}
-          color="bg-green-600"
+          gradient="from-green-500 to-emerald-600"
         />
         <StatCard
           icon={FaTicketAlt}
           title="Tổng vé bán ra (T5/2024)"
           value={stats.totalTicketsSold}
-          color="bg-orange-600"
+          gradient="from-orange-500 to-amber-600"
         />
         <StatCard
           icon={FaDollarSign}
           title="Tổng doanh thu (T5/2024)"
           value={formatCurrency(stats.totalRevenue)}
-          color="bg-purple-600"
+          gradient="from-purple-500 to-pink-600"
         />
       </div>
 

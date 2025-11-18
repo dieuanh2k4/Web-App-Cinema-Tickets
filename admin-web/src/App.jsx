@@ -4,6 +4,9 @@ import { useAuth } from './hooks/useAuth';
 import Layout from './layouts/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Movies from './pages/Movies';
+import AddMovie from './pages/AddMovie';
+import EditMovie from './pages/EditMovie';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -57,7 +60,11 @@ function App() {
             }
           >
             <Route index element={<Dashboard />} />
-            <Route path="movies" element={<div className="p-6 text-white">Quản lý phim (Coming soon)</div>} />
+            <Route path="movies">
+              <Route index element={<Movies />} />
+              <Route path="add" element={<AddMovie />} />
+              <Route path="edit/:id" element={<EditMovie />} />
+            </Route>
             <Route path="rooms" element={<div className="p-6 text-white">Quản lý phòng chiếu (Coming soon)</div>} />
             <Route path="seats" element={<div className="p-6 text-white">Quản lý ghế ngồi (Coming soon)</div>} />
             <Route path="showtimes" element={<div className="p-6 text-white">Quản lý lịch chiếu (Coming soon)</div>} />
