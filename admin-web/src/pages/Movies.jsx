@@ -50,12 +50,12 @@ const Movies = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-10">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Quản lý phim</h1>
-          <p className="text-gray-400">Danh sách tất cả các phim trong hệ thống</p>
+          <h1 className="text-3xl font-bold text-white mb-3">Quản lý phim</h1>
+          <p className="text-gray-400 text-sm lg:text-base">Danh sách tất cả các phim trong hệ thống</p>
         </div>
         <Link
           to="/movies/add"
@@ -67,8 +67,8 @@ const Movies = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-secondary rounded-lg p-6 border border-gray-700">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+      <div className="bg-secondary rounded-lg p-8 border border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
           {/* Search */}
           <div className="md:col-span-2">
             <div className="relative">
@@ -139,20 +139,20 @@ const Movies = () => {
           <table className="w-full">
             <thead className="bg-primary">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Tên phim</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase">Năm</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase">Thể loại</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase">Thời lượng</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase">Lịch chiếu</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase">Trạng thái</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase">Ngày tạo</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase">Thao tác</th>
+                <th className="px-8 py-4 text-left text-xs font-medium text-gray-400 uppercase">Tên phim</th>
+                <th className="px-8 py-4 text-center text-xs font-medium text-gray-400 uppercase">Năm</th>
+                <th className="px-8 py-4 text-center text-xs font-medium text-gray-400 uppercase">Thể loại</th>
+                <th className="px-8 py-4 text-center text-xs font-medium text-gray-400 uppercase">Thời lượng</th>
+                <th className="px-8 py-4 text-center text-xs font-medium text-gray-400 uppercase">Lịch chiếu</th>
+                <th className="px-8 py-4 text-center text-xs font-medium text-gray-400 uppercase">Trạng thái</th>
+                <th className="px-8 py-4 text-center text-xs font-medium text-gray-400 uppercase">Ngày tạo</th>
+                <th className="px-8 py-4 text-center text-xs font-medium text-gray-400 uppercase">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
               {currentMovies.map((movie) => (
                 <tr key={movie.id} className="hover:bg-primary/50 transition-colors">
-                  <td className="px-6 py-4">
+                  <td className="px-8 py-5">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-16 bg-gray-700 rounded overflow-hidden flex-shrink-0">
                         {movie.poster ? (
@@ -170,8 +170,8 @@ const Movies = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center text-white">{movie.releaseYear}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-8 py-5 text-center text-white">{movie.releaseYear}</td>
+                  <td className="px-8 py-5">
                     <div className="flex flex-wrap gap-1 justify-center">
                       {movie.genre.slice(0, 2).map((g, i) => (
                         <span key={i} className="px-2 py-1 bg-blue-600/20 text-blue-400 text-xs rounded">
@@ -185,8 +185,8 @@ const Movies = () => {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center text-white">{movie.duration} phút</td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-8 py-5 text-center text-white">{movie.duration} phút</td>
+                  <td className="px-8 py-5 text-center">
                     <span className="px-3 py-1 bg-orange-600/20 text-orange-400 text-sm rounded-full">
                       Xem lịch
                     </span>
@@ -200,10 +200,10 @@ const Movies = () => {
                       {movie.status === 'showing' ? 'Đang chiếu' : 'Sắp chiếu'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center text-gray-400 text-sm">
+                  <td className="px-8 py-5 text-center text-gray-400 text-sm">
                     {formatDate(new Date())}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-8 py-5">
                     <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => navigate(`/movies/edit/${movie.id}`)}
@@ -229,7 +229,7 @@ const Movies = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-700 flex items-center justify-between">
+          <div className="px-8 py-5 border-t border-gray-700 flex items-center justify-between">
             <div className="text-sm text-gray-400">
               Hiển thị {startIndex + 1} - {Math.min(startIndex + itemsPerPage, filteredMovies.length)} trong {filteredMovies.length} phim
             </div>

@@ -7,14 +7,14 @@ import { formatCurrency } from '../utils/helpers';
 // StatCard Component
 function StatCard({ icon: IconComponent, title, value, gradient }) {
   return (
-    <div className="bg-gradient-to-br from-secondary via-secondary to-secondary/50 rounded-2xl p-6 border border-gray-700/50 hover:border-accent/50 transition-all hover:shadow-xl hover:shadow-accent/10 group">
-      <div className="flex items-center justify-between">
+    <div className="bg-gradient-to-br from-secondary via-secondary to-secondary/50 rounded-2xl p-8 border border-gray-700/50 hover:border-accent/50 transition-all hover:shadow-xl hover:shadow-accent/10 group">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex-1">
-          <p className="text-gray-400 text-sm mb-2 group-hover:text-gray-300 transition-colors">{title}</p>
+          <p className="text-gray-400 text-sm mb-3 group-hover:text-gray-300 transition-colors">{title}</p>
           <h3 className="text-2xl lg:text-3xl font-bold text-white group-hover:scale-105 transition-transform origin-left">{value}</h3>
         </div>
-        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}>
-          {IconComponent && <IconComponent className="text-white" size={24} />}
+        <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg flex-shrink-0`}>
+          {IconComponent && <IconComponent className="text-white" size={26} />}
         </div>
       </div>
     </div>
@@ -25,10 +25,10 @@ function StatCard({ icon: IconComponent, title, value, gradient }) {
 function CustomTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-secondary border border-gray-700 rounded-lg p-3 shadow-lg">
-        <p className="text-white font-medium mb-1">{label}</p>
+      <div className="bg-secondary border border-gray-700 rounded-lg p-4 shadow-lg">
+        <p className="text-white font-medium mb-2">{label}</p>
         {payload.map((entry, index) => (
-          <p key={index} className="text-sm" style={{ color: entry.color }}>
+          <p key={index} className="text-sm mt-1" style={{ color: entry.color }}>
             {entry.name}: {entry.name.includes('Doanh thu') ? formatCurrency(entry.value) : entry.value}
           </p>
         ))}
@@ -46,38 +46,38 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-10">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
-          <p className="text-gray-400">Tổng quan hệ thống rạp chiếu phim</p>
+          <h1 className="text-3xl font-bold text-white mb-3">Dashboard</h1>
+          <p className="text-gray-400 text-sm lg:text-base">Tổng quan hệ thống rạp chiếu phim</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-4">
           <input
             type="date"
             value={dateRange.start}
             onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-            className="px-4 py-2 bg-secondary border border-gray-700 rounded-lg text-white focus:outline-none focus:border-accent"
+            className="px-4 py-2.5 bg-secondary border border-gray-700 rounded-lg text-white focus:outline-none focus:border-accent text-sm"
           />
-          <span className="text-gray-400 flex items-center">đến</span>
+          <span className="text-gray-400 flex items-center px-2">đến</span>
           <input
             type="date"
             value={dateRange.end}
             onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-            className="px-4 py-2 bg-secondary border border-gray-700 rounded-lg text-white focus:outline-none focus:border-accent"
+            className="px-4 py-2.5 bg-secondary border border-gray-700 rounded-lg text-white focus:outline-none focus:border-accent text-sm"
           />
-          <button className="px-6 py-2 bg-accent hover:bg-accent/90 text-white rounded-lg transition-colors">
+          <button className="px-6 py-2.5 bg-accent hover:bg-accent/90 text-white rounded-lg transition-colors font-medium">
             Lọc dữ liệu
           </button>
-          <button className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+          <button className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium">
             Xuất báo cáo
           </button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         <StatCard
           icon={FaMoneyBillWave}
           title="Doanh thu trong ngày (15/5/2024)"
@@ -105,10 +105,10 @@ const Dashboard = () => {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
         {/* Top Movies Bar Chart */}
-        <div className="bg-secondary rounded-lg p-6 border border-gray-700">
-          <div className="flex justify-between items-center mb-4">
+        <div className="bg-secondary rounded-lg p-8 border border-gray-700">
+          <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white">Top bài viết dược xem nhiều nhất</h2>
             <span className="text-sm text-gray-400">Lượt xem</span>
           </div>
@@ -125,8 +125,8 @@ const Dashboard = () => {
         </div>
 
         {/* Revenue Line Chart */}
-        <div className="bg-secondary rounded-lg p-6 border border-gray-700">
-          <div className="flex justify-between items-center mb-4">
+        <div className="bg-secondary rounded-lg p-8 border border-gray-700">
+          <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white">Doanh thu theo tháng</h2>
             <span className="text-sm text-gray-400">Doanh thu</span>
           </div>
@@ -145,7 +145,7 @@ const Dashboard = () => {
 
       {/* Revenue by Movie Table */}
       <div className="bg-secondary rounded-lg border border-gray-700 overflow-hidden">
-        <div className="p-6 border-b border-gray-700 flex justify-between items-center">
+        <div className="p-8 border-b border-gray-700 flex justify-between items-center">
           <h2 className="text-xl font-bold text-white">Doanh thu theo phim</h2>
           <a href="#" className="text-accent hover:text-accent/80 text-sm">Xem tất cả →</a>
         </div>

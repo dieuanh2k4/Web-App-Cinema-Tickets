@@ -90,18 +90,18 @@ const AddMovie = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-10">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 mb-2">
         <Link
           to="/movies"
-          className="p-2 hover:bg-secondary rounded-lg transition-colors text-gray-400 hover:text-white"
+          className="p-2.5 hover:bg-secondary rounded-lg transition-colors text-gray-400 hover:text-white"
         >
           <FaArrowLeft size={20} />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Tạo phim mới</h1>
-          <p className="text-gray-400">Nhập thông tin phim để thêm vào hệ thống</p>
+          <h1 className="text-3xl font-bold text-white mb-3">Tạo phim mới</h1>
+          <p className="text-gray-400 text-sm lg:text-base">Nhập thông tin phim để thêm vào hệ thống</p>
         </div>
       </div>
 
@@ -109,12 +109,12 @@ const AddMovie = () => {
         {/* Left Column - Form Fields */}
         <div className="lg:col-span-2 space-y-6">
           {/* Basic Info */}
-          <div className="bg-secondary rounded-lg p-6 border border-gray-700 space-y-4">
-            <h2 className="text-xl font-bold text-white mb-4">Thông tin cơ bản</h2>
+          <div className="bg-secondary rounded-lg p-8 border border-gray-700 space-y-5">
+            <h2 className="text-xl font-bold text-white mb-5">Thông tin cơ bản</h2>
             
             {/* Title */}
             <div>
-              <label className="block text-white font-medium mb-2">
+              <label className="block text-white font-medium mb-2.5">
                 Tên phim <span className="text-red-500">*</span>
               </label>
               <input
@@ -123,14 +123,14 @@ const AddMovie = () => {
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="Nhập tên phim"
-                className={`w-full px-4 py-2 bg-primary border ${errors.title ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent`}
+                className={`w-full px-4 py-2.5 bg-primary border ${errors.title ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors`}
               />
-              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+              {errors.title && <p className="text-red-500 text-sm mt-2">{errors.title}</p>}
             </div>
 
             {/* Original Title */}
             <div>
-              <label className="block text-white font-medium mb-2">
+              <label className="block text-white font-medium mb-2.5">
                 Tên phim (tiếng anh) <span className="text-red-500">*</span>
               </label>
               <input
@@ -139,14 +139,14 @@ const AddMovie = () => {
                 value={formData.originalTitle}
                 onChange={handleChange}
                 placeholder="Enter original title"
-                className={`w-full px-4 py-2 bg-primary border ${errors.originalTitle ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent`}
+                className={`w-full px-4 py-2.5 bg-primary border ${errors.originalTitle ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors`}
               />
-              {errors.originalTitle && <p className="text-red-500 text-sm mt-1">{errors.originalTitle}</p>}
+              {errors.originalTitle && <p className="text-red-500 text-sm mt-2">{errors.originalTitle}</p>}
             </div>
 
             {/* Director */}
             <div>
-              <label className="block text-white font-medium mb-2">
+              <label className="block text-white font-medium mb-2.5">
                 Đạo diễn <span className="text-red-500">*</span>
               </label>
               <input
@@ -155,14 +155,14 @@ const AddMovie = () => {
                 value={formData.director}
                 onChange={handleChange}
                 placeholder="Nhập tên đạo diễn"
-                className={`w-full px-4 py-2 bg-primary border ${errors.director ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent`}
+                className={`w-full px-4 py-2.5 bg-primary border ${errors.director ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors`}
               />
-              {errors.director && <p className="text-red-500 text-sm mt-1">{errors.director}</p>}
+              {errors.director && <p className="text-red-500 text-sm mt-2">{errors.director}</p>}
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-white font-medium mb-2">
+              <label className="block text-white font-medium mb-2.5">
                 Mô tả <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -171,20 +171,20 @@ const AddMovie = () => {
                 onChange={handleChange}
                 placeholder="Nhập mô tả phim"
                 rows="5"
-                className={`w-full px-4 py-2 bg-primary border ${errors.description ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent`}
+                className={`w-full px-4 py-2.5 bg-primary border ${errors.description ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors resize-none`}
               />
-              {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+              {errors.description && <p className="text-red-500 text-sm mt-2">{errors.description}</p>}
             </div>
           </div>
 
           {/* Details */}
-          <div className="bg-secondary rounded-lg p-6 border border-gray-700 space-y-4">
-            <h2 className="text-xl font-bold text-white mb-4">Chi tiết</h2>
+          <div className="bg-secondary rounded-lg p-8 border border-gray-700 space-y-5">
+            <h2 className="text-xl font-bold text-white mb-5">Chi tiết</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Duration */}
               <div>
-                <label className="block text-white font-medium mb-2">
+                <label className="block text-white font-medium mb-2.5">
                   Thời lượng (phút) <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -194,14 +194,14 @@ const AddMovie = () => {
                   onChange={handleChange}
                   placeholder="100"
                   min="1"
-                  className={`w-full px-4 py-2 bg-primary border ${errors.duration ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent`}
+                  className={`w-full px-4 py-2.5 bg-primary border ${errors.duration ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors`}
                 />
-                {errors.duration && <p className="text-red-500 text-sm mt-1">{errors.duration}</p>}
+                {errors.duration && <p className="text-red-500 text-sm mt-2">{errors.duration}</p>}
               </div>
 
               {/* Release Year */}
               <div>
-                <label className="block text-white font-medium mb-2">
+                <label className="block text-white font-medium mb-2.5">
                   Năm phát hành <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -211,14 +211,14 @@ const AddMovie = () => {
                   onChange={handleChange}
                   min="1900"
                   max={new Date().getFullYear() + 5}
-                  className={`w-full px-4 py-2 bg-primary border ${errors.releaseYear ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:outline-none focus:border-accent`}
+                  className={`w-full px-4 py-2.5 bg-primary border ${errors.releaseYear ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:outline-none focus:border-accent transition-colors`}
                 />
-                {errors.releaseYear && <p className="text-red-500 text-sm mt-1">{errors.releaseYear}</p>}
+                {errors.releaseYear && <p className="text-red-500 text-sm mt-2">{errors.releaseYear}</p>}
               </div>
 
               {/* IMDB Rating */}
               <div>
-                <label className="block text-white font-medium mb-2">IMDB Rating</label>
+                <label className="block text-white font-medium mb-2.5">IMDB Rating</label>
                 <input
                   type="number"
                   name="imdbRating"
@@ -228,18 +228,18 @@ const AddMovie = () => {
                   min="0"
                   max="10"
                   step="0.1"
-                  className="w-full px-4 py-2 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent"
+                  className="w-full px-4 py-2.5 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors"
                 />
               </div>
 
               {/* Status */}
               <div>
-                <label className="block text-white font-medium mb-2">Trạng thái</label>
+                <label className="block text-white font-medium mb-2.5">Trạng thái</label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 bg-primary border border-gray-600 rounded-lg text-white focus:outline-none focus:border-accent"
+                  className="w-full px-4 py-2.5 bg-primary border border-gray-600 rounded-lg text-white focus:outline-none focus:border-accent transition-colors"
                 >
                   <option value="coming-soon">Sắp chiếu</option>
                   <option value="showing">Đang chiếu</option>
@@ -249,7 +249,7 @@ const AddMovie = () => {
 
             {/* Genre */}
             <div>
-              <label className="block text-white font-medium mb-2">
+              <label className="block text-white font-medium mb-2.5">
                 Thể loại <span className="text-red-500">*</span>
               </label>
               <div className="flex flex-wrap gap-2 mb-3">
@@ -270,7 +270,7 @@ const AddMovie = () => {
                 <select
                   value={genreInput}
                   onChange={(e) => setGenreInput(e.target.value)}
-                  className="flex-1 px-4 py-2 bg-primary border border-gray-600 rounded-lg text-white focus:outline-none focus:border-accent"
+                  className="flex-1 px-4 py-2.5 bg-primary border border-gray-600 rounded-lg text-white focus:outline-none focus:border-accent transition-colors"
                 >
                   <option value="">Chọn thể loại</option>
                   {availableGenres.filter(g => !formData.genre.includes(g)).map(g => (
@@ -281,24 +281,24 @@ const AddMovie = () => {
                   type="button"
                   onClick={() => handleAddGenre(genreInput)}
                   disabled={!genreInput}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   Thêm
                 </button>
               </div>
-              {errors.genre && <p className="text-red-500 text-sm mt-1">{errors.genre}</p>}
+              {errors.genre && <p className="text-red-500 text-sm mt-2">{errors.genre}</p>}
             </div>
 
             {/* Trailer URL */}
             <div>
-              <label className="block text-white font-medium mb-2">Trailer URL</label>
+              <label className="block text-white font-medium mb-2.5">Trailer URL</label>
               <input
                 type="url"
                 name="trailer"
                 value={formData.trailer}
                 onChange={handleChange}
                 placeholder="https://youtube.com/..."
-                className="w-full px-4 py-2 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent"
+                className="w-full px-4 py-2.5 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
@@ -307,8 +307,8 @@ const AddMovie = () => {
         {/* Right Column - Poster Upload & Actions */}
         <div className="space-y-6">
           {/* Poster */}
-          <div className="bg-secondary rounded-lg p-6 border border-gray-700">
-            <h2 className="text-xl font-bold text-white mb-4">Poster</h2>
+          <div className="bg-secondary rounded-lg p-8 border border-gray-700">
+            <h2 className="text-xl font-bold text-white mb-5">Poster</h2>
             <div className="space-y-4">
               <div className="aspect-[2/3] bg-primary rounded-lg border-2 border-dashed border-gray-600 flex items-center justify-center overflow-hidden">
                 {formData.poster ? (
@@ -339,7 +339,7 @@ const AddMovie = () => {
           </div>
 
           {/* Actions */}
-          <div className="bg-secondary rounded-lg p-6 border border-gray-700 space-y-3">
+          <div className="bg-secondary rounded-lg p-8 border border-gray-700 space-y-4">
             <button
               type="submit"
               className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"

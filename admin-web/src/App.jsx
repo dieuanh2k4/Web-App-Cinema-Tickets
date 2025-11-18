@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Movies from './pages/Movies';
 import AddMovie from './pages/AddMovie';
 import EditMovie from './pages/EditMovie';
+import TicketPrices from './pages/TicketPrices';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -68,7 +69,7 @@ function App() {
             <Route path="rooms" element={<div className="p-6 text-white">Quản lý phòng chiếu (Coming soon)</div>} />
             <Route path="seats" element={<div className="p-6 text-white">Quản lý ghế ngồi (Coming soon)</div>} />
             <Route path="showtimes" element={<div className="p-6 text-white">Quản lý lịch chiếu (Coming soon)</div>} />
-            <Route path="ticket-prices" element={<div className="p-6 text-white">Quản lý giá vé (Coming soon)</div>} />
+            <Route path="ticket-prices" element={<TicketPrices />} />
             <Route path="orders" element={<div className="p-6 text-white">Quản lý đơn hàng (Coming soon)</div>} />
             <Route path="accounts" element={<div className="p-6 text-white">Quản lý tài khoản (Coming soon)</div>} />
           </Route>

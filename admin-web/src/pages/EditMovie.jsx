@@ -6,24 +6,28 @@ import { movies as initialMovies } from '../data/mockData';
 const EditMovie = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState(null);
+  
+  // Initialize formData directly from movie lookup
+  const movie = initialMovies.find(m => m.id === parseInt(id));
+  const [formData, setFormData] = useState(() => {
+    if (!movie) {
+      return null;
+    }
+    return movie;
+  });
+  
   const [genreInput, setGenreInput] = useState('');
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(true);
 
   const availableGenres = ['Animation', 'Adventure', 'Drama', 'Fantasy', 'Romance', 'Family', 'Action', 'Comedy', 'Thriller', 'Horror', 'Sci-Fi', 'War'];
 
   useEffect(() => {
-    // Find movie by id
-    const movie = initialMovies.find(m => m.id === parseInt(id));
+    // Redirect if movie not found
     if (!movie) {
       alert('Không tìm thấy phim!');
       navigate('/movies');
-      return;
     }
-    setFormData(movie);
-    setLoading(false);
-  }, [id, navigate]);
+  }, [movie, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -88,7 +92,7 @@ const EditMovie = () => {
     navigate('/movies');
   };
 
-  if (loading || !formData) {
+  if (!formData) {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
         <div className="text-white text-xl">Đang tải...</div>
@@ -97,18 +101,18 @@ const EditMovie = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-10">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 mb-2">
         <Link
           to="/movies"
-          className="p-2 hover:bg-secondary rounded-lg transition-colors text-gray-400 hover:text-white"
+          className="p-2.5 hover:bg-secondary rounded-lg transition-colors text-gray-400 hover:text-white"
         >
           <FaArrowLeft size={20} />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Chỉnh sửa phim</h1>
-          <p className="text-gray-400">Cập nhật thông tin phim: {formData.title}</p>
+          <h1 className="text-3xl font-bold text-white mb-3">Chỉnh sửa phim</h1>
+          <p className="text-gray-400 text-sm lg:text-base">Cập nhật thông tin phim: {formData.title}</p>
         </div>
       </div>
 
@@ -120,20 +124,20 @@ const EditMovie = () => {
             <div className="flex border-b border-gray-700">
               <button
                 type="button"
-                className="px-6 py-3 bg-primary text-white font-medium border-b-2 border-accent"
+                className="px-6 py-3.5 bg-primary text-white font-medium border-b-2 border-accent"
               >
                 Thông tin phim
               </button>
               <button
                 type="button"
-                className="px-6 py-3 text-gray-400 hover:text-white hover:bg-primary/50 transition-colors"
+                className="px-6 py-3.5 text-gray-400 hover:text-white hover:bg-primary/50 transition-colors"
                 disabled
               >
                 Danh giá phim (0)
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-8 space-y-5">
               {/* Title */}
               <div>
                 <label className="block text-white font-medium mb-2">

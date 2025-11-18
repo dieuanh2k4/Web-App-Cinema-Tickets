@@ -384,91 +384,31 @@ export const customers = [
 ];
 
 // Mock Ticket Prices
+// Ticket Prices based on Room Type, Seat Type, Showtime Type, and Day Type
 export const ticketPrices = [
-  {
-    id: 1,
-    seatType: 'standard',
-    timeSlot: 'morning', // 6:00 - 12:00
-    dayType: 'weekday',
-    price: 70000
-  },
-  {
-    id: 2,
-    seatType: 'standard',
-    timeSlot: 'afternoon', // 12:00 - 18:00
-    dayType: 'weekday',
-    price: 80000
-  },
-  {
-    id: 3,
-    seatType: 'standard',
-    timeSlot: 'evening', // 18:00 - 24:00
-    dayType: 'weekday',
-    price: 90000
-  },
-  {
-    id: 4,
-    seatType: 'standard',
-    timeSlot: 'morning',
-    dayType: 'weekend',
-    price: 80000
-  },
-  {
-    id: 5,
-    seatType: 'standard',
-    timeSlot: 'afternoon',
-    dayType: 'weekend',
-    price: 90000
-  },
-  {
-    id: 6,
-    seatType: 'standard',
-    timeSlot: 'evening',
-    dayType: 'weekend',
-    price: 100000
-  },
-  {
-    id: 7,
-    seatType: 'vip',
-    timeSlot: 'morning',
-    dayType: 'weekday',
-    price: 100000
-  },
-  {
-    id: 8,
-    seatType: 'vip',
-    timeSlot: 'afternoon',
-    dayType: 'weekday',
-    price: 110000
-  },
-  {
-    id: 9,
-    seatType: 'vip',
-    timeSlot: 'evening',
-    dayType: 'weekday',
-    price: 120000
-  },
-  {
-    id: 10,
-    seatType: 'vip',
-    timeSlot: 'morning',
-    dayType: 'weekend',
-    price: 110000
-  },
-  {
-    id: 11,
-    seatType: 'vip',
-    timeSlot: 'afternoon',
-    dayType: 'weekend',
-    price: 120000
-  },
-  {
-    id: 12,
-    seatType: 'vip',
-    timeSlot: 'evening',
-    dayType: 'weekend',
-    price: 130000
-  }
+  // 2D Room
+  { id: 1, roomType: '2D', seatType: 'Thường', showtimeType: 'Suất chiếu sớm', dayType: 'Ngày thường', price: 50000 },
+  { id: 2, roomType: '2D', seatType: 'Đôi', showtimeType: 'Suất chiếu sớm', dayType: 'Ngày thường', price: 70000 },
+  { id: 3, roomType: '2D', seatType: 'Vip', showtimeType: 'Suất chiếu sớm', dayType: 'Ngày thường', price: 90000 },
+  { id: 4, roomType: '2D', seatType: 'Thường', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 70000 },
+  { id: 5, roomType: '2D', seatType: 'Đôi', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 90000 },
+  { id: 6, roomType: '2D', seatType: 'Vip', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 110000 },
+  
+  // 3D Room
+  { id: 7, roomType: '3D', seatType: 'Thường', showtimeType: 'Suất chiếu sớm', dayType: 'Ngày thường', price: 70000 },
+  { id: 8, roomType: '3D', seatType: 'Đôi', showtimeType: 'Suất chiếu sớm', dayType: 'Ngày thường', price: 90000 },
+  { id: 9, roomType: '3D', seatType: 'Vip', showtimeType: 'Suất chiếu sớm', dayType: 'Ngày thường', price: 110000 },
+  { id: 10, roomType: '3D', seatType: 'Thường', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 90000 },
+  { id: 11, roomType: '3D', seatType: 'Đôi', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 110000 },
+  { id: 12, roomType: '3D', seatType: 'Vip', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 130000 },
+  
+  // IMAX Room
+  { id: 13, roomType: 'IMAX', seatType: 'Thường', showtimeType: 'Suất chiếu sớm', dayType: 'Ngày thường', price: 90000 },
+  { id: 14, roomType: 'IMAX', seatType: 'Đôi', showtimeType: 'Suất chiếu sớm', dayType: 'Ngày thường', price: 110000 },
+  { id: 15, roomType: 'IMAX', seatType: 'Vip', showtimeType: 'Suất chiếu sớm', dayType: 'Ngày thường', price: 130000 },
+  { id: 16, roomType: 'IMAX', seatType: 'Thường', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 110000 },
+  { id: 17, roomType: 'IMAX', seatType: 'Đôi', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 130000 },
+  { id: 18, roomType: 'IMAX', seatType: 'Vip', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 150000 }
 ];
 
 // Mock Dashboard Statistics
