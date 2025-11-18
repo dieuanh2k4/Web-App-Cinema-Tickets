@@ -136,20 +136,13 @@ const Login = () => {
                   <span>🔑</span>
                   <span>Tài khoản demo để thử nghiệm:</span>
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div 
                     className="bg-gradient-to-br from-blue-600/10 to-blue-600/5 border border-blue-600/20 px-4 py-3 rounded-xl hover:border-blue-600/40 transition-colors cursor-pointer" 
                     onClick={() => { setUsername('admin'); setPassword('admin123'); }}
                   >
                     <div className="font-semibold text-blue-400 mb-1">Admin</div>
                     <div className="text-gray-400">admin / admin123</div>
-                  </div>
-                  <div 
-                    className="bg-gradient-to-br from-green-600/10 to-green-600/5 border border-green-600/20 px-4 py-3 rounded-xl hover:border-green-600/40 transition-colors cursor-pointer" 
-                    onClick={() => { setUsername('manager'); setPassword('manager123'); }}
-                  >
-                    <div className="font-semibold text-green-400 mb-1">Manager</div>
-                    <div className="text-gray-400">manager / manager123</div>
                   </div>
                   <div 
                     className="bg-gradient-to-br from-purple-600/10 to-purple-600/5 border border-purple-600/20 px-4 py-3 rounded-xl hover:border-purple-600/40 transition-colors cursor-pointer" 

@@ -6,23 +6,77 @@ export const adminAccounts = [
     password: 'admin123',
     fullName: 'Thợ Săn Phú Bà',
     role: 'admin',
-    email: 'admin@memaybeo.com'
+    email: 'admin@gmail.com',
+    phone: '0901234567',
+    avatar: 'https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff',
+    status: 'active',
+    createdDate: '2024-01-01',
+    lastLogin: '2024-11-18T08:30:00'
   },
   {
     id: 2,
-    username: 'manager',
-    password: 'manager123',
-    fullName: 'Top 2 Vi En',
-    role: 'staff',
-    email: 'staff1@memaybeo.com'
-  },
-  {
-    id: 3,
     username: 'staff',
     password: 'staff123',
     fullName: 'Vua cua Hung Yen',
     role: 'staff',
-    email: 'staff2@memaybeo.com'
+    email: 'staff@gmail.com',
+    phone: '0912345678',
+    avatar: 'https://ui-avatars.com/api/?name=Staff&background=8b5cf6&color=fff',
+    status: 'active',
+    createdDate: '2024-02-15',
+    lastLogin: '2024-11-17T15:20:00'
+  },
+  {
+    id: 3,
+    username: 'nguyenvana',
+    password: 'password123',
+    fullName: 'Nguyễn Văn A',
+    role: 'staff',
+    email: 'nguyenvana@gmail.com',
+    phone: '0923456789',
+    avatar: 'https://ui-avatars.com/api/?name=Nguyen+Van+A&background=10b981&color=fff',
+    status: 'active',
+    createdDate: '2024-03-10',
+    lastLogin: '2024-11-16T10:15:00'
+  },
+  {
+    id: 4,
+    username: 'tranthib',
+    password: 'password123',
+    fullName: 'Trần Thị B',
+    role: 'staff',
+    email: 'tranthib@gmail.com',
+    phone: '0934567890',
+    avatar: 'https://ui-avatars.com/api/?name=Tran+Thi+B&background=f59e0b&color=fff',
+    status: 'active',
+    createdDate: '2024-04-20',
+    lastLogin: '2024-11-15T14:30:00'
+  },
+  {
+    id: 5,
+    username: 'levanc',
+    password: 'password123',
+    fullName: 'Lê Văn C',
+    role: 'manager',
+    email: 'levanc@gmail.com',
+    phone: '0945678901',
+    avatar: 'https://ui-avatars.com/api/?name=Le+Van+C&background=ef4444&color=fff',
+    status: 'inactive',
+    createdDate: '2024-05-05',
+    lastLogin: '2024-10-20T09:00:00'
+  },
+  {
+    id: 6,
+    username: 'phamthid',
+    password: 'password123',
+    fullName: 'Phạm Thị D',
+    role: 'staff',
+    email: 'phamthid@gmail.com',
+    phone: '0956789012',
+    avatar: 'https://ui-avatars.com/api/?name=Pham+Thi+D&background=ec4899&color=fff',
+    status: 'active',
+    createdDate: '2024-06-15',
+    lastLogin: '2024-11-18T07:45:00'
   }
 ];
 

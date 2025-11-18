@@ -8,6 +8,9 @@ import Movies from './pages/Movies';
 import AddMovie from './pages/AddMovie';
 import EditMovie from './pages/EditMovie';
 import TicketPrices from './pages/TicketPrices';
+import Accounts from './pages/Accounts';
+import AddAccount from './pages/AddAccount';
+import AccountDetail from './pages/AccountDetail';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -71,7 +74,11 @@ function App() {
             <Route path="showtimes" element={<div className="p-6 text-white">Quản lý lịch chiếu (Coming soon)</div>} />
             <Route path="ticket-prices" element={<TicketPrices />} />
             <Route path="orders" element={<div className="p-6 text-white">Quản lý đơn hàng (Coming soon)</div>} />
-            <Route path="accounts" element={<div className="p-6 text-white">Quản lý tài khoản (Coming soon)</div>} />
+            <Route path="accounts">
+              <Route index element={<Accounts />} />
+              <Route path="add" element={<AddAccount />} />
+              <Route path=":id" element={<AccountDetail />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>
