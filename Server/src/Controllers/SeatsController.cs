@@ -44,9 +44,11 @@ namespace Server.src.Controllers
                     .OrderBy(s => s.Name)
                     .ToListAsync();
 
-                var bookedSeatIds = await _context.Tickets
-                    .Where(t => t.ShowtimeId == showtimeId)
-                    .Select(t => t.SeatId)
+                // Kiểm tra ghế đã đặt từ StatusSeat table
+                var bookedSeatIds = await _context.StatusSeat
+                    .Where(ss => ss.ShowtimeId == showtimeId
+                              && (ss.Status == "Booked" || ss.Status == "Pending"))
+                    .Select(ss => ss.SeatId)
                     .Distinct()
                     .ToListAsync();
 
@@ -84,9 +86,11 @@ namespace Server.src.Controllers
         {
             try
             {
-                var bookedSeats = await _context.Tickets
-                    .Where(t => t.ShowtimeId == request.ShowtimeId && request.SeatIds.Contains(t.SeatId))
-                    .Select(t => t.SeatId)
+                var bookedSeats = await _context.StatusSeat
+                    .Where(ss => ss.ShowtimeId == request.ShowtimeId 
+                              && request.SeatIds.Contains(ss.SeatId)
+                              && (ss.Status == "Booked" || ss.Status == "Pending"))
+                    .Select(ss => ss.SeatId)
                     .ToListAsync();
 
                 if (bookedSeats.Any())

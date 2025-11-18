@@ -65,6 +65,9 @@ builder.Services.AddSwaggerGen(options =>
 // ==========================
 // Cấu hình DbContext (PostgreSQL)
 // ==========================
+// Enable UTC timestamp for PostgreSQL
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
