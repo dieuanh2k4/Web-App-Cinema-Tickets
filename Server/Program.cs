@@ -150,6 +150,20 @@ builder.Services.AddAuthorization(options =>
 });
 
 // ==========================
+// Cấu hình CORS: cho phép frontend được gọi API
+// ==========================
+const string DevCorsPolicy = "DevCorsPolicy";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(DevCorsPolicy, policy =>
+    {
+        policy.AllowAnyOrigin() // Cho phép MỌI domain
+              .AllowAnyMethod() // Cho phép MỌI method (GET, POST, PUT, DELETE...)
+              .AllowAnyHeader(); // Cho phép MỌI header
+    });
+});
+
+// ==========================
 // Build app
 // ==========================
 var app = builder.Build();

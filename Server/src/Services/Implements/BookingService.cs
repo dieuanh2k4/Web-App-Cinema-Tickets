@@ -66,7 +66,7 @@ namespace Server.src.Services.Implements
                 tickets.Add(ticket);
             }
 
-            await _context.Ticket.AddRangeAsync(tickets);
+            await _context.Tickets.AddRangeAsync(tickets);
 
             // 6. Tạo Payment
             var payment = new Payment
@@ -147,7 +147,7 @@ namespace Server.src.Services.Implements
                 tickets.Add(ticket);
             }
 
-            await _context.Ticket.AddRangeAsync(tickets);
+            await _context.Tickets.AddRangeAsync(tickets);
 
             // Payment đã thanh toán
             var payment = new Payment
@@ -220,7 +220,7 @@ namespace Server.src.Services.Implements
 
         private async Task<List<int>> GetBookedSeatsAsync(int showtimeId)
         {
-            return await _context.Ticket
+            return await _context.Tickets
                 .Where(t => t.ShowtimeId == showtimeId)
                 .Select(t => t.SeatId)
                 .Distinct()
