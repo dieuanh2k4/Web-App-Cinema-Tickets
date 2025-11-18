@@ -17,20 +17,20 @@ namespace Server.src.Repositories.Implements
 
         public async Task<Customer?> GetByPhoneAsync(string phone)
         {
-            return await _context.Customer
+            return await _context.Customers
                 .FirstOrDefaultAsync(c => c.Phone == phone);
         }
 
         public async Task<Customer> CreateAsync(Customer customer)
         {
-            await _context.Customer.AddAsync(customer);
+            await _context.Customers.AddAsync(customer);
             await _context.SaveChangesAsync();
             return customer;
         }
 
         public async Task<Customer?> GetByIdAsync(int id)
         {
-            return await _context.Customer
+            return await _context.Customers
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
     }

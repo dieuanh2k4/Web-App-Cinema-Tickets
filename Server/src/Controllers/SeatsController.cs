@@ -44,7 +44,7 @@ namespace Server.src.Controllers
                     .OrderBy(s => s.Name)
                     .ToListAsync();
 
-                var bookedSeatIds = await _context.Ticket
+                var bookedSeatIds = await _context.Tickets
                     .Where(t => t.ShowtimeId == showtimeId)
                     .Select(t => t.SeatId)
                     .Distinct()
@@ -84,7 +84,7 @@ namespace Server.src.Controllers
         {
             try
             {
-                var bookedSeats = await _context.Ticket
+                var bookedSeats = await _context.Tickets
                     .Where(t => t.ShowtimeId == request.ShowtimeId && request.SeatIds.Contains(t.SeatId))
                     .Select(t => t.SeatId)
                     .ToListAsync();
