@@ -12,9 +12,13 @@ namespace Server.src.Models
         public string? Name { get; set; }
         public DateOnly Birth { get; set; }
         public string? gender { get; set; }
-        public MailAddress? Email { get; set; }
+        public string? Email { get; set; }
         public string? Avatar { get; set; }
         public string? Phone { get; set; }
         public string? Address { get; set; }
+        
+        // Phase 2: Support cho Guest vs Registered User
+        public int? UserId { get; set; } // null = Guest, có giá trị = Registered User
+        public User? User { get; set; } // Navigation property
     }
 }

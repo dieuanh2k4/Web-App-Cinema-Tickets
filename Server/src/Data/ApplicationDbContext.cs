@@ -9,7 +9,7 @@ namespace Server.src.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public DbSet<Customer> Customer { get; set; }
+        public DbSet<Customer> Customers { get; set; }
         public DbSet<Movies> Movies { get; set; }
         public DbSet<Payment> Payment { get; set; }
         public DbSet<Rooms> Rooms { get; set; }
@@ -17,16 +17,13 @@ namespace Server.src.Data
         public DbSet<Showtimes> Showtimes { get; set; }
         public DbSet<StatusSeat> StatusSeat { get; set; }
         public DbSet<Theater> Theater { get; set; }
-        public DbSet<Ticket> Ticket { get; set; }
+        public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<TicketPrice> TicketPrices { get; set; }
         public DbSet<User> User { get; set; }
 
-        public ApplicationDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions)
-        {
-        }
+        public ApplicationDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions) {}
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-        }
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {}
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -48,7 +45,7 @@ namespace Server.src.Data
                     .HasColumnType("date")
                     .IsRequired();
                 entity.Property(c => c.gender)
-                    .HasMaxLength(1)
+                    .HasMaxLength(5)
                     .IsUnicode(false);
                 entity.Property(c => c.Address)
                     .HasMaxLength(255);
@@ -58,20 +55,16 @@ namespace Server.src.Data
                     .IsRequired();
                 entity.HasIndex(c => c.Phone)
                     .IsUnique();
-                entity.Property(c => c.Address)
-                    .HasMaxLength(225);
                 entity.Property(c => c.Avatar)
                     .HasMaxLength(255);
-
             });
 
             modelBuilder.Entity<Movies>(entity =>
             {
                 entity.ToTable(m =>
                 {
-                    m.HasCheckConstraint("CK_Movie_Duration", "Duration > 0");
-                    m.HasCheckConstraint("CK_Movie_ReleaseYear", "ReleaseYear <= YEAR(GETDATE())");
-                    m.HasCheckConstraint("CK_Movie_Rating", "Rating >= 0 AND Rating <= 10");
+                    m.HasCheckConstraint("CK_Movie_Duration", "\"Duration\" > 0");
+                    m.HasCheckConstraint("CK_Movie_Rating", "\"Rating\" >= 0 AND \"Rating\" <= 10");
                 });
                 entity.HasKey(m => m.Id);
                 entity.Property(c => c.Id)
@@ -82,37 +75,46 @@ namespace Server.src.Data
                     .HasMaxLength(100)
                     .IsRequired();
                 entity.Property(m => m.Thumbnail)
-                    .HasMaxLength(255)
-                    .IsUnicode(false);
+                    .HasMaxLength(1000)
+                    .IsUnicode(false)
+                    .IsRequired();
                 entity.Property(m => m.Duration)
                     .IsRequired();
-
                 entity.Property(m => m.Genre)
-                    .HasMaxLength(10);
-                entity.Property(m => m.RealeaseYear)
+                    .HasMaxLength(50)
                     .IsRequired();
-                entity.Property(m => m.Description)
-                    .HasMaxLength(1000)
-                    .IsUnicode(true)
-                    .IsRequired(false);
-                entity.Property(m => m.Description)
+                entity.Property(m => m.Language)
                     .HasMaxLength(100)
+                    .IsRequired();
+                entity.Property(m => m.AgeLimit)
+                    .HasMaxLength(20)
+                    .IsRequired();
+                entity.Property(m => m.StartDate)
+                    .IsRequired();
+                entity.Property(m => m.EndDate)
+                    .IsRequired();
+                entity.Property(m => m.Description)
+                    .HasMaxLength(3000)
                     .IsUnicode(true)
                     .IsRequired();
-                entity.Ignore(m => m.Actors);
+                entity.Property(m => m.Director)
+                    .HasMaxLength(20)
+                    .IsRequired();
+                entity.Property(m => m.Actors)
+                    .HasColumnType("Text[]")
+                    .IsRequired();
                 entity.Property(m => m.Rating)
                     .HasDefaultValue(0)
-                    .IsRequired();
-
+                    .IsRequired(); 
             });
 
             modelBuilder.Entity<Payment>(entity =>
             {
                 entity.ToTable(p =>
                 {
-                    p.HasCheckConstraint("CK_Payment_TotalPrice", "TotalPrice > 0");
-                    p.HasCheckConstraint("CK_Payment_Status", "Status IN('Đã Thanh toán', 'Chưa Thanh toán', 'Thanh toán thất bại')");
-                    p.HasCheckConstraint("CK_Payment_paymentMethod", "paymentMethod IN('Momo', 'Banking', 'Cash')");
+                    p.HasCheckConstraint("CK_Payment_TotalPrice", "\"TotalPrice\" > 0");
+                    p.HasCheckConstraint("CK_Payment_Status", "\"Status\" IN('Đã Thanh toán', 'Chưa Thanh toán', 'Thanh toán thất bại')");
+                    p.HasCheckConstraint("CK_Payment_paymentMethod", "\"paymentMethod\" IN('Momo', 'Banking', 'Cash')");
                 });
                 entity.HasKey(p => p.Id);
                 entity.Property(p => p.Id)
@@ -125,9 +127,9 @@ namespace Server.src.Data
                 entity.Property(p => p.Date)
                     .IsRequired();
                 entity.Property(p => p.Status)
-                    .HasMaxLength(20);
+                    .HasMaxLength(50);
                 entity.Property(p => p.paymentMethod)
-                    .HasMaxLength(20);
+                    .HasMaxLength(50);
 
                 entity.HasOne(p => p.Ticket)
                     .WithOne(t => t.Payment)
@@ -147,7 +149,7 @@ namespace Server.src.Data
                     .IsRequired();
                 entity.Property(r => r.Name)
                     .IsRequired()
-                    .HasMaxLength(10);
+                    .HasMaxLength(20);
                 entity.Property(r => r.Capacity)
                     .IsRequired();
                 entity.Property(r => r.Status)
@@ -155,19 +157,26 @@ namespace Server.src.Data
                     .HasDefaultValue("Trống");
                 entity.Property(r => r.TheaterId)
                     .IsRequired();
+                // entity.Property(r => r.TicketpriceId)
+                //     .IsRequired();
 
                 entity.HasOne(r => r.Theater)
                     .WithMany(t => t.Rooms)
                     .HasForeignKey(r => r.TheaterId)
                     .OnDelete(DeleteBehavior.Cascade);
+                
+                // entity.HasOne(r => r.TicketPrice)
+                //     .WithOne(t => t.Rooms)
+                //     .HasForeignKey<Rooms>(r => r.TicketpriceId)
+                //     .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Seats>(entity =>
             {
-                entity.ToTable(r =>
-                {
-                    r.HasCheckConstraint("CK_Seats_Price", "Price > 0");
-                });
+                // entity.ToTable(r =>
+                // {
+                //     r.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
+                // });
                 entity.HasKey(s => s.Id);
                 entity.Property(s => s.Id)
                     .ValueGeneratedOnAdd()
@@ -175,13 +184,17 @@ namespace Server.src.Data
                 entity.Property(s => s.Name)
                     .IsRequired()
                     .HasMaxLength(5);
-                entity.Property(s => s.Price)
-                    .IsRequired();
+                // entity.Property(s => s.Price)
+                //     .IsRequired();
                 entity.Property(s => s.Type)
                     .IsRequired()
                     .HasMaxLength(20);
                 entity.Property(s => s.RoomId)
                     .IsRequired();
+                entity.Property(s => s.Status)
+                    .HasMaxLength(10)
+                    .IsRequired();
+                entity.Ignore(s => s.Rooms);
 
                 entity.HasOne(s => s.Rooms)
                     .WithMany(r => r.Seats)
@@ -193,7 +206,7 @@ namespace Server.src.Data
             {
                 // entity.ToTable(r =>
                 // {
-                //     r.HasCheckConstraint("CK_Seats_Price", "Price > 0");
+                //     r.HasCheckConstraint("CK_Showtimes_Date", "\"Date\" >= CURRENT_DATE");
                 // });
                 entity.HasKey(s => s.Id);
                 entity.Property(s => s.Id)
@@ -207,10 +220,12 @@ namespace Server.src.Data
                     .IsRequired();
                 entity.Property(s => s.RoomId)
                     .IsRequired();
+                entity.Property(s => s.Date)
+                    .IsRequired();
 
                 entity.HasOne(s => s.Rooms)
-                    .WithOne(r => r.Showtimes)
-                    .HasForeignKey<Showtimes>(s => s.RoomId)
+                    .WithMany(r => r.Showtimes)
+                    .HasForeignKey(s => s.RoomId)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(s => s.Movies)
@@ -218,6 +233,29 @@ namespace Server.src.Data
                     .HasForeignKey(s => s.MovieId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // modelBuilder.Entity<StatusSeat>(entity =>
+            // {
+            //     entity.HasKey(s => s.Id);
+            //     entity.Property(s => s.SeatId)
+            //         .IsRequired();
+            //     entity.Property(s => s.ShowtimeId)
+            //         .IsRequired();
+            //     entity.Property(s => s.Status)
+            //         .IsRequired()
+            //         .HasMaxLength(20)
+            //         .HasDefaultValue("Trống");
+
+            //     entity.HasOne(s => s.Seats)
+            //         .WithOne(ss => ss.StatusSeat)
+            //         .HasForeignKey<StatusSeat>(s => s.SeatId)
+            //         .OnDelete(DeleteBehavior.Restrict);
+
+            //     entity.HasOne(s => s.Showtimes)
+            //         .WithMany(sh => sh.StatusSeat)
+            //         .HasForeignKey(s => s.ShowtimeId)
+            //         .OnDelete(DeleteBehavior.Restrict);
+            // });
 
             modelBuilder.Entity<Theater>(entity =>
             {
@@ -231,13 +269,47 @@ namespace Server.src.Data
                     .IsRequired();
                 entity.Property(t => t.Name)
                     .IsRequired()
-                    .HasMaxLength(20);
+                    .HasMaxLength(200);
                 entity.Property(t => t.Address)
                     .IsRequired()
-                    .HasMaxLength(200);
+                    .HasMaxLength(1000);
                 entity.Property(t => t.City)
                     .IsRequired()
-                    .HasMaxLength(20);
+                    .HasMaxLength(100);
+            });
+
+            modelBuilder.Entity<TicketPrice>(entity =>
+            {
+                entity.ToTable(t =>
+                {
+                    t.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
+                });
+                entity.HasKey(t => t.Id);
+                entity.Property(t => t.Id)
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(t => t.Price)
+                    .IsRequired();
+                // entity.Property(t => t.RoomId)
+                //     .IsRequired();
+                // entity.Property(t => t.SeatId)
+                //     .IsRequired();
+                entity.Property(t => t.RoomType)
+                    .HasMaxLength(100)
+                    .IsRequired();
+                entity.Property(t => t.SeatType)
+                    .HasMaxLength(100)
+                    .IsRequired();
+
+                // entity.HasOne(t => t.Rooms)
+                //     .WithOne(r => r.TicketPrice)
+                //     .HasForeignKey<TicketPrice>(t => t.RoomId)
+                //     .OnDelete(DeleteBehavior.Cascade);
+
+                // entity.HasOne(t => t.Seats)
+                //     .WithOne(s => s.TicketPrice)
+                //     .HasForeignKey<TicketPrice>(t => t.SeatId)
+                //     .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<User>(entity =>

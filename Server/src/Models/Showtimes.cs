@@ -12,8 +12,11 @@ namespace Server.src.Models
         public TimeOnly End { get; set; }
         public int MovieId { get; set; }
         public int RoomId { get; set; }
+        public DateOnly Date { get; set; }
 
         public Rooms? Rooms { get; set; }
         public Movies? Movies { get; set; }
+        // public StatusSeat? StatusSeat { get; set; }
+        // public ICollection<StatusSeat>? StatusSeat { get; set; }
     }
 }
