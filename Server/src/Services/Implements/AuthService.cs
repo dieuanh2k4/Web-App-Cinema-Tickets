@@ -29,7 +29,7 @@ namespace Server.src.Services.Implements
             if (user == null)
                 return AuthResult.Fail("Sai tài khoản hoặc mật khẩu");
 
-            string role = user.userType == 0 ? "Admin" : "Staff";
+            string role = user.userType == 0 ? "Admin" : "Staff"; // 0 = Admin, 1 = Staff
 
             var token = _jwtHelper.GenerateToken(user.username, role, user.Id);
 

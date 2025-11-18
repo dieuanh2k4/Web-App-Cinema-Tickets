@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Server.src.Models
+namespace Server.src.Dtos.Users
 {
-    public class User
+    public class UserDto
     {
         public int Id { get; set; }
         public string? username { get; set; }
         public string? password { get; set; }
-        public int userType { get; set; } // 0 = Admin, 1 = Staff
+        public int userType { get; set; }
     }
 }

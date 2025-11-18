@@ -48,7 +48,7 @@ namespace Server.src.Controllers
             return Ok(theater);
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpPost("create-theater")]
         public async Task<IActionResult> CreateTheater([FromBody] CreateTheaterDto createTheaterDto)
         {
@@ -67,7 +67,7 @@ namespace Server.src.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpPut("update-theater/{id}")]
         public async Task<IActionResult> UpdateTheater([FromBody] UpdateTheaterDto updateTheaterDto, int id)
         {
@@ -86,7 +86,7 @@ namespace Server.src.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete-theater/{id}")]
         public async Task<IActionResult> DeleteTheater(int id)
         {

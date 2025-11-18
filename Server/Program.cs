@@ -70,7 +70,14 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorCodesToAdd: null
+        )
+    );
 });
 
 // ==========================
@@ -85,7 +92,7 @@ builder.Services.AddControllers()
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
-builder.Services.AddScoped<ITicketPriceService, TicketPriceService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<ITheaterService, TheaterService>();
@@ -135,24 +142,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // ==========================
-// Cấu hình Authorization Policies
-// ==========================
-builder.Services.AddAuthorization(options =>
-{
-    // Policy chỉ cho Admin
-    options.AddPolicy("AdminOnly", policy => 
-        policy.RequireRole("Admin"));
-    
-    // Policy cho Staff hoặc Admin
-    options.AddPolicy("StaffOrAdmin", policy => 
-        policy.RequireRole("Admin", "Staff"));
-    
-    // Policy yêu cầu đăng nhập (bất kỳ role nào)
-    options.AddPolicy("Authenticated", policy => 
-        policy.RequireAuthenticatedUser());
-});
-
-// ==========================
 // Cấu hình CORS: cho phép frontend được gọi API
 // ==========================
 const string DevCorsPolicy = "DevCorsPolicy";
@@ -171,7 +160,8 @@ builder.Services.AddCors(options =>
 // ==========================
 var app = builder.Build();
 
-// **THÊM ĐOẠN NÀY: Chạy DataSeeder khi app khởi động**
+// DataSeeder tạm thời tắt vì Supabase connection timeout
+// Tạo tài khoản admin mặc định khi database trống
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
