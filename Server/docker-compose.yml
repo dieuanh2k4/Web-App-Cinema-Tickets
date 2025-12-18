@@ -1,0 +1,46 @@
+services:
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cinebook-backend
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=database;Port=5432;Database=postgres;Username=Cinebook;Password=${DB_PASSWORD}
+      - ASPNETCORE_URLS=http://+:8080
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - cinebook-network
+    restart: unless-stopped
+
+  database:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: Cinebook
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U Cinebook -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - cinebook-network
+
+networks:
+  cinebook-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
