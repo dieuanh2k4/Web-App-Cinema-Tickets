@@ -10,6 +10,7 @@ using Server.src.Services.Interfaces;
 using Server.src.Repositories.Implements;
 using Server.src.Repositories.Interfaces;
 using Server.src.Utils;
+using Minio;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -90,6 +91,7 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddScoped<IMinioStorageService, MinioStorageService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -153,6 +155,17 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod() // Cho phép MỌI method (GET, POST, PUT, DELETE...)
               .AllowAnyHeader(); // Cho phép MỌI header
     });
+});
+
+// Đăng ký Minio Client
+builder.Services.AddSingleton<IMinioClient>(s =>
+{
+    var configuration = s.GetRequiredService<IConfiguration>();
+    return new MinioClient()
+        .WithEndpoint(configuration["Minio:Endpoint"])
+        .WithCredentials(configuration["Minio:AccessKey"], configuration["Minio:SecretKey"])
+        .WithSSL(configuration.GetValue<bool>("Minio:UseSsl"))
+        .Build();
 });
 
 // ==========================
