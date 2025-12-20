@@ -8,14 +8,12 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { MovieCard } from "../../../components/MovieCard";
-import {
-  NOW_PLAYING_MOVIES,
-  UPCOMING_MOVIES,
-} from "../../../constants/mockData";
+import { movieService } from "../../../services/movieService";
 
 export default function HomeScreen() {
   const [movies, setMovies] = useState({
@@ -28,9 +26,13 @@ export default function HomeScreen() {
   const router = useRouter();
   const windowWidth = Dimensions.get("window").width;
 
-  useEffect(() => {
-    loadMockData();
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    loadMovies();
+  }, []);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       if (movies.featured.length > 0) {
         const nextSlide = (activeSlide + 1) % movies.featured.length;
@@ -43,24 +45,26 @@ export default function HomeScreen() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [activeSlide]);
+  }, [activeSlide, movies.featured]);
 
-  const loadMockData = () => {
-    // TODO: Thay thế bằng API calls thực
-    // const featuredResponse = await fetch('/api/movies/featured');
-    // const nowPlayingResponse = await fetch('/api/movies/now-playing');
-    // const upcomingResponse = await fetch('/api/movies/upcoming');
-    // const featured = await featuredResponse.json();
-    // const nowPlaying = await nowPlayingResponse.json();
-    // const upcoming = await upcomingResponse.json();
-    // setMovies({ featured, nowPlaying, upcoming });
+  const loadMovies = async () => {
+    try {
+      setLoading(true);
+      const [nowPlaying, upcoming] = await Promise.all([
+        movieService.getNowPlaying(),
+        movieService.getUpcoming(),
+      ]);
 
-    // Mock data
-    setMovies({
-      featured: NOW_PLAYING_MOVIES.slice(0, 3),
-      nowPlaying: NOW_PLAYING_MOVIES,
-      upcoming: UPCOMING_MOVIES,
-    });
+      setMovies({
+        featured: nowPlaying.slice(0, 3),
+        nowPlaying,
+        upcoming,
+      });
+    } catch (error) {
+      console.error("Error loading movies:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleMoviePress = (movieId) => {

@@ -5,6 +5,24 @@ import { API_CONFIG } from "../config/api.config";
 const AUTH_TOKEN_KEY = "auth_token";
 const USER_INFO_KEY = "user_info";
 
+// Mock users database for development (customer only)
+const mockUsers = [
+  {
+    id: 1,
+    username: "customer1",
+    email: "customer@test.com",
+    password: "123456",
+    phone: "0123456789",
+  },
+  {
+    id: 2,
+    username: "customer2",
+    email: "user@demo.com",
+    password: "123456",
+    phone: "0987654321",
+  },
+];
+
 const api = axios.create({
   baseURL: API_CONFIG.BASE_URL,
   headers: {
@@ -32,10 +50,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Nếu token hết hạn, xóa token và chuyển về màn đăng nhập
       await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
       await AsyncStorage.removeItem(USER_INFO_KEY);
-      // Có thể thêm logic để refresh token ở đây
     }
     return Promise.reject(error);
   }
@@ -86,102 +102,205 @@ export const authService = {
     }
   },
 
-  // Đăng nhập (thử API trước, nếu thất bại do mạng thì fallback sang mock local)
+  // Đăng nhập (chỉ dùng mock data)
   async login(email, password) {
     try {
-      // Shortcut for local development: a mock account that always works
-      if (email === "dev@local" && password === "password123") {
-        const mockToken = "mock_token_dev";
-        const mockUserInfo = {
-          id: 999,
-          name: "Dev User",
-          email: "dev@local",
-          phone: "0000000000",
+      console.log("Mock login with:", { email });
+
+      // Tìm user trong mock database
+      const mockUser = mockUsers.find(
+        (u) => u.email === email && u.password === password
+      );
+
+      if (mockUser) {
+        const mockToken = "mock_token_" + Date.now();
+        const userInfo = {
+          id: mockUser.id,
+          username: mockUser.username,
+          email: mockUser.email,
+          phone: mockUser.phone,
         };
-        await this.saveAuthData(mockToken, mockUserInfo);
+
+        await this.saveAuthData(mockToken, userInfo);
         return {
           success: true,
-          data: { token: mockToken, user: mockUserInfo },
+          data: { token: mockToken, user: userInfo },
           mock: true,
-        };
-      }
-      console.log("Logging in with:", { email });
-      const response = await api.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, {
-        email,
-        password,
-      });
-
-      console.log("Login response:", response.data);
-
-      if (response.data?.token) {
-        // Lưu token và thông tin user
-        await this.saveAuthData(response.data.token, response.data.user);
-        return {
-          success: true,
-          data: response.data,
+          message: "Đăng nhập thành công!",
         };
       }
 
       return {
         success: false,
-        error: response.data?.message || "Đăng nhập không thành công",
+        error: "Email hoặc mật khẩu không đúng",
       };
     } catch (error) {
-      console.error("Login error:", error.response || error);
-      // Nếu là lỗi mạng (không có response) thì dùng mock account để phát triển nhanh
-      const isNetworkError = !error.response;
-      if (isNetworkError) {
-        const mockToken = "mock_token_" + Date.now();
-        const mockUserInfo = {
-          id: 1,
-          name: "Nguyễn Văn A",
-          email: email || "test@local",
-          phone: "0123456789",
-        };
-        await this.saveAuthData(mockToken, mockUserInfo);
-        return {
-          success: true,
-          data: { token: mockToken, user: mockUserInfo },
-          mock: true,
-        };
-      }
-
+      console.error("Login error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || "Có lỗi xảy ra khi đăng nhập",
+        error: "Có lỗi xảy ra khi đăng nhập",
       };
     }
   },
 
-  // Đăng ký
-  async register(email, password) {
+  // Đăng ký customer mới
+  async register(username, password, email, phone) {
     try {
-      console.log("Registering with:", { email });
-      const response = await api.post(API_CONFIG.ENDPOINTS.AUTH.REGISTER, {
-        email,
-        password,
-      });
+      console.log("Registering new customer:", { username, email });
 
-      console.log("Register response:", response.data);
+      // Kiểm tra email đã tồn tại
+      const existingUser = mockUsers.find((u) => u.email === email);
+      if (existingUser) {
+        return {
+          success: false,
+          error: "Email đã được sử dụng",
+        };
+      }
 
-      if (response.data?.token) {
-        // Lưu token và thông tin user
-        await this.saveAuthData(response.data.token, response.data.user);
+      // Tạo customer mới
+      const newUser = {
+        id: mockUsers.length + 1,
+        username: username,
+        email: email,
+        password: password,
+        phone: phone,
+      };
+
+      // Thêm vào mock database
+      mockUsers.push(newUser);
+
+      // Tự động đăng nhập sau khi đăng ký
+      const mockToken = "mock_token_" + Date.now();
+      const userInfo = {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        phone: newUser.phone,
+      };
+
+      await this.saveAuthData(mockToken, userInfo);
+
+      return {
+        success: true,
+        data: {
+          token: mockToken,
+          user: userInfo,
+        },
+        mock: true,
+        message: "Đăng ký thành công!",
+      };
+    } catch (error) {
+      console.error("Register error:", error);
+      return {
+        success: false,
+        error: "Có lỗi xảy ra khi đăng ký",
+      };
+    }
+  },
+
+  // Xác thực email
+  async verifyEmail(email, code) {
+    try {
+      console.log("Verifying email:", { email, code });
+
+      // Kiểm tra user tồn tại
+      const user = mockUsers.find((u) => u.email === email);
+      if (!user) {
+        return {
+          success: false,
+          error: "Email không tồn tại",
+        };
+      }
+
+      // Mã demo: "123456"
+      if (code === "123456") {
         return {
           success: true,
-          data: response.data,
+          message: "Xác thực email thành công!",
+          mock: true,
         };
       }
 
       return {
         success: false,
-        error: response.data?.message || "Đăng ký không thành công",
+        error: "Mã xác thực không đúng",
       };
     } catch (error) {
-      console.error("Register error:", error.response || error);
+      console.error("Verify email error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || "Có lỗi xảy ra khi đăng ký",
+        error: "Có lỗi xảy ra khi xác thực email",
+      };
+    }
+  },
+
+  // Quên mật khẩu - gửi mã reset
+  async forgotPassword(email) {
+    try {
+      console.log("Forgot password for:", { email });
+
+      // Kiểm tra email tồn tại
+      const user = mockUsers.find((u) => u.email === email);
+      if (!user) {
+        return {
+          success: false,
+          error: "Email không tồn tại trong hệ thống",
+        };
+      }
+
+      // Giả lập gửi email reset
+      return {
+        success: true,
+        message: "Đã gửi mã xác thực đến email của bạn!",
+        mock: true,
+        data: {
+          resetCode: "123456", // Mã demo
+        },
+      };
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      return {
+        success: false,
+        error: "Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu",
+      };
+    }
+  },
+
+  // Đặt lại mật khẩu
+  async resetPassword(email, code, newPassword) {
+    try {
+      console.log("Resetting password for:", { email });
+
+      // Tìm user
+      const user = mockUsers.find((u) => u.email === email);
+      if (!user) {
+        return {
+          success: false,
+          error: "Email không tồn tại",
+        };
+      }
+
+      // Kiểm tra mã xác thực (demo: "123456")
+      if (code !== "123456") {
+        return {
+          success: false,
+          error: "Mã xác thực không đúng",
+        };
+      }
+
+      // Cập nhật mật khẩu mới
+      user.password = newPassword;
+
+      return {
+        success: true,
+        message: "Đặt lại mật khẩu thành công!",
+        mock: true,
+      };
+    } catch (error) {
+      console.error("Reset password error:", error);
+      return {
+        success: false,
+        error: "Có lỗi xảy ra khi đặt lại mật khẩu",
       };
     }
   },

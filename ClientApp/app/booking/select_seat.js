@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   SafeAreaView,
   View,
@@ -6,10 +6,17 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { MOCK_SEAT_LAYOUTS } from "../../constants/mockData";
+import { seatService } from "@/services/bookingService";
+import {
+  mockShowtimes,
+  mockMovies,
+  mockRooms,
+  mockTheaters,
+} from "@/constants/mockDataBackend";
 
 const formatCurrency = (value) => {
   if (!value) return "0đ";
@@ -18,23 +25,110 @@ const formatCurrency = (value) => {
 
 export default function SelectSeatScreen() {
   const router = useRouter();
-  const { showtimeId } = useLocalSearchParams();
-  const seatLayout = MOCK_SEAT_LAYOUTS[showtimeId];
+  const { showtimeId, movieId, roomId } = useLocalSearchParams();
+  const [seats, setSeats] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedSeats, setSelectedSeats] = useState([]);
 
-  const seatLookup = useMemo(() => {
-    if (!seatLayout) return {};
-    return seatLayout.rows.reduce((acc, row) => {
-      row.seats.forEach((seat) => {
-        if (seat) {
-          acc[seat.code] = seat;
-        }
+  // Lấy thông tin showtime, movie, room
+  const showtime = useMemo(
+    () => mockShowtimes.find((s) => s.id === parseInt(showtimeId)),
+    [showtimeId]
+  );
+
+  const movie = useMemo(
+    () =>
+      mockMovies.find((m) => m.id === (showtime?.movieId || parseInt(movieId))),
+    [showtime, movieId]
+  );
+
+  const room = useMemo(
+    () =>
+      mockRooms.find((r) => r.id === (showtime?.roomId || parseInt(roomId))),
+    [showtime, roomId]
+  );
+
+  const theater = useMemo(
+    () => (room ? mockTheaters.find((t) => t.id === room.theaterId) : null),
+    [room]
+  );
+
+  // Load seats khi component mount
+  useEffect(() => {
+    loadSeats();
+  }, [showtimeId, roomId]);
+
+  const loadSeats = async () => {
+    try {
+      setLoading(true);
+      const roomIdToUse = showtime?.roomId || parseInt(roomId);
+      const availableSeats = await seatService.getAvailableSeats(
+        parseInt(showtimeId),
+        roomIdToUse
+      );
+      setSeats(availableSeats);
+    } catch (error) {
+      console.error("Error loading seats:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Tạo sơ đồ ghế từ danh sách seats
+  const seatLayout = useMemo(() => {
+    if (!seats.length) return null;
+
+    // Group seats by row
+    const rowMap = {};
+    seats.forEach((seat) => {
+      const row = seat.name.charAt(0); // A, B, C, D, E
+      if (!rowMap[row]) {
+        rowMap[row] = [];
+      }
+      rowMap[row].push(seat);
+    });
+
+    // Sort seats in each row by column number
+    Object.keys(rowMap).forEach((row) => {
+      rowMap[row].sort((a, b) => {
+        const colA = parseInt(a.name.substring(1));
+        const colB = parseInt(b.name.substring(1));
+        return colA - colB;
       });
+    });
+
+    const rows = Object.keys(rowMap)
+      .sort()
+      .map((rowLetter) => ({
+        row: rowLetter,
+        seats: rowMap[rowLetter],
+      }));
+
+    return {
+      screenType: room?.type || "2D",
+      rows: rows,
+    };
+  }, [seats, room]);
+
+  const seatLookup = useMemo(() => {
+    return seats.reduce((acc, seat) => {
+      acc[seat.name] = seat;
       return acc;
     }, {});
-  }, [seatLayout]);
+  }, [seats]);
 
-  if (!seatLayout) {
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.emptyState}>
+          <ActivityIndicator size="large" color="#6C47DB" />
+          <Text style={styles.emptyTitle}>Đang tải sơ đồ ghế...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!seatLayout || !movie || !room) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyState}>
@@ -55,28 +149,22 @@ export default function SelectSeatScreen() {
     );
   }
 
-  const toggleSeat = (seatCode) => {
-    const seat = seatLookup[seatCode];
-    if (!seat || seat.status === "booked") return;
+  const toggleSeat = (seatName) => {
+    const seat = seatLookup[seatName];
+    if (!seat || seat.status === "Đã đặt") return;
 
     setSelectedSeats((prev) =>
-      prev.includes(seatCode)
-        ? prev.filter((code) => code !== seatCode)
-        : [...prev, seatCode]
+      prev.includes(seatName)
+        ? prev.filter((name) => name !== seatName)
+        : [...prev, seatName]
     );
   };
 
-  const selectedSeatCount = selectedSeats.reduce(
-    (total, code) => total + (seatLookup[code]?.span || 1),
-    0
-  );
+  const selectedSeatCount = selectedSeats.length;
 
-  const totalPrice = selectedSeats.reduce((sum, code) => {
-    const seatInfo = seatLookup[code];
-    if (!seatInfo) return sum;
-    const seatPrice = seatLayout.priceByType[seatInfo.type] || 0;
-    const multiplier = seatInfo.span || 1;
-    return sum + seatPrice * multiplier;
+  const totalPrice = selectedSeats.reduce((sum, seatName) => {
+    const seat = seatLookup[seatName];
+    return sum + (seat?.price || 0);
   }, 0);
 
   const sortedSeats = [...selectedSeats].sort((a, b) => a.localeCompare(b));
@@ -87,15 +175,15 @@ export default function SelectSeatScreen() {
       style: { backgroundColor: "#F5B301", borderColor: "#F5B301" },
     },
     {
-      label: "Ghế VIP",
+      label: "Ghế VIP (100k)",
       style: { backgroundColor: "#2C1F4F", borderColor: "#6C47DB" },
     },
     {
-      label: "Ghế thường",
+      label: "Ghế thường (70k)",
       style: { backgroundColor: "#2E2E2E", borderColor: "#444444" },
     },
     {
-      label: "Ghế đôi",
+      label: "Ghế đôi (75k/ghế)",
       style: { backgroundColor: "#3A1C24", borderColor: "#FF6B81" },
     },
     {
@@ -120,13 +208,15 @@ export default function SelectSeatScreen() {
             />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={styles.movieTitle}>{seatLayout.movieTitle}</Text>
+            <Text style={styles.movieTitle}>{movie.title}</Text>
             <Text style={styles.movieMeta}>
-              {seatLayout.theaterName} • {seatLayout.roomName}
+              {theater?.name} • {room.name}
             </Text>
-            <Text style={styles.movieMeta}>
-              {seatLayout.startTime} • {seatLayout.date}
-            </Text>
+            {showtime && (
+              <Text style={styles.movieMeta}>
+                {showtime.start} • {showtime.date}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -139,42 +229,34 @@ export default function SelectSeatScreen() {
         <View style={styles.seatGrid}>
           <View style={styles.rowLabelsColumn}>
             {seatLayout.rows.map((row) => (
-              <View key={`label-${row.label}`} style={styles.rowLabelBox}>
-                <Text style={styles.rowLabelText}>{row.label}</Text>
+              <View key={`label-${row.row}`} style={styles.rowLabelBox}>
+                <Text style={styles.rowLabelText}>{row.row}</Text>
               </View>
             ))}
           </View>
           <View style={styles.seatMatrix}>
             {seatLayout.rows.map((row) => (
-              <View key={row.label} style={styles.seatRow}>
-                {row.seats.map((seat, index) =>
-                  seat ? (
-                    <Pressable
-                      key={seat.code}
-                      style={[
-                        styles.seatBase,
-                        seat.type === "vip" && styles.seatVip,
-                        seat.type === "couple" && styles.seatCouple,
-                        seat.status === "booked" && styles.seatBooked,
-                        selectedSeats.includes(seat.code) &&
-                          seat.status !== "booked" &&
-                          styles.seatSelected,
-                        seat.span === 2 && styles.seatDouble,
-                      ]}
-                      disabled={seat.status === "booked"}
-                      onPress={() => toggleSeat(seat.code)}
-                    >
-                      <Text style={styles.seatText}>
-                        {seat.code.replace(/[A-Z]/g, "")}
-                      </Text>
-                    </Pressable>
-                  ) : (
-                    <View
-                      key={`space-${row.label}-${index}`}
-                      style={styles.spacer}
-                    />
-                  )
-                )}
+              <View key={row.row} style={styles.seatRow}>
+                {row.seats.map((seat) => (
+                  <Pressable
+                    key={seat.id}
+                    style={[
+                      styles.seatBase,
+                      seat.type === "VIP" && styles.seatVip,
+                      seat.isCoupleEligible && styles.seatCoupleEligible,
+                      seat.status === "Đã đặt" && styles.seatBooked,
+                      selectedSeats.includes(seat.name) &&
+                        seat.status !== "Đã đặt" &&
+                        styles.seatSelected,
+                    ]}
+                    disabled={seat.status === "Đã đặt"}
+                    onPress={() => toggleSeat(seat.name)}
+                  >
+                    <Text style={styles.seatText}>
+                      {seat.name.replace(/[A-Z]/g, "")}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
             ))}
           </View>
@@ -209,6 +291,24 @@ export default function SelectSeatScreen() {
               selectedSeats.length === 0 && styles.confirmButtonDisabled,
             ]}
             disabled={selectedSeats.length === 0}
+            onPress={() => {
+              if (selectedSeats.length > 0) {
+                router.push({
+                  pathname: "/booking/payment_method",
+                  params: {
+                    movieTitle: movie.title,
+                    theaterName: theater?.name,
+                    roomName: room.name,
+                    date:
+                      showtime?.date || new Date().toISOString().split("T")[0],
+                    time: showtime?.start || "00:00",
+                    seats: sortedSeats.join(", "),
+                    totalAmount: totalPrice,
+                    showtimeId: showtimeId,
+                  },
+                });
+              }
+            }}
           >
             <Text style={styles.confirmButtonText}>
               {selectedSeats.length === 0
@@ -282,45 +382,49 @@ const styles = StyleSheet.create({
   seatGrid: {
     backgroundColor: "#141414",
     borderRadius: 24,
-    padding: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: "#1F1F1F",
     flexDirection: "row",
-    gap: 12,
+    gap: 8,
   },
   rowLabelsColumn: {
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     paddingVertical: 4,
-    gap: 12,
+    minWidth: 36,
+    marginRight: 4,
   },
   rowLabelBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#2A2A2A",
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: "#6C47DB",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#1F1F1F",
+    marginVertical: 3,
   },
   rowLabelText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
+    color: "#6C47DB",
+    fontWeight: "800",
+    fontSize: 15,
   },
   seatMatrix: {
     flex: 1,
-    paddingLeft: 4,
-    gap: 12,
+    paddingLeft: 8,
+    gap: 6,
   },
   seatRow: {
     flexDirection: "row",
     justifyContent: "center",
     gap: 8,
+    marginVertical: 3,
   },
   seatBase: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 6,
     backgroundColor: "#2E2E2E",
     justifyContent: "center",
     alignItems: "center",
@@ -330,25 +434,27 @@ const styles = StyleSheet.create({
   seatVip: {
     backgroundColor: "#2C1F4F",
     borderColor: "#6C47DB",
+    borderWidth: 1.5,
   },
-  seatCouple: {
+  seatCoupleEligible: {
     backgroundColor: "#3A1C24",
     borderColor: "#FF6B81",
-  },
-  seatDouble: {
-    width: 72,
+    borderWidth: 1.5,
   },
   seatBooked: {
     backgroundColor: "#151515",
     borderColor: "#2A2A2A",
+    opacity: 0.5,
   },
   seatSelected: {
     backgroundColor: "#F5B301",
     borderColor: "#F5B301",
+    borderWidth: 2,
+    transform: [{ scale: 1.1 }],
   },
   seatText: {
     color: "#FFFFFF",
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "700",
   },
   spacer: {
@@ -367,14 +473,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   legendSeat: {
-    width: 22,
-    height: 22,
+    width: 24,
+    height: 24,
     borderRadius: 6,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   legendLabel: {
-    color: "#9CA3AF",
-    fontSize: 12,
+    color: "#E5E7EB",
+    fontSize: 13,
+    fontWeight: "500",
   },
   summary: {
     position: "absolute",
