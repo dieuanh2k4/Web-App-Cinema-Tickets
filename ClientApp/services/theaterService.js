@@ -1,16 +1,11 @@
 import apiClient from "./apiService";
 import { API_CONFIG } from "../config/api.config";
-import {
-  mockTheaters,
-  getTheatersByCity as getMockTheatersByCity,
-} from "../constants/mockDataBackend";
 
 export const theaterService = {
   getAllTheaters: async () => {
     try {
-      // Sử dụng mock data
-      console.log("Using mock theaters data");
-      return mockTheaters;
+      const res = await apiClient.get(API_CONFIG.ENDPOINTS.THEATERS.GET_ALL);
+      return res.data || [];
     } catch (error) {
       console.error("Error fetching all theaters:", error);
       return [];
@@ -19,9 +14,10 @@ export const theaterService = {
 
   getTheaterById: async (id) => {
     try {
-      // Sử dụng mock data
-      const theater = mockTheaters.find((t) => t.id === parseInt(id));
-      return theater || null;
+      const res = await apiClient.get(
+        API_CONFIG.ENDPOINTS.THEATERS.GET_BY_ID(id)
+      );
+      return res.data || null;
     } catch (error) {
       console.error("Error fetching theater by id:", error);
       throw error;
@@ -30,8 +26,9 @@ export const theaterService = {
 
   getTheatersByCity: async (city) => {
     try {
-      // Sử dụng mock data
-      return getMockTheatersByCity(city);
+      const endpoint = API_CONFIG.ENDPOINTS.THEATERS.GET_BY_CITY(city);
+      const res = await apiClient.get(endpoint);
+      return res.data || [];
     } catch (error) {
       console.error("Error fetching theaters by city:", error);
       return [];
@@ -40,9 +37,8 @@ export const theaterService = {
 
   getCities: async () => {
     try {
-      const cities = [...new Set(mockTheaters.map((t) => t.city))].filter(
-        Boolean
-      );
+      const theaters = await theaterService.getAllTheaters();
+      const cities = [...new Set(theaters.map((t) => t.city))].filter(Boolean);
       return cities.sort();
     } catch (error) {
       console.error("Error fetching cities:", error);

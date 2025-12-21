@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.src.Data;
 using Server.src.Dtos.Theater;
@@ -23,6 +24,7 @@ namespace Server.src.Controllers
             _theaterService = theaterService;
         }
 
+        [AllowAnonymous]
         [HttpGet("get-all-theater")]
         public async Task<IActionResult> GetTheaters()
         {
@@ -46,6 +48,7 @@ namespace Server.src.Controllers
             return Ok(theater);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("create-theater")]
         public async Task<IActionResult> CreateTheater([FromBody] CreateTheaterDto createTheaterDto)
         {
@@ -64,6 +67,7 @@ namespace Server.src.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("update-theater/{id}")]
         public async Task<IActionResult> UpdateTheater([FromBody] UpdateTheaterDto updateTheaterDto, int id)
         {
@@ -82,6 +86,7 @@ namespace Server.src.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete-theater/{id}")]
         public async Task<IActionResult> DeleteTheater(int id)
         {

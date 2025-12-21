@@ -11,12 +11,8 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { seatService } from "@/services/bookingService";
-import {
-  mockShowtimes,
-  mockMovies,
-  mockRooms,
-  mockTheaters,
-} from "@/constants/mockDataBackend";
+import { movieService } from "@/services/movieService";
+import { showtimeService } from "@/services/showtimeService";
 
 const formatCurrency = (value) => {
   if (!value) return "0đ";
@@ -30,33 +26,42 @@ export default function SelectSeatScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedSeats, setSelectedSeats] = useState([]);
 
-  // Lấy thông tin showtime, movie, room
-  const showtime = useMemo(
-    () => mockShowtimes.find((s) => s.id === parseInt(showtimeId)),
-    [showtimeId]
-  );
-
-  const movie = useMemo(
-    () =>
-      mockMovies.find((m) => m.id === (showtime?.movieId || parseInt(movieId))),
-    [showtime, movieId]
-  );
-
-  const room = useMemo(
-    () =>
-      mockRooms.find((r) => r.id === (showtime?.roomId || parseInt(roomId))),
-    [showtime, roomId]
-  );
-
-  const theater = useMemo(
-    () => (room ? mockTheaters.find((t) => t.id === room.theaterId) : null),
-    [room]
-  );
+  // Lấy thông tin showtime, movie, room từ backend
+  const [showtime, setShowtime] = useState(null);
+  const [movie, setMovie] = useState(null);
+  const [room, setRoom] = useState(null);
+  const [theater, setTheater] = useState(null);
 
   // Load seats khi component mount
   useEffect(() => {
     loadSeats();
   }, [showtimeId, roomId]);
+
+  useEffect(() => {
+    const loadMeta = async () => {
+      try {
+        // Load movie
+        if (movieId) {
+          const mv = await movieService.getMovieById(parseInt(movieId));
+          setMovie(mv);
+        }
+
+        // Load showtime and related room/theater
+        if (showtimeId) {
+          const all = await showtimeService.getAllShowtimes();
+          const st = all.find((s) => Number(s.id) === parseInt(showtimeId));
+          setShowtime(st || null);
+          if (st) {
+            setRoom(st.rooms || { id: st.roomId, name: st.roomName });
+            setTheater(st.theater || null);
+          }
+        }
+      } catch (e) {
+        console.error("Error loading meta info:", e);
+      }
+    };
+    loadMeta();
+  }, [showtimeId, movieId]);
 
   const loadSeats = async () => {
     try {

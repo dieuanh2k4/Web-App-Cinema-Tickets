@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
@@ -22,6 +23,7 @@ namespace Server.Controllers
             _movieService = movieService;
         }
 
+        [AllowAnonymous]
         [HttpGet("get-all-movies")]
         public async Task<IActionResult> GetMovies()
         {
@@ -37,8 +39,9 @@ namespace Server.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpGet("get-movie-by-id/{id}")]
-        public async Task<IActionResult> GetMovieById([FromQuery] int id)
+        public async Task<IActionResult> GetMovieById([FromRoute] int id)
         {
             try
             {
@@ -51,6 +54,7 @@ namespace Server.Controllers
             }
         }
 
+        [Authorize(Roles = "Staff,Admin")]
         [HttpPost("create-movie")]
         public async Task<IActionResult> CreateMovie([FromForm] CreateMovieDto movieDto, IFormFile? imageFile)
         {
@@ -58,8 +62,8 @@ namespace Server.Controllers
             {
                 if (imageFile != null)
                 {
-                    var uploadResult = await _movieService.UploadImage(imageFile);
-                    movieDto.Thumbnail = uploadResult.SecureUrl.ToString();
+                    var imageUrl = await _movieService.UploadImage(imageFile);
+                    movieDto.Thumbnail = imageUrl;
                 }
 
                 var createdMovie = await _movieService.AddMovie(movieDto);
@@ -82,8 +86,8 @@ namespace Server.Controllers
             {
                 if (imageFile != null)
                 {
-                    var uploadResult = await _movieService.UploadImage(imageFile);
-                    updateMovieDto.Thumbnail = uploadResult.SecureUrl.ToString();
+                    var imageUrl = await _movieService.UploadImage(imageFile);
+                    updateMovieDto.Thumbnail = imageUrl;
                 }
 
                 var updateMovie = await _movieService.UpdateMovie(updateMovieDto, id);
@@ -96,7 +100,8 @@ namespace Server.Controllers
             }
         }
 
-        [HttpDelete("delete-movies/{id}")]
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("delete-movie/{id}")]
         public async Task<IActionResult> DeleteMovie(int id)
         {
             try

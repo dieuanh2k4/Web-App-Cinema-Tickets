@@ -57,6 +57,9 @@ namespace Server.Migrations
                         .IsUnicode(false)
                         .HasColumnType("character varying(15)");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("gender")
                         .HasMaxLength(5)
                         .IsUnicode(false)
@@ -67,7 +70,9 @@ namespace Server.Migrations
                     b.HasIndex("Phone")
                         .IsUnique();
 
-                    b.ToTable("Customer", t =>
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Customer", null, t =>
                         {
                             t.HasCheckConstraint("CK_Customer_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
                         });
@@ -139,7 +144,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Movies", t =>
+                    b.ToTable("Movies", null, t =>
                         {
                             t.HasCheckConstraint("CK_Movie_Duration", "\"Duration\" > 0");
 
@@ -177,7 +182,7 @@ namespace Server.Migrations
                     b.HasIndex("TicketId")
                         .IsUnique();
 
-                    b.ToTable("Payment", t =>
+                    b.ToTable("Payment", null, t =>
                         {
                             t.HasCheckConstraint("CK_Payment_Status", "\"Status\" IN('Đã Thanh toán', 'Chưa Thanh toán', 'Thanh toán thất bại')");
 
@@ -219,7 +224,7 @@ namespace Server.Migrations
 
                     b.HasIndex("TheaterId");
 
-                    b.ToTable("Rooms");
+                    b.ToTable("Rooms", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.Seats", b =>
@@ -255,7 +260,7 @@ namespace Server.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Seats");
+                    b.ToTable("Seats", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.Showtimes", b =>
@@ -287,10 +292,7 @@ namespace Server.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Showtimes", t =>
-                        {
-                            t.HasCheckConstraint("CK_Showtimes_Date", "\"Date\" > CURRENT_DATE");
-                        });
+                    b.ToTable("Showtimes", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.StatusSeat", b =>
@@ -322,7 +324,7 @@ namespace Server.Migrations
 
                     b.HasIndex("ShowtimesId");
 
-                    b.ToTable("StatusSeat");
+                    b.ToTable("StatusSeat", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.Theater", b =>
@@ -350,7 +352,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Theater");
+                    b.ToTable("Theater", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.Ticket", b =>
@@ -409,7 +411,7 @@ namespace Server.Migrations
 
                     b.HasIndex("ShowtimesId");
 
-                    b.ToTable("Ticket");
+                    b.ToTable("Ticket", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.TicketPrice", b =>
@@ -435,7 +437,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TicketPrices", t =>
+                    b.ToTable("TicketPrices", null, t =>
                         {
                             t.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
                         });
@@ -463,7 +465,16 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("User");
+                    b.ToTable("User", (string)null);
+                });
+
+            modelBuilder.Entity("Server.src.Models.Customer", b =>
+                {
+                    b.HasOne("Server.src.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Server.src.Models.Payment", b =>

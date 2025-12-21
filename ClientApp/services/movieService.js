@@ -1,13 +1,11 @@
 import apiClient from "./apiService";
 import { API_CONFIG } from "../config/api.config";
-import { mockMovies, getMoviesByStatus } from "../constants/mockDataBackend";
 
 export const movieService = {
   getAllMovies: async () => {
     try {
-      // Sử dụng mock data
-      console.log("Using mock movies data");
-      return mockMovies;
+      const res = await apiClient.get(API_CONFIG.ENDPOINTS.MOVIES.GET_ALL);
+      return res.data || [];
     } catch (error) {
       console.error("Error fetching all movies:", error);
       return [];
@@ -16,19 +14,21 @@ export const movieService = {
 
   getMovieById: async (id) => {
     try {
-      // Sử dụng mock data
-      const movie = mockMovies.find((m) => m.id === parseInt(id));
-      return movie || null;
+      const res = await apiClient.get(
+        API_CONFIG.ENDPOINTS.MOVIES.GET_BY_ID(id)
+      );
+      return res.data || null;
     } catch (error) {
       console.error("Error fetching movie by id:", error);
       throw error;
     }
   },
 
-  // Helper để filter movies theo status từ backend
+  // Helpers that filter locally based on movie.status returned from backend
   getNowPlaying: async () => {
     try {
-      return getMoviesByStatus("Đang chiếu");
+      const movies = await movieService.getAllMovies();
+      return movies.filter((m) => m.status === "Đang chiếu");
     } catch (error) {
       console.error("Error fetching now playing movies:", error);
       return [];
@@ -37,7 +37,8 @@ export const movieService = {
 
   getUpcoming: async () => {
     try {
-      return getMoviesByStatus("Sắp chiếu");
+      const movies = await movieService.getAllMovies();
+      return movies.filter((m) => m.status === "Sắp chiếu");
     } catch (error) {
       console.error("Error fetching upcoming movies:", error);
       return [];
@@ -47,7 +48,7 @@ export const movieService = {
   searchMovies: async (query) => {
     try {
       const movies = await movieService.getAllMovies();
-      const lowerQuery = query.toLowerCase();
+      const lowerQuery = (query || "").toLowerCase();
       return movies.filter(
         (movie) =>
           movie.title?.toLowerCase().includes(lowerQuery) ||

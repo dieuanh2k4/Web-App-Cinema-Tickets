@@ -1,18 +1,11 @@
 import apiClient from "./apiService";
 import { API_CONFIG } from "../config/api.config";
-import {
-  mockShowtimes,
-  mockRooms,
-  mockTheaters,
-  getShowtimesByMovieTheaterDate,
-} from "../constants/mockDataBackend";
 
 export const showtimeService = {
   getAllShowtimes: async () => {
     try {
-      // Sử dụng mock data
-      console.log("Using mock showtimes data");
-      return mockShowtimes;
+      const res = await apiClient.get(API_CONFIG.ENDPOINTS.SHOWTIMES.GET_ALL);
+      return res.data || [];
     } catch (error) {
       console.error("Error fetching all showtimes:", error);
       return [];
@@ -21,24 +14,14 @@ export const showtimeService = {
 
   getShowtimesByMovie: async (theaterId, movieId, date) => {
     try {
-      // Sử dụng mock data
       const formattedDate = showtimeService.formatDateForBackend(date);
-      const showtimes = getShowtimesByMovieTheaterDate(
-        movieId,
+      const endpoint = API_CONFIG.ENDPOINTS.SHOWTIMES.GET_BY_MOVIE(
         theaterId,
+        movieId,
         formattedDate
       );
-
-      // Enrich với thông tin room và theater
-      return showtimes.map((showtime) => {
-        const room = mockRooms.find((r) => r.id === showtime.roomId);
-        const theater = mockTheaters.find((t) => t.id === room?.theaterId);
-        return {
-          ...showtime,
-          rooms: room,
-          theater: theater,
-        };
-      });
+      const res = await apiClient.get(endpoint);
+      return res.data || [];
     } catch (error) {
       console.error("Error fetching showtimes by movie:", error);
       return [];

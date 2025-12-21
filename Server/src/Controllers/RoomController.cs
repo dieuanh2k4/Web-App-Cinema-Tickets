@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.src.Data;
 using Server.src.Dtos.Rooms;
@@ -24,6 +25,7 @@ namespace Server.src.Controllers
             _roomService = roomService;
         }
 
+        [AllowAnonymous]
         [HttpGet("get-all-room")]
         public async Task<IActionResult> GetRooms()
         {
@@ -40,6 +42,7 @@ namespace Server.src.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("create-rooms")]
         public async Task<IActionResult> CreateRoom([FromBody] CreateRoomDto createRoomDto, int row, int seatsInRow, int normalSeats, int coupleRowsSeats)
         {
@@ -59,6 +62,7 @@ namespace Server.src.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("update-room/{id}")]
         public async Task<IActionResult> UpdateRoom([FromBody] UpdateRoomDto updateRoomDto, int row, int seatsInRow, int normalSeats, int coupleRowsSeats, int id)
         {
@@ -76,6 +80,7 @@ namespace Server.src.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete-room/{id}")]
         public async Task<IActionResult> DeleteRoom(int id)
         {
