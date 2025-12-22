@@ -1,4 +1,8 @@
-import BASE_URL from "@env";
+// import BASE_URL from "@env";
+import { API_CONFIG } from "../config/api.config";
+
+const BASE_URL = API_CONFIG.BASE_URL;
+
 class ApiService {
   // Lấy danh sách phim đang chiếu
   async getNowPlayingMovies() {
