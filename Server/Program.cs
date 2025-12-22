@@ -10,7 +10,10 @@ using Server.src.Services.Interfaces;
 using Server.src.Repositories.Implements;
 using Server.src.Repositories.Interfaces;
 using Server.src.Utils;
+using Server.src.BackgroundJobs;
 using StackExchange.Redis;
+using Hangfire;
+using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,6 +103,29 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = builder.Configuration["Redis:ConnectionString"];
     options.InstanceName = builder.Configuration["Redis:InstanceName"];
 });
+
+// ==========================
+// Cấu hình Hangfire với PostgreSQL
+// ==========================
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(options =>
+    {
+        options.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
+    }));
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.WorkerCount = 1; // Số worker xử lý background jobs
+});
+
+// Register background jobs
+builder.Services.AddScoped<SeatHoldCleanupJob>();
+
+// Register notification service
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -214,6 +240,25 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// ==========================
+// Cấu hình Hangfire Dashboard
+// ==========================
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
+    DashboardTitle = "CineBook Background Jobs"
+});
+
+// Đăng ký recurring job: kiểm tra ghế sắp hết hạn mỗi 1 phút
+RecurringJob.AddOrUpdate<SeatHoldCleanupJob>(
+    "check-expiring-seat-holds",
+    job => job.CheckExpiringSeatHolds(),
+    "*/1 * * * *", // Cron: mỗi 1 phút
+    new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time") // GMT+7
+    });
 
 app.UseHttpsRedirection();
 

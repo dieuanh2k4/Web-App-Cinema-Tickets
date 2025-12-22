@@ -60,7 +60,7 @@ namespace Server.src.Controllers
         }
 
         /// <summary>
-        /// Test seat hold simulation (giả lập giữ ghế 10 phút)
+        /// Test seat hold simulation (giả lập giữ ghế 10 phút) - Support nhiều ghế
         /// </summary>
         [HttpPost("hold-seat")]
         public async Task<IActionResult> TestSeatHold([FromBody] TestSeatHoldDto dto)
@@ -68,32 +68,60 @@ namespace Server.src.Controllers
             try
             {
                 var db = _redis.GetDatabase();
-                
-                var holdKey = $"seat_hold:{dto.ShowtimeId}:{dto.SeatId}";
                 var sessionId = dto.SessionId ?? Guid.NewGuid().ToString();
+                var holdId = Guid.NewGuid().ToString();
+                var ttl = TimeSpan.FromMinutes(10);
                 
-                // Kiểm tra ghế đã được giữ chưa
-                var existingHolder = await db.StringGetAsync(holdKey);
-                if (!existingHolder.IsNullOrEmpty && existingHolder != sessionId)
+                // Kiểm tra tất cả ghế đã được giữ chưa
+                var alreadyHeldSeats = new List<int>();
+                foreach (var seatId in dto.SeatIds)
+                {
+                    var holdKey = $"seat_hold:{dto.ShowtimeId}:{seatId}";
+                    var existingHolder = await db.StringGetAsync(holdKey);
+                    if (!existingHolder.IsNullOrEmpty && existingHolder != sessionId)
+                    {
+                        alreadyHeldSeats.Add(seatId);
+                    }
+                }
+                
+                if (alreadyHeldSeats.Any())
                 {
                     return BadRequest(new
                     {
                         success = false,
-                        message = $"Ghế {dto.SeatId} đã được giữ bởi session khác",
-                        holdBy = existingHolder.ToString()
+                        message = $"Các ghế sau đã được giữ: {string.Join(", ", alreadyHeldSeats)}",
+                        alreadyHeldSeats
                     });
                 }
                 
-                // Giữ ghế trong 10 phút
-                var ttl = TimeSpan.FromMinutes(10);
-                await db.StringSetAsync(holdKey, sessionId, ttl);
+                // Giữ tất cả ghế
+                foreach (var seatId in dto.SeatIds)
+                {
+                    var holdKey = $"seat_hold:{dto.ShowtimeId}:{seatId}";
+                    await db.StringSetAsync(holdKey, holdId, ttl);
+                }
+                
+                // Lưu thông tin hold
+                var holdInfoKey = $"hold_info:{holdId}";
+                var holdInfo = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    holdId,
+                    showtimeId = dto.ShowtimeId,
+                    seatIds = dto.SeatIds,
+                    sessionId,
+                    holdAt = DateTime.UtcNow,
+                    expiresAt = DateTime.UtcNow.Add(ttl)
+                });
+                await db.StringSetAsync(holdInfoKey, holdInfo, ttl);
                 
                 return Ok(new
                 {
                     success = true,
-                    message = "Ghế đã được giữ thành công!",
-                    holdKey = holdKey,
-                    sessionId = sessionId,
+                    message = $"Đã giữ {dto.SeatIds.Count} ghế thành công!",
+                    holdId,
+                    sessionId,
+                    showtimeId = dto.ShowtimeId,
+                    seatIds = dto.SeatIds,
                     expiresAt = DateTime.Now.Add(ttl),
                     ttlSeconds = (int)ttl.TotalSeconds
                 });
@@ -230,7 +258,7 @@ namespace Server.src.Controllers
     public class TestSeatHoldDto
     {
         public int ShowtimeId { get; set; }
-        public int SeatId { get; set; }
+        public List<int> SeatIds { get; set; } = new(); // Thay đổi từ SeatId thành SeatIds (mảng)
         public string? SessionId { get; set; }
     }
 }
