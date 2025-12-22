@@ -10,6 +10,7 @@ using Server.src.Services.Interfaces;
 using Server.src.Repositories.Implements;
 using Server.src.Repositories.Interfaces;
 using Server.src.Utils;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,6 +82,24 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
+
+// ==========================
+// Cấu hình Redis
+// ==========================
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var redisConfig = builder.Configuration.GetSection("Redis");
+    var configOptions = ConfigurationOptions.Parse(redisConfig["ConnectionString"]!);
+    configOptions.AbortOnConnectFail = redisConfig.GetValue<bool>("AbortOnConnectFail");
+    
+    return ConnectionMultiplexer.Connect(configOptions);
+});
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration["Redis:ConnectionString"];
+    options.InstanceName = builder.Configuration["Redis:InstanceName"];
+});
 
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IAuthService, AuthService>();

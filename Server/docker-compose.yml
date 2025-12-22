@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:latest
+    container_name: redis-cinebook
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cinebook-network
+
+  # Optional: Redis Commander (Web UI để xem Redis)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-ui-cinebook
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - cinebook-network
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  cinebook-network:
+    driver: bridge
