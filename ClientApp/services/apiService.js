@@ -1,114 +1,48 @@
-// import BASE_URL from "@env";
+import axios from "axios";
 import { API_CONFIG } from "../config/api.config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const BASE_URL = API_CONFIG.BASE_URL;
+// Tạo axios instance với base URL
+const apiClient = axios.create({
+  baseURL: API_CONFIG.BASE_URL,
+  headers: API_CONFIG.HEADERS,
+  timeout: 10000,
+});
 
-class ApiService {
-  // Lấy danh sách phim đang chiếu
-  async getNowPlayingMovies() {
+// Request interceptor để thêm token vào header
+apiClient.interceptors.request.use(
+  async (config) => {
     try {
-      const response = await fetch(`${BASE_URL}/movies/now-playing`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch now playing movies");
+      const token = await AsyncStorage.getItem("auth_token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
-      return await response.json();
     } catch (error) {
-      console.error("Error fetching now playing movies:", error);
-      throw error;
+      console.error("Error getting token from storage:", error);
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
 
-  // Lấy danh sách phim sắp chiếu
-  async getUpcomingMovies() {
-    try {
-      const response = await fetch(`${BASE_URL}/movies/upcoming`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch upcoming movies");
+// Response interceptor để xử lý errors
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid - clear auth data
+      try {
+        await AsyncStorage.multiRemove(["auth_token", "user_info"]);
+      } catch (storageError) {
+        console.error("Error clearing auth data:", storageError);
       }
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching upcoming movies:", error);
-      throw error;
     }
+    return Promise.reject(error);
   }
+);
 
-  // Lấy danh sách phim featured
-  async getFeaturedMovies() {
-    try {
-      const response = await fetch(`${BASE_URL}/movies/featured`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch featured movies");
-      }
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching featured movies:", error);
-      throw error;
-    }
-  }
-
-  // Lấy chi tiết phim theo ID
-  async getMovieById(id) {
-    try {
-      const response = await fetch(`${BASE_URL}/movies/${id}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch movie details");
-      }
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching movie details:", error);
-      throw error;
-    }
-  }
-
-  // Lấy danh sách rạp chiếu
-  async getCinemas() {
-    try {
-      const response = await fetch(`${BASE_URL}/cinemas`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch cinemas");
-      }
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching cinemas:", error);
-      throw error;
-    }
-  }
-
-  // Lấy suất chiếu theo phim và rạp
-  async getShowtimes(movieId, cinemaId) {
-    try {
-      const response = await fetch(
-        `${BASE_URL}/showtimes?movieId=${movieId}&cinemaId=${cinemaId}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch showtimes");
-      }
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching showtimes:", error);
-      throw error;
-    }
-  }
-
-  // Đặt vé
-  async bookTicket(bookingData) {
-    try {
-      const response = await fetch(`${BASE_URL}/bookings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(bookingData),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to book ticket");
-      }
-      return await response.json();
-    } catch (error) {
-      console.error("Error booking ticket:", error);
-      throw error;
-    }
-  }
-}
-
-export default new ApiService();
+export default apiClient;

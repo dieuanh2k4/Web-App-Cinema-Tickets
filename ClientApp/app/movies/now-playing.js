@@ -12,7 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { MovieCard } from "../../components/MovieCard";
-import { NOW_PLAYING_MOVIES } from "../../constants/mockData";
+import { movieService } from "../../services/movieService";
 
 const { width: windowWidth } = Dimensions.get("window");
 
@@ -25,24 +25,16 @@ export default function NowPlayingScreen() {
     loadMovies();
   }, []);
 
-  const loadMovies = () => {
-    setRefreshing(true);
-    // TODO: Thay thế bằng API call thực
-    // try {
-    //   const response = await fetch('/api/movies/now-playing');
-    //   const moviesData = await response.json();
-    //   setMovies(moviesData);
-    // } catch (error) {
-    //   console.error('Error loading movies:', error);
-    // } finally {
-    //   setRefreshing(false);
-    // }
-
-    // Mock data
-    setTimeout(() => {
-      setMovies(NOW_PLAYING_MOVIES);
+  const loadMovies = async () => {
+    try {
+      setRefreshing(true);
+      const moviesData = await movieService.getNowPlaying();
+      setMovies(moviesData);
+    } catch (error) {
+      console.error("Error loading movies:", error);
+    } finally {
       setRefreshing(false);
-    }, 500);
+    }
   };
 
   const handleMoviePress = (movieId) => {
@@ -57,15 +49,25 @@ export default function NowPlayingScreen() {
       style={styles.movieItem}
       onPress={() => handleMoviePress(item.id)}
     >
-      <Image source={{ uri: item.posterUrl }} style={styles.poster} />
+      <Image
+        source={{ uri: item.posterUrl }}
+        style={styles.poster}
+        resizeMode="cover"
+      />
       <View style={styles.movieInfo}>
         <Text style={styles.movieTitle} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.movieGenre} numberOfLines={1}>
-          {item.genre}
-        </Text>
-        <Text style={styles.movieDuration}>{item.duration}</Text>
+        <View style={styles.genreRow}>
+          <MaterialCommunityIcons name="tag" size={14} color="#999" />
+          <Text style={styles.movieGenre} numberOfLines={1}>
+            {item.genre}
+          </Text>
+        </View>
+        <View style={styles.durationRow}>
+          <MaterialCommunityIcons name="clock-outline" size={14} color="#999" />
+          <Text style={styles.movieDuration}>{item.duration} phút</Text>
+        </View>
         <View style={styles.ratingContainer}>
           <MaterialCommunityIcons name="star" size={16} color="#FFD700" />
           <Text style={styles.rating}>{item.rating}</Text>
@@ -117,7 +119,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingTop: 50,
+    paddingBottom: 15,
     backgroundColor: "#1A1A1A",
     borderBottomWidth: 1,
     borderBottomColor: "#333333",
@@ -139,21 +142,21 @@ const styles = StyleSheet.create({
   movieItem: {
     flexDirection: "row",
     backgroundColor: "#2A2A2A",
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 16,
     padding: 12,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
   poster: {
-    width: 80,
-    height: 120,
+    width: 100,
+    height: 150,
     borderRadius: 12,
     marginRight: 16,
   },
@@ -165,17 +168,27 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  genreRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
   },
   movieGenre: {
     color: "#CCCCCC",
     fontSize: 14,
-    marginBottom: 4,
+    marginLeft: 6,
+  },
+  durationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
   },
   movieDuration: {
     color: "#999999",
-    fontSize: 12,
-    marginBottom: 8,
+    fontSize: 13,
+    marginLeft: 6,
   },
   ratingContainer: {
     flexDirection: "row",

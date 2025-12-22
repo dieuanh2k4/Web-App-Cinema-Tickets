@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { NOW_PLAYING_MOVIES, UPCOMING_MOVIES } from "../../constants/mockData";
+import { movieService } from "../../services/movieService";
 import { showtimeService } from "../../services/showtimeService";
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
@@ -27,29 +27,37 @@ export default function MovieDetailScreen() {
 
   useEffect(() => {
     loadMovieDetail();
-    loadShowtimes();
   }, [id]);
 
-  const loadMovieDetail = () => {
-    const allMovies = [...NOW_PLAYING_MOVIES, ...UPCOMING_MOVIES];
-    const foundMovie = allMovies.find((movie) => movie.id.toString() === id);
+  const loadMovieDetail = async () => {
+    try {
+      setLoading(true);
+      const movieData = await movieService.getMovieById(id);
+      setMovie(movieData);
 
-    if (foundMovie) {
-      setMovie(foundMovie);
+      // Load showtimes for this movie
+      await loadShowtimes(movieData.id);
+    } catch (error) {
+      console.error("Error loading movie detail:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const loadShowtimes = async () => {
+  const loadShowtimes = async (movieId) => {
     try {
-      setLoading(true);
-      const data = await showtimeService.getShowtimesByMovie(id);
-      setShowtimes(data);
-      const groupedByTheater = showtimeService.groupShowtimesByTheater(data);
+      // Get all showtimes and filter by movie
+      const allShowtimes = await showtimeService.getAllShowtimes();
+      const movieShowtimes = allShowtimes.filter(
+        (st) => st.movieId === movieId
+      );
+      setShowtimes(movieShowtimes);
+
+      const groupedByTheater =
+        showtimeService.groupShowtimesByTheater(movieShowtimes);
       setTheaters(groupedByTheater);
     } catch (error) {
-      console.error('Error loading showtimes:', error);
-    } finally {
-      setLoading(false);
+      console.error("Error loading showtimes:", error);
     }
   };
 
@@ -138,57 +146,6 @@ export default function MovieDetailScreen() {
                 "Câu chuyện hấp dẫn về những nhân vật đầy cá tính trong một thế giới đầy màu sắc. Phim mang đến những trải nghiệm thị giác tuyệt vời và cốt truyện lôi cuốn."}
             </Text>
           </View>
-
-          {theaters.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Suất chiếu</Text>
-              {loading ? (
-                <ActivityIndicator size="large" color="#6C47DB" />
-              ) : (
-                theaters.map((theater) => (
-                  <View key={theater.id} style={styles.theaterCard}>
-                    <View style={styles.theaterHeader}>
-                      <MaterialCommunityIcons
-                        name="movie-open"
-                        size={20}
-                        color="#6C47DB"
-                      />
-                      <View style={styles.theaterInfo}>
-                        <Text style={styles.theaterName}>{theater.name}</Text>
-                        <Text style={styles.theaterAddress}>
-                          {theater.address}, {theater.city}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={styles.showtimesContainer}>
-                      {theater.showtimes.map((showtime) => (
-                        <TouchableOpacity
-                          key={showtime.id}
-                          style={styles.showtimeButton}
-                          onPress={() =>
-                            router.push({
-                              pathname: "/booking/select_seat",
-                              params: {
-                                showtimeId: showtime.id,
-                                movieId: id,
-                              },
-                            })
-                          }
-                        >
-                          <Text style={styles.showtimeTime}>
-                            {showtime.start}
-                          </Text>
-                          <Text style={styles.showtimeRoom}>
-                            {showtime.roomName}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                ))
-              )}
-            </View>
-          )}
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Thông tin phim</Text>

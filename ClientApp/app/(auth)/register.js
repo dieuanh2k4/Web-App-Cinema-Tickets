@@ -53,12 +53,22 @@ export default function Register() {
     }
 
     try {
-      const result = await authService.register(email, password);
+      // Tạo username từ email (lấy phần trước @)
+      const username = email.split("@")[0];
+      const phone = ""; // Để trống, không bắt buộc
+
+      const result = await authService.register(
+        username,
+        password,
+        email,
+        phone
+      );
       if (result.success) {
         await register({
           token: result.data.token,
           user: result.data.user,
         });
+        Alert.alert("Thành công", result.message || "Đăng ký thành công!");
       } else {
         Alert.alert("Lỗi đăng ký", result.error);
       }
@@ -182,5 +192,18 @@ const styles = StyleSheet.create({
     color: "#6C47DB",
     fontSize: 14,
     textDecorationLine: "underline",
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: "#FF6B6B",
+  },
+  errorText: {
+    color: "#FF6B6B",
+    fontSize: 13,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  inputContainer: {
+    marginBottom: 8,
   },
 });
