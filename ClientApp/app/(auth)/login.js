@@ -20,19 +20,27 @@ export default function Login() {
   const [errors, setErrors] = useState({});
 
   const handleLogin = async () => {
+    console.log("=== LOGIN TEST ===");
+    console.log("Email:", email);
+    console.log("Password:", password ? "***" : "empty");
+
     try {
       const result = await authService.login(email, password);
+      console.log("Login result:", result);
+
       if (result.success) {
-        // Lưu thông tin user và chuyển hướng thông qua AuthContext
+        console.log("Login success");
         await login({
           token: result.data.token,
           user: result.data.user,
         });
       } else {
-        Alert.alert("Lỗi đăng nhập", result.error);
+        console.log("Login failed:", result.error);
+        Alert.alert("Lỗi đăng nhập", JSON.stringify(result.error));
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Có lỗi xảy ra khi đăng nhập");
+      console.log("Exception:", error);
+      Alert.alert("Lỗi", error.message);
     }
   };
 

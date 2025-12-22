@@ -1,38 +1,57 @@
-import apiClient from './apiService';
+import apiClient from "./apiService";
+import { API_CONFIG } from "../config/api.config";
 
 export const showtimeService = {
-  getShowtimesByMovie: async (movieId) => {
+  getAllShowtimes: async () => {
     try {
-      const response = await apiClient.get(`/Showtimes/by-movie/${movieId}`);
-      return response.data;
+      const res = await apiClient.get(API_CONFIG.ENDPOINTS.SHOWTIMES.GET_ALL);
+      return res.data || [];
     } catch (error) {
-      console.error('Error fetching showtimes:', error);
-      throw error;
+      console.error("Error fetching all showtimes:", error);
+      return [];
     }
   },
 
-  getShowtimesByMovieAndDate: async (movieId, date) => {
+  getShowtimesByMovie: async (theaterId, movieId, date) => {
     try {
-      const response = await apiClient.get(`/Showtimes/by-movie/${movieId}/date/${date}`);
-      return response.data;
+      const formattedDate = showtimeService.formatDateForBackend(date);
+      const endpoint = API_CONFIG.ENDPOINTS.SHOWTIMES.GET_BY_MOVIE(
+        theaterId,
+        movieId,
+        formattedDate
+      );
+      const res = await apiClient.get(endpoint);
+      return res.data || [];
     } catch (error) {
-      console.error('Error fetching showtimes by date:', error);
-      throw error;
+      console.error("Error fetching showtimes by movie:", error);
+      return [];
     }
+  },
+
+  // Helper để format date sang DateOnly format mà backend expect
+  formatDateForBackend: (date) => {
+    if (!date) {
+      const today = new Date();
+      return today.toISOString().split("T")[0];
+    }
+    if (typeof date === "string") return date;
+    return date.toISOString().split("T")[0];
   },
 
   groupShowtimesByTheater: (showtimes) => {
     const grouped = {};
 
-    showtimes.forEach(showtime => {
-      const theaterId = showtime.theaterId;
+    showtimes.forEach((showtime) => {
+      const theaterId = showtime.rooms?.theaterId || showtime.theaterId;
+      const theaterName = showtime.rooms?.theater?.name || showtime.theaterName;
+
       if (!grouped[theaterId]) {
         grouped[theaterId] = {
           id: theaterId,
-          name: showtime.theaterName,
-          address: showtime.theaterAddress,
-          city: showtime.theaterCity,
-          showtimes: []
+          name: theaterName,
+          address: showtime.rooms?.theater?.address || showtime.theaterAddress,
+          city: showtime.rooms?.theater?.city || showtime.theaterCity,
+          showtimes: [],
         };
       }
       grouped[theaterId].showtimes.push(showtime);
@@ -44,7 +63,7 @@ export const showtimeService = {
   groupShowtimesByDate: (showtimes) => {
     const grouped = {};
 
-    showtimes.forEach(showtime => {
+    showtimes.forEach((showtime) => {
       const date = showtime.date;
       if (!grouped[date]) {
         grouped[date] = [];
@@ -53,5 +72,5 @@ export const showtimeService = {
     });
 
     return grouped;
-  }
+  },
 };

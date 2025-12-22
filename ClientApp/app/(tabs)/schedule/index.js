@@ -161,6 +161,7 @@
 //   },
 // });
 
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -169,31 +170,60 @@ import {
   SafeAreaView,
   ScrollView,
   Image,
+  ActivityIndicator,
+  RefreshControl,
+  TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { MOCK_THEATERS } from "../../../constants/mockData";
+import { theaterService } from "../../../services/theaterService";
+import { showtimeService } from "../../../services/showtimeService";
 
-const getFeaturedMovies = (theater) => {
-  if (!theater.showtimes?.length) {
-    return [];
-  }
-
-  const today = new Date().toDateString();
-  const todaySchedule =
-    theater.showtimes.find(
-      (showtime) => new Date(showtime.date).toDateString() === today
-    ) || theater.showtimes[0];
-
-  return todaySchedule?.movies || [];
-};
-
-const formatFeatures = (theater) => theater.features?.slice(0, 4) || [];
+const formatFeatures = (theater) =>
+  [theater.city ? `Thành phố ${theater.city}` : "", "Rạp hiện đại"]
+    .filter(Boolean)
+    .slice(0, 4);
 
 const formatDistance = (distance) => distance || "—";
 
 export default function ScheduleScreen() {
   const router = useRouter();
+  const [theaters, setTheaters] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    loadTheaters();
+  }, []);
+
+  const loadTheaters = async () => {
+    try {
+      setLoading(true);
+      const theatersData = await theaterService.getAllTheaters();
+
+      // Load showtimes and group by theater
+      const allShowtimes = await showtimeService.getAllShowtimes();
+
+      // Add showtimes to each theater
+      const theatersWithShowtimes = theatersData.map((theater) => {
+        const theaterShowtimes = allShowtimes.filter(
+          (st) => st.theaterName === theater.name
+        );
+        return {
+          ...theater,
+          showtimes: theaterShowtimes,
+          showtimeCount: theaterShowtimes.length,
+        };
+      });
+
+      setTheaters(theatersWithShowtimes);
+    } catch (error) {
+      console.error("Error loading theaters:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   const handleShowtimePress = (theaterId, movieId, showtimeId) => {
     router.push({
@@ -213,144 +243,123 @@ export default function ScheduleScreen() {
         Chọn rạp yêu thích và suất chiếu phù hợp trong ngày
       </Text>
 
-      <ScrollView
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {MOCK_THEATERS.map((theater) => {
-          const movies = getFeaturedMovies(theater);
-          return (
-            <View key={theater.theaterId} style={styles.theaterCard}>
-              {theater.imageUrl && (
-                <Image
-                  source={{ uri: theater.imageUrl }}
-                  style={styles.theaterImage}
-                />
-              )}
-              <View style={styles.cardBody}>
-                <View style={styles.headerRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.theaterName}>{theater.name}</Text>
-                    <Text style={styles.theaterAddress}>{theater.address}</Text>
-                  </View>
-                  <View style={styles.ratingBadge}>
-                    <MaterialCommunityIcons
-                      name="star"
-                      size={16}
-                      color="#F5B301"
-                    />
-                    <Text style={styles.ratingText}>
-                      {theater.rating?.toFixed(1) || "4.5"}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text style={styles.description}>{theater.description}</Text>
-
-                <View style={styles.metaRow}>
-                  <MaterialCommunityIcons
-                    name="map-marker"
-                    size={16}
-                    color="#6C47DB"
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6C47DB" />
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                loadTheaters();
+              }}
+              tintColor="#6C47DB"
+              colors={["#6C47DB"]}
+            />
+          }
+        >
+          {theaters.map((theater) => {
+            return (
+              <View
+                key={theater.id || theater.theaterId}
+                style={styles.theaterCard}
+              >
+                {theater.imageUrl && (
+                  <Image
+                    source={{ uri: theater.imageUrl }}
+                    style={styles.theaterImage}
                   />
-                  <Text style={styles.metaText}>
-                    {formatDistance(theater.distance)}
-                  </Text>
-                  <View style={styles.dot} />
-                  <MaterialCommunityIcons
-                    name="seat"
-                    size={16}
-                    color="#6C47DB"
-                  />
-                  <Text style={styles.metaText}>
-                    {theater.screenType || theater.features?.[0] || "ScreenX"}
-                  </Text>
-                </View>
-
-                <View style={styles.badgeRow}>
-                  {formatFeatures(theater).map((feature) => (
-                    <View key={feature} style={styles.badge}>
-                      <Text style={styles.badgeText}>{feature}</Text>
-                    </View>
-                  ))}
-                </View>
-
-                <View style={styles.divider} />
-
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Suất chiếu nổi bật</Text>
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: "/(theaters)/theater_detail",
-                        params: { theaterId: theater.theaterId.toString() },
-                      })
-                    }
-                  >
-                    <Text style={styles.sectionLink}>Xem chi tiết</Text>
-                  </Pressable>
-                </View>
-
-                {movies.length === 0 ? (
-                  <View style={styles.noShowtime}>
-                    <MaterialCommunityIcons
-                      name="calendar-blank-outline"
-                      size={20}
-                      color="#9CA3AF"
-                    />
-                    <Text style={styles.noShowtimeText}>
-                      Chưa có suất chiếu cho ngày này.
-                    </Text>
-                  </View>
-                ) : (
-                  movies.map((movie) => (
-                    <View key={movie.movieId} style={styles.movieBlock}>
-                      <View style={styles.movieInfo}>
-                        <Text style={styles.movieTitle}>
-                          {movie.movieTitle}
-                        </Text>
-                        <Text style={styles.movieMeta}>
-                          {movie.duration} phút • {movie.genre}
-                        </Text>
-                      </View>
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.showtimeRow}
-                      >
-                        {movie.showtimes.map((showtime) => (
-                          <Pressable
-                            key={showtime.id}
-                            style={styles.showtimeChip}
-                            onPress={() =>
-                              handleShowtimePress(
-                                theater.theaterId,
-                                movie.movieId,
-                                showtime.id
-                              )
-                            }
-                          >
-                            <Text style={styles.showtimeTime}>
-                              {showtime.start}
-                            </Text>
-                            <Text style={styles.showtimeRoom}>
-                              {showtime.roomType}
-                            </Text>
-                            <Text style={styles.showtimePrice}>
-                              {showtime.price}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </ScrollView>
-                    </View>
-                  ))
                 )}
+                <View style={styles.cardBody}>
+                  <View style={styles.headerRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.theaterName}>{theater.name}</Text>
+                      <Text style={styles.theaterAddress}>
+                        {theater.address}
+                      </Text>
+                    </View>
+                    <View style={styles.ratingBadge}>
+                      <MaterialCommunityIcons
+                        name="star"
+                        size={16}
+                        color="#F5B301"
+                      />
+                      <Text style={styles.ratingText}>
+                        {theater.rating?.toFixed(1) || "4.5"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.description}>{theater.description}</Text>
+
+                  <View style={styles.metaRow}>
+                    <MaterialCommunityIcons
+                      name="map-marker"
+                      size={16}
+                      color="#6C47DB"
+                    />
+                    <Text style={styles.metaText}>
+                      {formatDistance(theater.distance)}
+                    </Text>
+                    <View style={styles.dot} />
+                    <MaterialCommunityIcons
+                      name="seat"
+                      size={16}
+                      color="#6C47DB"
+                    />
+                    <Text style={styles.metaText}>
+                      {theater.screenType || theater.features?.[0] || "ScreenX"}
+                    </Text>
+                  </View>
+
+                  <View style={styles.badgeRow}>
+                    {formatFeatures(theater).map((feature, index) => (
+                      <View
+                        key={`${
+                          theater.id || theater.theaterId
+                        }-feature-${index}`}
+                        style={styles.badge}
+                      >
+                        <Text style={styles.badgeText}>{feature}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <View style={styles.divider} />
+
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>
+                      Lịch chiếu ({theater.showtimeCount || 0} suất)
+                    </Text>
+                    <Pressable
+                      onPress={() =>
+                        router.push({
+                          pathname: "/(theaters)/theater_detail",
+                          params: { theaterId: theater.id.toString() },
+                        })
+                      }
+                      style={styles.viewAllButton}
+                    >
+                      <Text style={styles.sectionLink}>Xem tất cả</Text>
+                      <MaterialCommunityIcons
+                        name="chevron-right"
+                        size={20}
+                        color="#6C47DB"
+                      />
+                    </Pressable>
+                  </View>
+                </View>
               </View>
-            </View>
-          );
-        })}
-      </ScrollView>
+            );
+          })}
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -362,10 +371,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 100,
+  },
   screenTitle: {
     fontSize: 26,
     fontWeight: "bold",
     color: "#FFFFFF",
+    paddingTop: 32,
   },
   screenSubtitle: {
     color: "#9CA3AF",
@@ -472,62 +488,16 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: "#FFFFFF",
     fontWeight: "600",
+    fontSize: 15,
+  },
+  viewAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   sectionLink: {
     color: "#6C47DB",
     fontWeight: "600",
-  },
-  noShowtime: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 8,
-  },
-  noShowtimeText: {
-    color: "#9CA3AF",
-  },
-  movieBlock: {
-    gap: 8,
-    marginTop: 12,
-  },
-  movieInfo: {
-    gap: 2,
-  },
-  movieTitle: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  movieMeta: {
-    color: "#9CA3AF",
-    fontSize: 13,
-  },
-  showtimeRow: {
-    gap: 12,
-    paddingVertical: 4,
-  },
-  showtimeChip: {
-    backgroundColor: "#1F1F1F",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: "#2E2E2E",
-    marginRight: 12,
-  },
-  showtimeTime: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  showtimeRoom: {
-    color: "#9CA3AF",
-    fontSize: 12,
-    marginVertical: 2,
-  },
-  showtimePrice: {
-    color: "#6C47DB",
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 14,
   },
 });

@@ -90,6 +90,9 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 
+// ==========================
+// Đăng ký các Service (DI)
+// ==========================
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IMinioStorageService, MinioStorageService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -99,14 +102,14 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<ITheaterService, TheaterService>();
 builder.Services.AddScoped<ITicketPriceService, TicketPriceService>();
-
-// Phase 2: Booking services
-builder.Services.AddScoped<ICustomerService, CustomerService>();
-builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<JwtTokenHelper>();
 
+// Phase 2: Booking services
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 // ==========================
 // Thêm Repository
 // ==========================
@@ -114,7 +117,6 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Phase 2: Customer repository
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-
 // ==========================
 // Cấu hình Cloudinary
 // ==========================
@@ -215,7 +217,6 @@ app.UseAuthorization();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 // Map route cho Controller
-app.UseCors(DevCorsPolicy);
 app.MapControllers();
 
 app.Run();

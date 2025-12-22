@@ -41,7 +41,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="schedule"
+        name="schedule/index"
         options={{
           title: "Lịch chiếu",
           tabBarIcon: ({ color, size }) => (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,20 +8,44 @@ import {
   SafeAreaView,
   Platform,
   StatusBar,
+  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { MOCK_THEATERS } from "../../constants/mockData";
+import { theaterService } from "../../services/theaterService";
+import { showtimeService } from "../../services/showtimeService";
 
 export default function TheaterDetailScreen() {
   const { theaterId } = useLocalSearchParams();
   const router = useRouter();
   const [selectedDateIndex, setSelectedDateIndex] = useState(0);
+  const [theater, setTheater] = useState(null);
+  const [showtimes, setShowtimes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Tìm thông tin rạp
-  const theater = MOCK_THEATERS.find(
-    (t) => t.theaterId === parseInt(theaterId)
-  );
+  useEffect(() => {
+    loadTheaterDetail();
+  }, [theaterId]);
+
+  const loadTheaterDetail = async () => {
+    try {
+      setLoading(true);
+      const theaterData = await theaterService.getTheaterById(theaterId);
+      setTheater(theaterData);
+
+      // Load all showtimes for this theater
+      const allShowtimes = await showtimeService.getAllShowtimes();
+      const theaterShowtimes = allShowtimes.filter((st) => {
+        // Filter by theater name (mockDataBackend uses theaterName)
+        return st.theaterName === theaterData.name;
+      });
+      setShowtimes(theaterShowtimes);
+    } catch (error) {
+      console.error("Error loading theater detail:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Tạo danh sách 7 ngày
   const [dates] = useState(() => {
@@ -44,32 +68,67 @@ export default function TheaterDetailScreen() {
     return list;
   });
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6C47DB" />
+          <Text style={styles.loadingText}>Đang tải thông tin rạp...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!theater) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.error}>Không tìm thấy rạp</Text>
+        <View style={styles.errorContainer}>
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={48}
+            color="#9CA3AF"
+          />
+          <Text style={styles.error}>Không tìm thấy rạp</Text>
+          <Pressable
+            style={styles.backButtonError}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>Quay lại</Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
     );
   }
 
   const selectedDate = dates[selectedDateIndex].date;
+  const selectedDateStr = selectedDate.toISOString().split("T")[0]; // Format: YYYY-MM-DD
 
   // Lọc suất chiếu theo ngày và nhóm theo phim
-  const movieShowtimes = theater.showtimes
-    .filter(
-      (s) => new Date(s.date).toDateString() === selectedDate.toDateString()
-    )
+  const movieShowtimes = showtimes
+    .filter((st) => {
+      // So sánh với date string từ backend (format: YYYY-MM-DD)
+      return st.date === selectedDateStr;
+    })
     .reduce((acc, showtime) => {
-      showtime.movies.forEach((movie) => {
-        if (!acc[movie.movieId]) {
-          acc[movie.movieId] = {
-            movieId: movie.movieId,
-            movieTitle: movie.movieTitle,
-            showtimes: [],
-          };
-        }
-        acc[movie.movieId].showtimes.push(movie);
+      const movieId = showtime.movieId;
+      const movieTitle = showtime.movieTitle || `Phim ${movieId}`;
+
+      if (!acc[movieId]) {
+        acc[movieId] = {
+          movieId,
+          movieTitle,
+          showtimes: [],
+        };
+      }
+
+      acc[movieId].showtimes.push({
+        id: showtime.id,
+        start: showtime.start?.substring(0, 5) || showtime.start, // Format HH:mm
+        end: showtime.end,
+        roomId: showtime.roomId,
+        roomType: showtime.roomName || `Phòng ${showtime.roomId}`,
       });
+
       return acc;
     }, {});
 
@@ -180,6 +239,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0A0A0A",
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    color: "#9CA3AF",
+    marginTop: 16,
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  error: {
+    color: "#9CA3AF",
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: "center",
+  },
+  backButtonError: {
+    backgroundColor: "#6C47DB",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 24,
+  },
+  backButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
   header: {
     backgroundColor: "#1A1A1A",
