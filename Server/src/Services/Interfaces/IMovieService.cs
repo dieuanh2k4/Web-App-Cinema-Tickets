@@ -11,7 +11,7 @@ namespace Server.src.Services.Interfaces
     public interface IMovieService
     {
         Task<List<Movies>> GetAllMovies();
-        Task<ImageUploadResult> UploadImage(IFormFile file);
+        Task<string> UploadImage(IFormFile file);
         Task<Movies> AddMovie(CreateMovieDto movieDto);
         Task<Movies> UpdateMovie(UpdateMovieDto updateMovieDto, int id);
         Task<Movies> GetMovieById(int id);

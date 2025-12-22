@@ -9,10 +9,6 @@ using Server.src.Mapper;
 using Server.src.Data;
 using Server.src.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using CloudinaryDotNet;
-using CloudinaryDotNet.Actions;
-using Microsoft.Extensions.Options;
-using Server.src.Utils;
 
 namespace Server.src.Services.Implements
 {
@@ -21,18 +17,12 @@ namespace Server.src.Services.Implements
         private static readonly List<Movies> _movies = new List<Movies>();
 
         private readonly ApplicationDbContext _context;
+        private readonly IMinioStorageService _minioStorage;
 
-        private readonly Cloudinary _cloudinary;
-
-        public MovieService(ApplicationDbContext context, IOptions<CloudinarySettings> config)
+        public MovieService(ApplicationDbContext context, IMinioStorageService minioStorage)
         {
-            var acc = new Account(
-                config.Value.CloudName,
-                config.Value.ApiKey,
-                config.Value.ApiSecret
-            );
-            _cloudinary = new Cloudinary(acc);
             _context = context;
+            _minioStorage = minioStorage;
         }
 
         public Task<List<Movies>> GetAllMovies()
@@ -46,23 +36,19 @@ namespace Server.src.Services.Implements
             return movie;
         }
 
-        // up ảnh lên cloudinary
-        public async Task<ImageUploadResult> UploadImage(IFormFile file)
+        // Upload ảnh lên MinIO
+        public async Task<string> UploadImage(IFormFile file)
         {
-            var uploadResult = new ImageUploadResult();
-
-            if (file.Length > 0)
+            if (file == null || file.Length == 0)
             {
-                // mở 1 luồng stream của file bằng OpenReadStream là để xử lý dl nhị phân, tối ưu hóa bộ nhớ và hiệu suất...
-                using var stream = file.OpenReadStream();
-                var uploadParams = new ImageUploadParams
-                {
-                    File = new FileDescription(file.FileName, stream),
-                    Transformation = new Transformation().Crop("fill")
-                };
-                uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                throw new ArgumentException("File không hợp lệ");
             }
-            return uploadResult;
+
+            // Upload lên MinIO với folder "movies"
+            var fileName = await _minioStorage.UploadImageAsync(file, "movies");
+            
+            // Trả về URL đầy đủ
+            return _minioStorage.GetImageUrl(fileName);
         }
 
         public async Task<Movies> AddMovie(CreateMovieDto createmovieDto)

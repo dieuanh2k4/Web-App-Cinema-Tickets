@@ -62,8 +62,8 @@ namespace Server.Controllers
             {
                 if (imageFile != null)
                 {
-                    var uploadResult = await _movieService.UploadImage(imageFile);
-                    movieDto.Thumbnail = uploadResult.SecureUrl.ToString();
+                    var imageUrl = await _movieService.UploadImage(imageFile);
+                    movieDto.Thumbnail = imageUrl;
                 }
 
                 var createdMovie = await _movieService.AddMovie(movieDto);
@@ -86,8 +86,8 @@ namespace Server.Controllers
             {
                 if (imageFile != null)
                 {
-                    var uploadResult = await _movieService.UploadImage(imageFile);
-                    updateMovieDto.Thumbnail = uploadResult.SecureUrl.ToString();
+                    var imageUrl = await _movieService.UploadImage(imageFile);
+                    updateMovieDto.Thumbnail = imageUrl;
                 }
 
                 var updateMovie = await _movieService.UpdateMovie(updateMovieDto, id);

@@ -10,6 +10,7 @@ using Server.src.Services.Interfaces;
 using Server.src.Repositories.Implements;
 using Server.src.Repositories.Interfaces;
 using Server.src.Utils;
+using Minio;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -90,6 +91,7 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddScoped<IMinioStorageService, MinioStorageService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -155,25 +157,42 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Đăng ký Minio Client
+builder.Services.AddSingleton<IMinioClient>(s =>
+{
+    var configuration = s.GetRequiredService<IConfiguration>();
+    return new MinioClient()
+        .WithEndpoint(configuration["Minio:Endpoint"])
+        .WithCredentials(configuration["Minio:AccessKey"], configuration["Minio:SecretKey"])
+        .WithSSL(configuration.GetValue<bool>("Minio:UseSsl"))
+        .Build();
+});
+
 // ==========================
 // Build app
 // ==========================
 var app = builder.Build();
 
-// DataSeeder tạm thời tắt vì Supabase connection timeout
-// Tạo tài khoản admin mặc định khi database trống
+// Tự động chạy migrations khi khởi động
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        DataSeeder.Seed(context); // Gọi DataSeeder
+        
+        // Chạy migrations tự động
+        Console.WriteLine("Đang chạy database migrations...");
+        context.Database.Migrate();
+        Console.WriteLine("Migrations hoàn tất!");
+        
+        // Seed dữ liệu
+        DataSeeder.Seed(context);
         Console.WriteLine("DataSeeder đã chạy thành công!");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Lỗi khi chạy DataSeeder: {ex.Message}");
+        Console.WriteLine($"Lỗi khi khởi tạo database: {ex.Message}");
     }
 }
 
@@ -191,6 +210,9 @@ app.UseHttpsRedirection();
 // Thêm Authentication & Authorization cho JWT
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Redirect root path to Swagger
+app.MapGet("/", () => Results.Redirect("/swagger"));
 
 // Map route cho Controller
 app.UseCors(DevCorsPolicy);
