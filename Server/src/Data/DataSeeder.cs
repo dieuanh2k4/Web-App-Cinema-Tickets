@@ -167,7 +167,7 @@ namespace Server.src.Data
                         AgeLimit = "T13",
                         StartDate = DateTime.UtcNow.Date.AddDays(-7),
                         EndDate = DateTime.UtcNow.Date.AddDays(30),
-                        Thumbnail = "https://res.cloudinary.com/demo/image/upload/avatar2.jpg",
+                        Thumbnail = "https://m.media-amazon.com/images/I/71s3cEqEZTL._AC_UF1000,1000_QL80_.jpg",
                         Rating = 8.5
                     },
                     new Movies
@@ -182,7 +182,7 @@ namespace Server.src.Data
                         AgeLimit = "T13",
                         StartDate = DateTime.UtcNow.Date.AddDays(-14),
                         EndDate = DateTime.UtcNow.Date.AddDays(20),
-                        Thumbnail = "https://res.cloudinary.com/demo/image/upload/avengers.jpg",
+                        Thumbnail = "https://upload.wikimedia.org/wikipedia/vi/2/2d/Avengers_Endgame_bia_teaser.jpg",
                         Rating = 9.0
                     },
                     new Movies
@@ -197,7 +197,7 @@ namespace Server.src.Data
                         AgeLimit = "T13",
                         StartDate = DateTime.UtcNow.Date.AddDays(-5),
                         EndDate = DateTime.UtcNow.Date.AddDays(25),
-                        Thumbnail = "https://res.cloudinary.com/demo/image/upload/matbiec.jpg",
+                        Thumbnail = "https://upload.wikimedia.org/wikipedia/vi/4/42/%C3%81p_ph%C3%ADch_phim_M%E1%BA%AFt_bi%E1%BA%BFc.jpg",
                         Rating = 7.5
                     }
                 };
