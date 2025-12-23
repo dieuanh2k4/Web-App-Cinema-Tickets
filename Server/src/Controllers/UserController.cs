@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
 using Server.src.Dtos.Users;
 using Server.src.Services.Interfaces;
@@ -85,6 +86,111 @@ namespace Server.src.Controllers
                 await _context.SaveChangesAsync();
 
                 return Ok(_userService);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Get current user profile
+        /// </summary>
+        [AllowAnonymous]
+        [Authorize]
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetProfile()
+        {
+            try
+            {
+                var userId = User.FindFirst("id")?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Unauthorized" });
+                }
+
+                var user = await _context.User
+                    .FirstOrDefaultAsync(u => u.Id == int.Parse(userId));
+
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                return Ok(new
+                {
+                    id = user.Id,
+                    username = user.Username,
+                    email = user.Email,
+                    phoneNumber = user.PhoneNumber,
+                    userType = user.UserType,
+                    createdAt = user.CreatedDate
+                });
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Get current user's tickets
+        /// </summary>
+        [AllowAnonymous]
+        [Authorize]
+        [HttpGet("tickets")]
+        public async Task<IActionResult> GetUserTickets()
+        {
+            try
+            {
+                var userId = User.FindFirst("id")?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Unauthorized" });
+                }
+
+                var user = await _context.User
+                    .FirstOrDefaultAsync(u => u.Id == int.Parse(userId));
+
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                // Get tickets by user's email (assuming Customer email matches User email)
+                var tickets = await _context.Tickets
+                    .Include(t => t.Showtimes)
+                        .ThenInclude(s => s.Movies)
+                    .Include(t => t.Showtimes)
+                        .ThenInclude(s => s.Rooms)
+                            .ThenInclude(r => r.Theater)
+                    .Include(t => t.Customer)
+                    .Where(t => t.Customer.Email == user.Email)
+                    .OrderByDescending(t => t.Date)
+                    .ToListAsync();
+
+                var result = tickets.Select(t => new
+                {
+                    ticketId = t.Id,
+                    bookingCode = t.Id.ToString("D8"),
+                    movieTitle = t.Showtimes?.Movies?.Title,
+                    movieThumbnail = t.Showtimes?.Movies?.Thumbnail,
+                    theaterName = t.Showtimes?.Rooms?.Theater?.TheaterName,
+                    roomName = t.Showtimes?.Rooms?.Name,
+                    showtime = new DateTime(
+                        t.Date.Year,
+                        t.Date.Month,
+                        t.Date.Day,
+                        t.Showtimes?.Start.Hour ?? 0,
+                        t.Showtimes?.Start.Minute ?? 0,
+                        0
+                    ),
+                    totalPrice = t.TotalPrice,
+                    status = t.Status,
+                    bookingDate = t.Date
+                }).ToList();
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
