@@ -20,6 +20,7 @@ namespace Server.src.Data
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<TicketPrice> TicketPrices { get; set; }
         public DbSet<User> User { get; set; }
+        public DbSet<OTPCode> OTPCodes { get; set; }
 
         public ApplicationDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions) {}
 

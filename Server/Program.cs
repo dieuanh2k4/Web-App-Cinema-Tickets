@@ -176,8 +176,11 @@ builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 
-// Search service
-builder.Services.AddScoped<ISearchService, SearchService>();
+// Payment & QR Code & Email services
+builder.Services.AddScoped<VNPayService>();
+builder.Services.AddScoped<QRCodeService>();
+builder.Services.AddScoped<EmailService>();
+
 // ==========================
 // Thêm Repository
 // ==========================
