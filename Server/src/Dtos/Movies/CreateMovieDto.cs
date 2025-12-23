@@ -19,5 +19,6 @@ namespace Server.src.Dtos.Movies
         public string? Director { get; set; } = null;// đạo diễn
         public List<string>? Actors { get; set; } = null;// diễn viên
         public double Rating { get; set; } = 0;// đánh giá
+        public string? Trailer { get; set; } = null; // YouTube trailer URL
     }
 }

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Server.src.Data;
 using Server.src.Dtos.ShowTimes;
 using Server.src.Services.Interfaces;
+using Server.src.Services.Implements;
 
 namespace Server.src.Controllers
 {
@@ -17,11 +18,16 @@ namespace Server.src.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IShowtimeService _showtimeService;
+        private readonly AutoShowtimeService _autoShowtimeService;
 
-        public ShowtimesController(ApplicationDbContext context, IShowtimeService showtimeService, ILogger<ShowtimesController> logger) : base(logger)
+        public ShowtimesController(
+            ApplicationDbContext context, 
+            IShowtimeService showtimeService, 
+            ILogger<ShowtimesController> logger) : base(logger)
         {
             _context = context;
             _showtimeService = showtimeService;
+            _autoShowtimeService = new AutoShowtimeService(context);
         }
 
         [AllowAnonymous]
@@ -109,6 +115,86 @@ namespace Server.src.Controllers
                 var showtimes = await _showtimeService.GetShowtimeByMovie(theaterId, movieId, date);
 
                 return Ok(showtimes);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        /// <summary>
+        /// AI: Tự động tạo lịch chiếu cho 1 ngày
+        /// </summary>
+        [AllowAnonymous]
+        [HttpPost("auto-generate")]
+        public async Task<IActionResult> AutoGenerateShowtimes([FromQuery] DateOnly? date)
+        {
+            try
+            {
+                var targetDate = date ?? DateOnly.FromDateTime(DateTime.Now);
+                var showtimes = await _autoShowtimeService.GenerateShowtimesForDate(targetDate);
+
+                return Ok(new
+                {
+                    isSuccess = true,
+                    message = $"Đã tạo {showtimes.Count} suất chiếu cho ngày {targetDate:dd/MM/yyyy}",
+                    data = showtimes,
+                    generatedAt = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        /// <summary>
+        /// AI: Tự động tạo lịch chiếu cho nhiều ngày
+        /// </summary>
+        [AllowAnonymous]
+        [HttpPost("auto-generate-range")]
+        public async Task<IActionResult> AutoGenerateShowtimesRange([FromQuery] DateOnly startDate, [FromQuery] DateOnly endDate)
+        {
+            try
+            {
+                if (startDate > endDate)
+                {
+                    return BadRequest(new { isSuccess = false, message = "Ngày bắt đầu phải nhỏ hơn ngày kết thúc" });
+                }
+
+                var showtimes = await _autoShowtimeService.GenerateShowtimesForDateRange(startDate, endDate);
+
+                return Ok(new
+                {
+                    isSuccess = true,
+                    message = $"Đã tạo {showtimes.Count} suất chiếu từ {startDate:dd/MM/yyyy} đến {endDate:dd/MM/yyyy}",
+                    data = showtimes,
+                    generatedAt = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Lấy thống kê lịch chiếu
+        /// </summary>
+        [AllowAnonymous]
+        [HttpGet("statistics")]
+        public async Task<IActionResult> GetShowtimeStatistics([FromQuery] DateOnly? date)
+        {
+            try
+            {
+                var targetDate = date ?? DateOnly.FromDateTime(DateTime.Now);
+                var stats = await _autoShowtimeService.GetShowtimeStatistics(targetDate);
+
+                return Ok(new
+                {
+                    isSuccess = true,
+                    data = stats
+                });
             }
             catch (Exception ex)
             {
