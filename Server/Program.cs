@@ -170,10 +170,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<ITheaterService, TheaterService>();
 builder.Services.AddScoped<ITicketPriceService, TicketPriceService>();
-builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
-builder.Services.AddScoped<JwtTokenHelper>();
 
 // Phase 2: Booking services
 builder.Services.AddScoped<ICustomerService, CustomerService>();
@@ -227,7 +224,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(DevCorsPolicy, policy =>
     {
-        policy.AllowAnyOrigin() // Cho phép MỌI domain
+        policy.AllowAnyOrigin() // Cho phép MỌI domain/origin
               .AllowAnyMethod() // Cho phép MỌI method (GET, POST, PUT, DELETE...)
               .AllowAnyHeader(); // Cho phép MỌI header
     });
@@ -302,6 +299,9 @@ RecurringJob.AddOrUpdate<SeatHoldCleanupJob>(
     {
         TimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time") // GMT+7
     });
+
+// **QUAN TRỌNG: Bật CORS trước khi xử lý request**
+app.UseCors(DevCorsPolicy);
 
 app.UseHttpsRedirection();
 
