@@ -78,6 +78,8 @@ namespace Server.src.Controllers
                 {
                     var holdKey = $"seat_hold:{dto.ShowtimeId}:{seatId}";
                     var existingHolder = await db.StringGetAsync(holdKey);
+                    
+                    // ✅ FIX: So sánh với sessionId thay vì holdId
                     if (!existingHolder.IsNullOrEmpty && existingHolder != sessionId)
                     {
                         alreadyHeldSeats.Add(seatId);
@@ -94,14 +96,14 @@ namespace Server.src.Controllers
                     });
                 }
                 
-                // Giữ tất cả ghế
+                // ✅ FIX: Lưu sessionId thay vì holdId để có thể verify ownership
                 foreach (var seatId in dto.SeatIds)
                 {
                     var holdKey = $"seat_hold:{dto.ShowtimeId}:{seatId}";
-                    await db.StringSetAsync(holdKey, holdId, ttl);
+                    await db.StringSetAsync(holdKey, sessionId, ttl);
                 }
                 
-                // Lưu thông tin hold
+                // Lưu thông tin hold chi tiết
                 var holdInfoKey = $"hold_info:{holdId}";
                 var holdInfo = System.Text.Json.JsonSerializer.Serialize(new
                 {

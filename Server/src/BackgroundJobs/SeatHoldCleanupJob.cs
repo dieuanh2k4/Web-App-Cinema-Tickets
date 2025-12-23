@@ -33,37 +33,40 @@ namespace Server.src.BackgroundJobs
 
         /// <summary>
         /// Job chạy định kỳ để kiểm tra các ghế sắp hết hạn
+        /// NOTE: Tạm thời disable để tránh timeout, Redis TTL tự động xóa keys
         /// </summary>
-        [AutomaticRetry(Attempts = 3)]
+        [AutomaticRetry(Attempts = 0)] // Disable retry để tránh spam logs
         public async Task CheckExpiringSeatHolds()
         {
             try
             {
+                // ⚠️ TEMPORARY: Disable job vì SCAN operation gây timeout
+                // Redis TTL tự động xóa keys sau 10 phút nên không cần job này
+                _logger.LogInformation("[SeatHoldCleanup] Job bị disable tạm thời. Redis TTL tự động cleanup.");
+                
+                await Task.CompletedTask;
+                return;
+                
+                /* ORIGINAL CODE - Uncomment khi cần:
                 var db = _redis.GetDatabase();
-                var server = _redis.GetServer(_redis.GetEndPoints().First());
                 
-                // Lấy TTL từ config (mặc định 10 phút = 600 giây)
+                // Sử dụng async scan thay vì Keys() để tránh block Redis
+                var endpoint = _redis.GetEndPoints().First();
+                var server = _redis.GetServer(endpoint);
+                
                 var ttlMinutes = _configuration.GetValue<int>("Redis:SeatHoldTTLMinutes", 10);
-                var warningThresholdSeconds = 120; // Cảnh báo khi còn 2 phút
+                var warningThresholdSeconds = 120;
 
-                // Tìm tất cả các key hold:*
-                var keys = server.Keys(pattern: "CineBook:hold:*").ToList();
-                
-                _logger.LogInformation($"[SeatHoldCleanup] Đang kiểm tra {keys.Count} ghế đang giữ...");
-
-                foreach (var key in keys)
+                var scannedCount = 0;
+                await foreach (var key in server.KeysAsync(pattern: "CineBook:hold:*", pageSize: 100))
                 {
+                    scannedCount++;
                     var ttl = await db.KeyTimeToLiveAsync(key);
                     
-                    if (!ttl.HasValue)
-                    {
-                        _logger.LogWarning($"[SeatHoldCleanup] Key {key} không có TTL, bỏ qua.");
-                        continue;
-                    }
+                    if (!ttl.HasValue) continue;
 
                     var remainingSeconds = ttl.Value.TotalSeconds;
 
-                    // Nếu còn khoảng 2 phút (120 giây) thì gửi cảnh báo
                     if (remainingSeconds > 0 && remainingSeconds <= warningThresholdSeconds)
                     {
                         var holdId = key.ToString().Replace("CineBook:hold:", "");
@@ -71,23 +74,17 @@ namespace Server.src.BackgroundJobs
                         _logger.LogWarning($"⚠️ [SeatHoldCleanup] HoldId '{holdId}' sắp hết hạn (còn {remainingSeconds}s)");
                     }
                     
-                    // Nếu đã hết hạn (TTL âm hoặc = 0)
-                    else if (remainingSeconds <= 0)
-                    {
-                        var holdId = key.ToString().Replace("CineBook:hold:", "");
-                        await _notificationService.SendSeatExpiredNotificationAsync(holdId);
-                        _logger.LogInformation($"❌ [SeatHoldCleanup] HoldId '{holdId}' đã hết hạn");
-                        
-                        // Redis tự động xóa key khi hết TTL, không cần xóa thủ công
-                    }
+                    // Giới hạn số lượng keys xử lý mỗi lần
+                    if (scannedCount >= 100) break;
                 }
 
-                _logger.LogInformation($"[SeatHoldCleanup] Hoàn tất kiểm tra seat holds.");
+                _logger.LogInformation($"[SeatHoldCleanup] Đã kiểm tra {scannedCount} seat holds.");
+                */
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[SeatHoldCleanup] Lỗi khi kiểm tra seat holds");
-                throw; // Để Hangfire retry
+                // Không throw để tránh retry
             }
         }
 

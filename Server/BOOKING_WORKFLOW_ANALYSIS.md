@@ -774,27 +774,35 @@ builder.Services.AddSingleton<IDistributedLockFactory>(sp =>
 
 ### **📅 Roadmap triển khai:**
 
-#### **Phase 1: MVP (2 tuần)**
-- [ ] Cài đặt Redis + StackExchange.Redis
-- [ ] Implement `HoldSeatsAsync()` với Redis TTL
-- [ ] Implement `ConfirmBookingAsync()` với transaction
-- [ ] Unit tests + Integration tests
+#### **Phase 1: MVP (2 tuần)** - ✅ **100% HOÀN THÀNH**
+- [x] Cài đặt Redis + StackExchange.Redis
+- [x] Implement `HoldSeatsAsync()` với Redis TTL (RedisTestController)
+- [x] Implement `ConfirmBookingAsync()` với transaction (BookingController)
+- [x] Unit tests (11 test cases) + Integration tests (5 test cases)
+- [x] Manual testing documentation (22 test scenarios)
+- [x] Fix idempotent hold logic
 
-#### **Phase 2: Enhancement (1 tuần)**
-- [ ] Thêm Distributed Lock (RedLock.net)
-- [ ] Background job cleanup (Hangfire)
-- [ ] Monitoring (Redis Insight)
+#### **Phase 2: Enhancement (1 tuần)** - ⚡ **60% ĐANG THỰC HIỆN**
+- [x] Install RedLock.net package
+- [x] Create DistributedLockService
+- [x] Add health checks (PostgreSQL + Redis at `/health` endpoint)
+- [x] Background job cleanup (Hangfire) - **⚠️ Disabled vì Redis TTL đã tự động cleanup**
+- [ ] Implement distributed locks trong BookingController
+- [ ] Setup Redis Insight cho monitoring
+- [ ] Load testing với k6/JMeter
 
-#### **Phase 3: Real-time (1 tuần)**
+#### **Phase 3: Real-time (1 tuần)** - ❌ CHƯA BẮT ĐẦU
 - [ ] WebSocket/SignalR cho seat availability
 - [ ] Redis Pub/Sub cho broadcast updates
 - [ ] Frontend countdown timer (10 phút)
+- [ ] Real-time notifications khi ghế sắp hết hạn
 
-#### **Phase 4: Optimization (tuần 5+)**
+#### **Phase 4: Optimization (tuần 5+)** - ❌ CHƯA BẮT ĐẦU
 - [ ] Redis Cluster setup
 - [ ] Cache warming strategies
 - [ ] Performance benchmarking
 - [ ] Load testing (JMeter/k6)
+- [ ] Redis Sentinel for high availability
 
 ---
 

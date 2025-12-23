@@ -121,6 +121,25 @@ builder.Services.AddHangfireServer(options =>
     options.WorkerCount = 1; // Số worker xử lý background jobs
 });
 
+// ⭐ Phase 2: Add Health Checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>("postgresql")
+    .AddCheck("redis", () =>
+    {
+        try
+        {
+            var sp = builder.Services.BuildServiceProvider();
+            var redis = sp.GetRequiredService<IConnectionMultiplexer>();
+            return redis.IsConnected
+                ? Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("Redis connected")
+                : Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy("Redis disconnected");
+        }
+        catch (Exception ex)
+        {
+            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy("Redis error", ex);
+        }
+    });
+
 // Register background jobs
 builder.Services.AddScoped<SeatHoldCleanupJob>();
 
@@ -249,6 +268,9 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
     DashboardTitle = "CineBook Background Jobs"
 });
+
+// ⭐ Phase 2: Health Checks Endpoint
+app.MapHealthChecks("/health");
 
 // Đăng ký recurring job: kiểm tra ghế sắp hết hạn mỗi 1 phút
 RecurringJob.AddOrUpdate<SeatHoldCleanupJob>(
