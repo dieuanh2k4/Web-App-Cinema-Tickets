@@ -42,7 +42,7 @@ namespace Server.src.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpPost("create-rooms")]
         public async Task<IActionResult> CreateRoom([FromBody] CreateRoomDto createRoomDto, int row, int seatsInRow, int normalSeats, int coupleRowsSeats)
         {
@@ -62,7 +62,7 @@ namespace Server.src.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpPut("update-room/{id}")]
         public async Task<IActionResult> UpdateRoom([FromBody] UpdateRoomDto updateRoomDto, int row, int seatsInRow, int normalSeats, int coupleRowsSeats, int id)
         {
@@ -80,7 +80,7 @@ namespace Server.src.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete-room/{id}")]
         public async Task<IActionResult> DeleteRoom(int id)
         {

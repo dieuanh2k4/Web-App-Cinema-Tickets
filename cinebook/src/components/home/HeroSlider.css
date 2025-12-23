@@ -3,7 +3,7 @@
   width: 100%;
   max-width: 1200px;
   height: 480px;
-  margin: 120px auto 0;
+  margin: 160px auto 0;
   overflow: hidden;
   border-radius: 15px;
   box-shadow: 0 10px 40px rgba(108, 99, 255, 0.3);
@@ -227,7 +227,7 @@
 @media (max-width: 1024px) {
   .hero-slider {
     height: 400px;
-    margin-top: 140px;
+    margin-top: 180px;
   }
 
   .slide-title {
@@ -258,7 +258,7 @@
 @media (max-width: 768px) {
   .hero-slider {
     height: 350px;
-    margin-top: 160px;
+    margin-top: 200px;
     border-radius: 10px;
   }
 
@@ -284,3 +284,4 @@
     padding: 0 50px;
   }
 }
+

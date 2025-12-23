@@ -11,8 +11,8 @@ namespace Server.src.Data
     {
         public static void Seed(ApplicationDbContext context)
         {
-            // Đảm bảo DB đã tồn tại
-            context.Database.Migrate();
+            // Migration đã được chạy rồi, không cần gọi lại
+            // context.Database.Migrate();
 
             // 1. Seed Users
             if (!context.User.Any())
@@ -23,19 +23,25 @@ namespace Server.src.Data
                     {
                         username = "admin",
                         password = PasswordHelper.HashPassword("admin123"),
-                        userType = 0 // Admin
+                        userType = 0 // 0 = Admin
                     },
                     new User
                     {
                         username = "staff",
                         password = PasswordHelper.HashPassword("staff123"),
-                        userType = 1 // Staff
+                        userType = 1 // 1 = Staff
+                    },
+                    new User
+                    {
+                        username = "customer",
+                        password = PasswordHelper.HashPassword("customer123"),
+                        userType = 2 // 2 = Customer
                     }
                 };
 
                 context.User.AddRange(users);
                 context.SaveChanges();
-                Console.WriteLine("✅ Đã tạo 2 users");
+                Console.WriteLine("Đã tạo 3 users");
             }
 
             // 2. Seed Theaters
@@ -329,7 +335,7 @@ namespace Server.src.Data
                 Console.WriteLine("✅ Đã tạo 4 ticket prices");
             }
 
-            Console.WriteLine("\n🎉 DataSeeder hoàn thành!");
+            Console.WriteLine("\nData User hoàn thành!");
         }
     }
 }

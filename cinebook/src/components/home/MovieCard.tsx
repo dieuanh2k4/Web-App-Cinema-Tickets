@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Movie } from '../../types/movie.types';
 import './MovieCard.css';
 
@@ -16,12 +17,15 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
   };
 
   return (
-    <div className="movie-card">
+    <Link to={`/movie/${movie.id}`} className="movie-card">
       <div className="movie-poster">
         <img src={movie.thumbnail} alt={movie.title} loading="lazy" />
         <div className="movie-overlay">
           <div className="overlay-content">
-            <button className="btn-buy-ticket">MUA VÉ</button>
+            <button className="btn-buy-ticket" onClick={(e) => {
+              e.preventDefault();
+              window.location.href = `/movie/${movie.id}#showtime-section`;
+            }}>MUA VÉ</button>
             <button className="btn-trailer">XEM TRAILER</button>
           </div>
         </div>
@@ -45,7 +49,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
           <span>📅 {formatDate(movie.startDate)}</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

@@ -32,7 +32,7 @@ services:
     networks:
       - cinebook-network
 
-  # ⭐ Phase 2: Redis Insight (Professional monitoring tool)
+  # Phase 2: Redis Insight (Professional monitoring tool)
   redis-insight:
     image: redis/redisinsight:latest
     container_name: redis-insight-cinebook

@@ -39,8 +39,9 @@ namespace Server.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpGet("get-movie-by-id/{id}")]
-        public async Task<IActionResult> GetMovieById([FromQuery] int id)
+        public async Task<IActionResult> GetMovieById([FromRoute] int id)
         {
             try
             {
@@ -53,7 +54,7 @@ namespace Server.Controllers
             }
         }
 
-        [Authorize(Policy = "StaffOrAdmin")]
+        [Authorize(Roles = "Staff,Admin")]
         [HttpPost("create-movie")]
         public async Task<IActionResult> CreateMovie([FromForm] CreateMovieDto movieDto, IFormFile? imageFile)
         {
@@ -61,8 +62,8 @@ namespace Server.Controllers
             {
                 if (imageFile != null)
                 {
-                    var uploadResult = await _movieService.UploadImage(imageFile);
-                    movieDto.Thumbnail = uploadResult.SecureUrl.ToString();
+                    var imageUrl = await _movieService.UploadImage(imageFile);
+                    movieDto.Thumbnail = imageUrl;
                 }
 
                 var createdMovie = await _movieService.AddMovie(movieDto);
@@ -85,8 +86,8 @@ namespace Server.Controllers
             {
                 if (imageFile != null)
                 {
-                    var uploadResult = await _movieService.UploadImage(imageFile);
-                    updateMovieDto.Thumbnail = uploadResult.SecureUrl.ToString();
+                    var imageUrl = await _movieService.UploadImage(imageFile);
+                    updateMovieDto.Thumbnail = imageUrl;
                 }
 
                 var updateMovie = await _movieService.UpdateMovie(updateMovieDto, id);
@@ -99,7 +100,7 @@ namespace Server.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete-movie/{id}")]
         public async Task<IActionResult> DeleteMovie(int id)
         {

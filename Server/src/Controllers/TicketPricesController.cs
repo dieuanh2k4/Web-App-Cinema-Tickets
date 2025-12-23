@@ -42,7 +42,7 @@ namespace Server.src.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpPost("create-ticket-price")]
         public async Task<IActionResult> CreateTicketPrice([FromBody] CreateTicketPriceDto createTicketPriceDto)
         {
@@ -61,7 +61,7 @@ namespace Server.src.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpPut("update-ticket-price/{id}")]
         public async Task<IActionResult> UpdateTicketPrice([FromBody] UpdateTicketPriceDto updateTicketPriceDto, int id)
         {
@@ -79,7 +79,7 @@ namespace Server.src.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete-ticket-price/{id}")]
         public async Task<IActionResult> DeleteTicketPrice(int id)
         {

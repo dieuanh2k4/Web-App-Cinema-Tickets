@@ -74,7 +74,14 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorCodesToAdd: null
+        )
+    );
 });
 
 // ==========================
@@ -121,7 +128,7 @@ builder.Services.AddHangfireServer(options =>
     options.WorkerCount = 1; // Số worker xử lý background jobs
 });
 
-// ⭐ Phase 2: Add Health Checks
+// Phase 2: Add Health Checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<ApplicationDbContext>("postgresql")
     .AddCheck("redis", () =>
@@ -147,21 +154,22 @@ builder.Services.AddScoped<SeatHoldCleanupJob>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddScoped<IMinioStorageService, MinioStorageService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
-builder.Services.AddScoped<ITicketPriceService, TicketPriceService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<ITheaterService, TheaterService>();
 builder.Services.AddScoped<ITicketPriceService, TicketPriceService>();
-
-// Phase 2: Booking services
-builder.Services.AddScoped<ICustomerService, CustomerService>();
-builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<JwtTokenHelper>();
 
+// Phase 2: Booking services
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 // ==========================
 // Thêm Repository
 // ==========================
@@ -169,7 +177,6 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Phase 2: Customer repository
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-
 // ==========================
 // Cấu hình Cloudinary
 // ==========================
@@ -199,24 +206,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // ==========================
-// Cấu hình Authorization Policies
-// ==========================
-builder.Services.AddAuthorization(options =>
-{
-    // Policy chỉ cho Admin
-    options.AddPolicy("AdminOnly", policy => 
-        policy.RequireRole("Admin"));
-    
-    // Policy cho Staff hoặc Admin
-    options.AddPolicy("StaffOrAdmin", policy => 
-        policy.RequireRole("Admin", "Staff"));
-    
-    // Policy yêu cầu đăng nhập (bất kỳ role nào)
-    options.AddPolicy("Authenticated", policy => 
-        policy.RequireAuthenticatedUser());
-});
-
-// ==========================
 // Cấu hình CORS: cho phép frontend được gọi API
 // ==========================
 const string DevCorsPolicy = "DevCorsPolicy";
@@ -230,24 +219,42 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Đăng ký Minio Client
+builder.Services.AddSingleton<IMinioClient>(s =>
+{
+    var configuration = s.GetRequiredService<IConfiguration>();
+    return new MinioClient()
+        .WithEndpoint(configuration["Minio:Endpoint"])
+        .WithCredentials(configuration["Minio:AccessKey"], configuration["Minio:SecretKey"])
+        .WithSSL(configuration.GetValue<bool>("Minio:UseSsl"))
+        .Build();
+});
+
 // ==========================
 // Build app
 // ==========================
 var app = builder.Build();
 
-// **THÊM ĐOẠN NÀY: Chạy DataSeeder khi app khởi động**
+// Tự động chạy migrations khi khởi động
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        DataSeeder.Seed(context); // Gọi DataSeeder
+        
+        // Chạy migrations tự động
+        Console.WriteLine("Đang chạy database migrations...");
+        context.Database.Migrate();
+        Console.WriteLine("Migrations hoàn tất!");
+        
+        // Seed dữ liệu
+        DataSeeder.Seed(context);
         Console.WriteLine("DataSeeder đã chạy thành công!");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Lỗi khi chạy DataSeeder: {ex.Message}");
+        Console.WriteLine($"Lỗi khi khởi tạo database: {ex.Message}");
     }
 }
 
@@ -269,7 +276,7 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     DashboardTitle = "CineBook Background Jobs"
 });
 
-// ⭐ Phase 2: Health Checks Endpoint
+// Phase 2: Health Checks Endpoint
 app.MapHealthChecks("/health");
 
 // Đăng ký recurring job: kiểm tra ghế sắp hết hạn mỗi 1 phút
@@ -288,8 +295,10 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Redirect root path to Swagger
+app.MapGet("/", () => Results.Redirect("/swagger"));
+
 // Map route cho Controller
-app.UseCors(DevCorsPolicy);
 app.MapControllers();
 
 app.Run();
