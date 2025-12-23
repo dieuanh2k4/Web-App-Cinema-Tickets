@@ -778,18 +778,12 @@ builder.Services.AddSingleton<IDistributedLockFactory>(sp =>
 - [x] Cài đặt Redis + StackExchange.Redis
 - [x] Implement `HoldSeatsAsync()` với Redis TTL (RedisTestController)
 - [x] Implement `ConfirmBookingAsync()` với transaction (BookingController)
-- [x] Unit tests (11 test cases) + Integration tests (5 test cases)
-- [x] Manual testing documentation (22 test scenarios)
-- [x] Fix idempotent hold logic
+- [ ] Unit tests + Integration tests
 
-#### **Phase 2: Enhancement (1 tuần)** - ⚡ **60% ĐANG THỰC HIỆN**
-- [x] Install RedLock.net package
-- [x] Create DistributedLockService
-- [x] Add health checks (PostgreSQL + Redis at `/health` endpoint)
+#### **Phase 2: Enhancement (1 tuần)** - 🚧 40% HOÀN THÀNH
+- [ ] Thêm Distributed Lock (RedLock.net)
 - [x] Background job cleanup (Hangfire) - **⚠️ Disabled vì Redis TTL đã tự động cleanup**
-- [ ] Implement distributed locks trong BookingController
-- [ ] Setup Redis Insight cho monitoring
-- [ ] Load testing với k6/JMeter
+- [ ] Monitoring (Redis Insight)
 
 #### **Phase 3: Real-time (1 tuần)** - ❌ CHƯA BẮT ĐẦU
 - [ ] WebSocket/SignalR cho seat availability

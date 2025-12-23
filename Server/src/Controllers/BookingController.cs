@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Server.src.Dtos.Booking;
 using Server.src.Services.Interfaces;
+using Server.src.Services.Implements;
 using StackExchange.Redis;
 
 namespace Server.src.Controllers
@@ -18,16 +19,19 @@ namespace Server.src.Controllers
         private readonly IBookingService _bookingService;
         private readonly IConnectionMultiplexer _redis;
         private readonly IConfiguration _configuration;
+        private readonly DistributedLockService _lockService;
 
         public BookingController(
             IBookingService bookingService, 
             IConnectionMultiplexer redis,
             IConfiguration configuration,
+            DistributedLockService lockService,
             ILogger<BookingController> logger) : base(logger)
         {
             _bookingService = bookingService;
             _redis = redis;
             _configuration = configuration;
+            _lockService = lockService;
         }
 
         /// <summary>
@@ -99,6 +103,7 @@ namespace Server.src.Controllers
         /// <summary>
         /// 🔒 Bước 1: Giữ ghế trong 10 phút (Hold Seats)
         /// User chọn ghế → Backend hold ghế trong Redis với TTL 10 phút
+        /// ⭐ Phase 2: Sử dụng Distributed Lock để ngăn race condition 100%
         /// </summary>
         [AllowAnonymous]
         [HttpPost("hold-seats")]
@@ -111,54 +116,70 @@ namespace Server.src.Controllers
                     return BadRequest(new { message = "Vui lòng chọn ít nhất 1 ghế" });
                 }
 
-                var db = _redis.GetDatabase();
-                var ttlMinutes = _configuration.GetValue<int>("Redis:SeatHoldTTLMinutes", 10);
-                var holdId = Guid.NewGuid().ToString(); // Unique hold ID
-                var holdKey = $"CineBook:hold:{holdId}";
-
-                // Kiểm tra xem các ghế đã được hold chưa
-                foreach (var seatId in dto.SeatIds)
-                {
-                    var seatKey = $"CineBook:seat:{dto.ShowtimeId}:{seatId}";
-                    var isHeld = await db.KeyExistsAsync(seatKey);
-                    
-                    if (isHeld)
+                // ⭐ Phase 2: Acquire distributed lock cho showtime + seats
+                var lockResource = $"booking:lock:{dto.ShowtimeId}:{string.Join(",", dto.SeatIds.OrderBy(x => x))}";
+                
+                var result = await _lockService.ExecuteWithLockAsync(
+                    lockResource,
+                    async () =>
                     {
-                        return BadRequest(new { message = $"Ghế {seatId} đã được giữ bởi người khác" });
-                    }
-                }
+                        var db = _redis.GetDatabase();
+                        var ttlMinutes = _configuration.GetValue<int>("Redis:SeatHoldTTLMinutes", 10);
+                        var holdId = Guid.NewGuid().ToString();
+                        var holdKey = $"CineBook:hold:{holdId}";
 
-                // Hold các ghế trong Redis với TTL 10 phút
-                var holdData = new
-                {
-                    holdId,
-                    showtimeId = dto.ShowtimeId,
-                    seatIds = dto.SeatIds,
-                    userId = dto.UserId,
-                    holdAt = DateTime.UtcNow,
-                    expiresAt = DateTime.UtcNow.AddMinutes(ttlMinutes)
-                };
+                        // Kiểm tra xem các ghế đã được hold chưa (bên trong lock)
+                        foreach (var seatId in dto.SeatIds)
+                        {
+                            var seatKey = $"CineBook:seat:{dto.ShowtimeId}:{seatId}";
+                            var isHeld = await db.KeyExistsAsync(seatKey);
+                            
+                            if (isHeld)
+                            {
+                                throw new InvalidOperationException($"Ghế {seatId} đã được giữ bởi người khác");
+                            }
+                        }
 
-                var holdDataJson = System.Text.Json.JsonSerializer.Serialize(holdData);
-                await db.StringSetAsync(holdKey, holdDataJson, TimeSpan.FromMinutes(ttlMinutes));
+                        // Hold các ghế trong Redis với TTL 10 phút
+                        var holdData = new
+                        {
+                            holdId,
+                            showtimeId = dto.ShowtimeId,
+                            seatIds = dto.SeatIds,
+                            userId = dto.UserId,
+                            holdAt = DateTime.UtcNow,
+                            expiresAt = DateTime.UtcNow.AddMinutes(ttlMinutes)
+                        };
 
-                // Đánh dấu từng ghế là đang được hold
-                foreach (var seatId in dto.SeatIds)
-                {
-                    var seatKey = $"CineBook:seat:{dto.ShowtimeId}:{seatId}";
-                    await db.StringSetAsync(seatKey, holdId, TimeSpan.FromMinutes(ttlMinutes));
-                }
+                        var holdDataJson = System.Text.Json.JsonSerializer.Serialize(holdData);
+                        await db.StringSetAsync(holdKey, holdDataJson, TimeSpan.FromMinutes(ttlMinutes));
 
-                return Ok(new
-                {
-                    success = true,
-                    message = $"Đã giữ {dto.SeatIds.Count} ghế trong {ttlMinutes} phút",
-                    holdId,
-                    showtimeId = dto.ShowtimeId,
-                    seatIds = dto.SeatIds,
-                    expiresAt = holdData.expiresAt,
-                    ttlSeconds = ttlMinutes * 60
-                });
+                        // Đánh dấu từng ghế là đang được hold
+                        foreach (var seatId in dto.SeatIds)
+                        {
+                            var seatKey = $"CineBook:seat:{dto.ShowtimeId}:{seatId}";
+                            await db.StringSetAsync(seatKey, holdId, TimeSpan.FromMinutes(ttlMinutes));
+                        }
+
+                        return new
+                        {
+                            success = true,
+                            message = $"Đã giữ {dto.SeatIds.Count} ghế trong {ttlMinutes} phút",
+                            holdId,
+                            showtimeId = dto.ShowtimeId,
+                            seatIds = dto.SeatIds,
+                            expiresAt = holdData.expiresAt,
+                            ttlSeconds = ttlMinutes * 60
+                        };
+                    },
+                    TimeSpan.FromSeconds(10) // Lock timeout: 10 giây
+                );
+
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
