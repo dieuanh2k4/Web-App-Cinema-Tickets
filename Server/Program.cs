@@ -14,6 +14,7 @@ using Server.src.BackgroundJobs;
 using StackExchange.Redis;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Minio;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -177,6 +178,9 @@ builder.Services.AddScoped<JwtTokenHelper>();
 // Phase 2: Booking services
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+
+// Search service
+builder.Services.AddScoped<ISearchService, SearchService>();
 // ==========================
 // Thêm Repository
 // ==========================
