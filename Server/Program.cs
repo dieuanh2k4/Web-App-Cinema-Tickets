@@ -110,6 +110,12 @@ builder.Services.AddScoped<JwtTokenHelper>();
 // Phase 2: Booking services
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+
+// Payment & QR Code & Email services
+builder.Services.AddScoped<VNPayService>();
+builder.Services.AddScoped<QRCodeService>();
+builder.Services.AddScoped<EmailService>();
+
 // ==========================
 // Thêm Repository
 // ==========================

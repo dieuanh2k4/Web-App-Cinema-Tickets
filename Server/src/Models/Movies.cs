@@ -20,6 +20,7 @@ namespace Server.src.Models
         public string? Director { get; set; } // đạo diễn
         public List<string>? Actors { get; set; } // diễn viên
         public double Rating { get; set; } // đánh giá
+        public string? Trailer { get; set; } // YouTube trailer URL
         
         public ICollection<Showtimes>? Showtimes { get; set; }
 
