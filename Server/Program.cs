@@ -10,9 +10,20 @@ using Server.src.Services.Interfaces;
 using Server.src.Repositories.Implements;
 using Server.src.Repositories.Interfaces;
 using Server.src.Utils;
+using Server.src.BackgroundJobs;
+using StackExchange.Redis;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Minio;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Trong Docker chỉ dùng HTTP, HTTPS sẽ được xử lý bởi reverse proxy (nginx)
+// Port 8080 trong container sẽ được map ra port 5000 ở host
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(8080); // HTTP only - khớp với ASPNETCORE_URLS và docker port mapping
+});
 
 // ==========================
 // Swagger cấu hình với JWT Authorization
@@ -91,8 +102,65 @@ builder.Services.AddControllers()
     });
 
 // ==========================
-// Đăng ký các Service (DI)
+// Cấu hình Redis
 // ==========================
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var redisConfig = builder.Configuration.GetSection("Redis");
+    var configOptions = ConfigurationOptions.Parse(redisConfig["ConnectionString"]!);
+    configOptions.AbortOnConnectFail = redisConfig.GetValue<bool>("AbortOnConnectFail");
+    
+    return ConnectionMultiplexer.Connect(configOptions);
+});
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration["Redis:ConnectionString"];
+    options.InstanceName = builder.Configuration["Redis:InstanceName"];
+});
+
+// ==========================
+// Cấu hình Hangfire với PostgreSQL
+// ==========================
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(options =>
+    {
+        options.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
+    }));
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.WorkerCount = 1; // Số worker xử lý background jobs
+});
+
+// Phase 2: Add Health Checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>("postgresql")
+    .AddCheck("redis", () =>
+    {
+        try
+        {
+            var sp = builder.Services.BuildServiceProvider();
+            var redis = sp.GetRequiredService<IConnectionMultiplexer>();
+            return redis.IsConnected
+                ? Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("Redis connected")
+                : Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy("Redis disconnected");
+        }
+        catch (Exception ex)
+        {
+            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy("Redis error", ex);
+        }
+    });
+
+// Register background jobs
+builder.Services.AddScoped<SeatHoldCleanupJob>();
+
+// Register notification service
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IMinioStorageService, MinioStorageService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -212,6 +280,28 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// ==========================
+// Cấu hình Hangfire Dashboard
+// ==========================
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
+    DashboardTitle = "CineBook Background Jobs"
+});
+
+// Phase 2: Health Checks Endpoint
+app.MapHealthChecks("/health");
+
+// Đăng ký recurring job: kiểm tra ghế sắp hết hạn mỗi 1 phút
+RecurringJob.AddOrUpdate<SeatHoldCleanupJob>(
+    "check-expiring-seat-holds",
+    job => job.CheckExpiringSeatHolds(),
+    "*/1 * * * *", // Cron: mỗi 1 phút
+    new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time") // GMT+7
+    });
 
 app.UseHttpsRedirection();
 

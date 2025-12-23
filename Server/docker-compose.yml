@@ -71,12 +71,61 @@ services:
       - cinebook-network
     restart: unless-stopped
 
-networks:
-  cinebook-network:
-    driver: bridge
+  redis:
+    image: redis:latest
+    container_name: redis-cinebook
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cinebook-network
+
+  # Optional: Redis Commander (Web UI để xem Redis)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-ui-cinebook
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8082:8081"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - cinebook-network
+
+  # Phase 2: Redis Insight (Professional monitoring tool)
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: redis-insight-cinebook
+    ports:
+      - "5540:5540"
+    volumes:
+      - redis-insight-data:/data
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - cinebook-network
 
 volumes:
   postgres-data:
     driver: local
   minio-data:
     driver: local
+  redis-data:
+    driver: local
+  redis-insight-data:
+    driver: local
+
+networks:
+  cinebook-network:
+    driver: bridge

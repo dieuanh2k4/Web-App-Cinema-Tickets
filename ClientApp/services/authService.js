@@ -94,8 +94,8 @@ export const authService = {
       console.log("🔵 Login Request:", { url, email });
 
       const res = await api.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, {
-        email,
-        password,
+        Username: email, // Backend expects 'Username' not 'email'
+        Password: password, // Backend expects 'Password' with capital P
       });
 
       console.log("✅ Login Response:", res.data);
