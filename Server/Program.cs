@@ -17,6 +17,13 @@ using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Trong Docker chỉ dùng HTTP, HTTPS sẽ được xử lý bởi reverse proxy (nginx)
+// Port 8080 trong container sẽ được map ra port 5000 ở host
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(8080); // HTTP only - khớp với ASPNETCORE_URLS và docker port mapping
+});
+
 // ==========================
 // Swagger cấu hình với JWT Authorization
 // ==========================
