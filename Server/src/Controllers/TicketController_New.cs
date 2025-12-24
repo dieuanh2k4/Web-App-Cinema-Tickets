@@ -8,15 +8,15 @@ namespace Server.src.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TicketController : ApiControllerBase
+    public class TicketControllerNew : ApiControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly QRCodeService _qrCodeService;
 
-        public TicketController(
+        public TicketControllerNew(
             ApplicationDbContext context,
             QRCodeService qrCodeService,
-            ILogger<TicketController> logger) : base(logger)
+            ILogger<TicketControllerNew> logger) : base(logger)
         {
             _context = context;
             _qrCodeService = qrCodeService;

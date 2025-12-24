@@ -120,11 +120,11 @@ namespace Server.src.Controllers
                 return Ok(new
                 {
                     id = user.Id,
-                    username = user.Username,
-                    email = user.Email,
-                    phoneNumber = user.PhoneNumber,
-                    userType = user.UserType,
-                    createdAt = user.CreatedDate
+                    username = user.username,
+                    email = user.email,
+                    phoneNumber = user.phoneNumber,
+                    userType = user.userType,
+                    createdAt = user.createdDate
                 });
             }
             catch (Exception ex)
@@ -165,7 +165,7 @@ namespace Server.src.Controllers
                         .ThenInclude(s => s.Rooms)
                             .ThenInclude(r => r.Theater)
                     .Include(t => t.Customer)
-                    .Where(t => t.Customer.Email == user.Email)
+                    .Where(t => t.Customer.Email == user.email)
                     .OrderByDescending(t => t.Date)
                     .ToListAsync();
 
@@ -175,7 +175,7 @@ namespace Server.src.Controllers
                     bookingCode = t.Id.ToString("D8"),
                     movieTitle = t.Showtimes?.Movies?.Title,
                     movieThumbnail = t.Showtimes?.Movies?.Thumbnail,
-                    theaterName = t.Showtimes?.Rooms?.Theater?.TheaterName,
+                    theaterName = t.Showtimes?.Rooms?.Theater?.Name,
                     roomName = t.Showtimes?.Rooms?.Name,
                     showtime = new DateTime(
                         t.Date.Year,
@@ -186,7 +186,6 @@ namespace Server.src.Controllers
                         0
                     ),
                     totalPrice = t.TotalPrice,
-                    status = t.Status,
                     bookingDate = t.Date
                 }).ToList();
 
