@@ -209,13 +209,13 @@ export default function ShowtimesPage() {
               )}
             </div>
 
-            {/* Date selector - Tab style like image */}
+            {/* Date selector */}
             <div>
               <label className="block text-sm text-gray-400 mb-3 flex items-center space-x-2">
                 <FiCalendar size={16} />
-                <span>Chọn ngày chiếu</span>
+                <span>Chọn ngày</span>
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-7 gap-2">
                 {dates.map((date) => {
                   const formatted = formatDate(date);
                   const isSelected = formatted.fullDate === selectedDate;
@@ -223,20 +223,19 @@ export default function ShowtimesPage() {
                     <button
                       key={formatted.fullDate}
                       onClick={() => setSelectedDate(formatted.fullDate)}
-                      className={`px-4 py-2.5 rounded-lg text-center transition-all border ${
+                      className={`p-3 rounded-lg text-center transition-all ${
                         isSelected
-                          ? 'bg-purple text-white border-purple shadow-lg shadow-purple/30'
-                          : 'bg-dark-lighter hover:bg-dark text-gray-300 border-gray-custom hover:border-purple/50'
+                          ? 'bg-purple text-white shadow-lg shadow-purple/30'
+                          : 'bg-dark hover:bg-dark-lighter text-gray-400'
                       }`}
                     >
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs font-medium">{formatted.day}</span>
-                        <span className="font-bold text-base">{formatted.date}/{formatted.month}</span>
+                      <div className="text-xs mb-1">{formatted.day}</div>
+                      <div className="font-bold text-lg">{formatted.date}</div>
+                      <div className="text-xs">
+                        {formatted.month}/{new Date().getFullYear()}
                       </div>
                       {formatted.isToday && (
-                        <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-white' : 'text-purple'}`}>
-                          Hôm nay
-                        </div>
+                        <div className="text-xs text-purple mt-1">Hôm nay</div>
                       )}
                     </button>
                   );
