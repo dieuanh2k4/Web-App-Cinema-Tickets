@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Movies from './pages/Movies';
 import AddMovie from './pages/AddMovie';
 import EditMovie from './pages/EditMovie';
+import Rooms from './pages/Rooms';
 import TicketPrices from './pages/TicketPrices';
 import Accounts from './pages/Accounts';
 import AddAccount from './pages/AddAccount';
@@ -69,7 +70,7 @@ function App() {
               <Route path="add" element={<AddMovie />} />
               <Route path="edit/:id" element={<EditMovie />} />
             </Route>
-            <Route path="rooms" element={<div className="p-6 text-white">Quản lý phòng chiếu (Coming soon)</div>} />
+            <Route path="rooms" element={<Rooms />} />
             <Route path="seats" element={<div className="p-6 text-white">Quản lý ghế ngồi (Coming soon)</div>} />
             <Route path="showtimes" element={<div className="p-6 text-white">Quản lý lịch chiếu (Coming soon)</div>} />
             <Route path="ticket-prices" element={<TicketPrices />} />

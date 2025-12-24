@@ -196,42 +196,6 @@ export const movies = [
   }
 ];
 
-// Mock Rooms
-export const rooms = [
-  {
-    id: 1,
-    name: 'Phòng 1',
-    capacity: 120,
-    rows: 10,
-    seatsPerRow: 12,
-    type: 'standard'
-  },
-  {
-    id: 2,
-    name: 'Phòng 2',
-    capacity: 80,
-    rows: 8,
-    seatsPerRow: 10,
-    type: 'vip'
-  },
-  {
-    id: 3,
-    name: 'Phòng 3',
-    capacity: 150,
-    rows: 12,
-    seatsPerRow: 13,
-    type: 'imax'
-  },
-  {
-    id: 4,
-    name: 'Phòng 4',
-    capacity: 100,
-    rows: 10,
-    seatsPerRow: 10,
-    type: 'standard'
-  }
-];
-
 // Mock Seats - Generate for each room
 export const generateSeats = (roomId) => {
   const room = rooms.find(r => r.id === roomId);
@@ -463,6 +427,55 @@ export const ticketPrices = [
   { id: 16, roomType: 'IMAX', seatType: 'Thường', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 110000 },
   { id: 17, roomType: 'IMAX', seatType: 'Đôi', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 130000 },
   { id: 18, roomType: 'IMAX', seatType: 'Vip', showtimeType: 'Suất chiếu thường', dayType: 'Ngày cuối tuần', price: 150000 }
+];
+
+// Mock Rooms (Cinema Rooms)
+export const rooms = [
+  {
+    id: 1,
+    name: 'Phòng 1',
+    type: '2D',
+    totalSeats: 238,
+    rows: 14,
+    columns: 17,
+    createdDate: '2024-01-15'
+  },
+  {
+    id: 2,
+    name: 'Phòng 2',
+    type: '2D',
+    totalSeats: 150,
+    rows: 12,
+    columns: 13,
+    createdDate: '2024-01-15'
+  },
+  {
+    id: 3,
+    name: 'Phòng 3',
+    type: '3D',
+    totalSeats: 100,
+    rows: 10,
+    columns: 10,
+    createdDate: '2024-02-01'
+  },
+  {
+    id: 4,
+    name: 'Phòng 4',
+    type: '3D',
+    totalSeats: 130,
+    rows: 10,
+    columns: 13,
+    createdDate: '2024-02-01'
+  },
+  {
+    id: 5,
+    name: 'Phòng IMAX',
+    type: 'IMAX',
+    totalSeats: 200,
+    rows: 15,
+    columns: 14,
+    createdDate: '2024-03-10'
+  }
 ];
 
 // Mock Dashboard Statistics
