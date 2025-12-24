@@ -4,7 +4,7 @@ WORKDIR /src
 
 COPY ["Server/Server.csproj", "Server/"]
 
-RUN dotnet restore "Server.csproj"
+RUN dotnet restore "Server/Server.csproj"
 
 COPY . .
 
