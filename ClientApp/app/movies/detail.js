@@ -34,25 +34,21 @@ export default function MovieDetailScreen() {
       setLoading(true);
       const movieData = await movieService.getMovieById(id);
       setMovie(movieData);
-
-      // Load showtimes for this movie
       await loadShowtimes(movieData.id);
+      setLoading(false);
     } catch (error) {
       console.error("Error loading movie detail:", error);
-    } finally {
       setLoading(false);
     }
   };
 
   const loadShowtimes = async (movieId) => {
     try {
-      // Get all showtimes and filter by movie
       const allShowtimes = await showtimeService.getAllShowtimes();
       const movieShowtimes = allShowtimes.filter(
-        (st) => st.movieId === movieId
+        (st) => st.movieId === parseInt(movieId)
       );
       setShowtimes(movieShowtimes);
-
       const groupedByTheater =
         showtimeService.groupShowtimesByTheater(movieShowtimes);
       setTheaters(groupedByTheater);

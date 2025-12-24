@@ -30,9 +30,9 @@ export default function UpcomingScreen() {
       setRefreshing(true);
       const moviesData = await movieService.getUpcoming();
       setMovies(moviesData);
+      setRefreshing(false);
     } catch (error) {
       console.error("Error loading movies:", error);
-    } finally {
       setRefreshing(false);
     }
   };
