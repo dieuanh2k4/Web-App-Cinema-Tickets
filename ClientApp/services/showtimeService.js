@@ -2,6 +2,7 @@ import apiClient from "./apiService";
 import { API_CONFIG } from "../config/api.config";
 
 export const showtimeService = {
+  // Lấy tất cả lịch chiếu
   getAllShowtimes: async () => {
     try {
       const res = await apiClient.get(API_CONFIG.ENDPOINTS.SHOWTIMES.GET_ALL);
@@ -12,6 +13,7 @@ export const showtimeService = {
     }
   },
 
+  // Lấy lịch chiếu theo phim, rạp và ngày
   getShowtimesByMovie: async (theaterId, movieId, date) => {
     try {
       const formattedDate = showtimeService.formatDateForBackend(date);
@@ -101,6 +103,94 @@ export const showtimeService = {
     });
 
     return grouped;
+  },
+
+  // Get showtime by ID
+  getShowtimeById: async (showtimeId) => {
+    try {
+      const res = await apiClient.get(
+        `${API_CONFIG.ENDPOINTS.SHOWTIMES.GET_ALL}/${showtimeId}`
+      );
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching showtime by ID:", error);
+      throw error;
+    }
+  },
+
+  // Get showtimes by theater ID
+  getShowtimesByTheater: async (theaterId, date = null) => {
+    try {
+      const allShowtimes = await showtimeService.getAllShowtimes();
+      const formattedDate = date
+        ? showtimeService.formatDateForBackend(date)
+        : null;
+
+      const filtered = allShowtimes.filter((st) => {
+        const matchesTheater =
+          st.rooms?.theaterId === parseInt(theaterId) ||
+          st.theaterId === parseInt(theaterId);
+
+        if (!formattedDate) return matchesTheater;
+
+        const showtimeDate = st.date?.split("T")[0] || st.date;
+        return matchesTheater && showtimeDate === formattedDate;
+      });
+
+      return filtered;
+    } catch (error) {
+      console.error("Error fetching showtimes by theater:", error);
+      return [];
+    }
+  },
+
+  // Get upcoming showtimes for a movie
+  getUpcomingShowtimes: async (movieId, days = 7) => {
+    try {
+      const allShowtimes = await showtimeService.getAllShowtimes();
+      const today = new Date();
+      const futureDate = new Date();
+      futureDate.setDate(today.getDate() + days);
+
+      const filtered = allShowtimes.filter((st) => {
+        const showtimeDate = new Date(st.date);
+        return (
+          st.movieId === parseInt(movieId) &&
+          showtimeDate >= today &&
+          showtimeDate <= futureDate
+        );
+      });
+
+      return filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+    } catch (error) {
+      console.error("Error fetching upcoming showtimes:", error);
+      return [];
+    }
+  },
+
+  // Lấy thống kê lịch chiếu
+  getShowtimeStatistics: async (date = null) => {
+    try {
+      const dateParam = date ? `?date=${date}` : "";
+      const res = await apiClient.get(`/Showtimes/statistics${dateParam}`);
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching showtime statistics:", error);
+      throw error;
+    }
+  },
+
+  // Get available seats count for a showtime
+  getAvailableSeatsCount: async (showtimeId) => {
+    try {
+      const res = await apiClient.get(
+        API_CONFIG.ENDPOINTS.BOOKING.AVAILABLE_SEATS(showtimeId)
+      );
+      return res.data?.availableSeats || 0;
+    } catch (error) {
+      console.error("Error fetching available seats:", error);
+      return 0;
+    }
   },
 
   // Parse seats data từ backend API /Seats/showtime/{id}
