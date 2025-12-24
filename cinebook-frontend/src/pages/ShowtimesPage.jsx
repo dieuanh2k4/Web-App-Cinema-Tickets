@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { FiMapPin, FiCalendar, FiClock, FiChevronDown } from 'react-icons/fi';
-import { getTheaters, getAllShowtimes, getMovies } from '../services/api';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { FiMapPin, FiCalendar, FiClock, FiChevronDown } from "react-icons/fi";
+import { getTheaters, getMovies, getShowtimesByTheater } from "../services/api";
 
 export default function ShowtimesPage() {
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
+    new Date().toISOString().split("T")[0]
   );
-  const [selectedTheaterId, setSelectedTheaterId] = useState('all');
+  const [selectedTheaterId, setSelectedTheaterId] = useState("all");
 
   const {
     data: theaters,
     isLoading: isLoadingTheaters,
     error: theatersError,
   } = useQuery({
-    queryKey: ['theaters'],
+    queryKey: ["theaters"],
     queryFn: getTheaters,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
@@ -27,8 +27,11 @@ export default function ShowtimesPage() {
     isLoading: isLoadingShowtimes,
     error: showtimesError,
   } = useQuery({
-    queryKey: ['all-showtimes', selectedDate],
-    queryFn: getAllShowtimes,
+    queryKey: ["all-showtimes", selectedDate, selectedTheaterId],
+    queryFn: () => {
+      return getShowtimesByTheater(selectedTheaterId, selectedDate);
+    },
+    enabled: selectedTheaterId !== "all", // Chỉ fetch khi đã chọn rạp cụ thể
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -39,7 +42,7 @@ export default function ShowtimesPage() {
     isLoading: isLoadingMovies,
     error: moviesError,
   } = useQuery({
-    queryKey: ['movies'],
+    queryKey: ["movies"],
     queryFn: getMovies,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -47,34 +50,27 @@ export default function ShowtimesPage() {
   });
 
   // Debug logs
-  console.log('=== SHOWTIMES PAGE DEBUG ===');
-  console.log('Theaters:', theaters);
-  console.log('Showtimes raw:', showtimes);
-  console.log('Movies:', movies);
-  console.log('Selected Date:', selectedDate);
+  console.log("=== SHOWTIMES PAGE DEBUG ===");
+  console.log("Theaters:", theaters);
+  console.log(
+    "Theaters type:",
+    typeof theaters,
+    "Is Array:",
+    Array.isArray(theaters)
+  );
+  console.log("Showtimes raw:", showtimes);
+  console.log("Movies:", movies);
+  console.log("Selected Date:", selectedDate);
+  console.log("Selected Theater ID:", selectedTheaterId);
+  console.log("Loading states:", {
+    isLoadingTheaters,
+    isLoadingMovies,
+    isLoadingShowtimes,
+  });
+  console.log("Errors:", { theatersError, moviesError, showtimesError });
 
-  // Filter showtimes by date and theater
-  const filteredShowtimes =
-    showtimes?.filter((showtime) => {
-      // Backend returns {date: "2024-12-24", start: "19:00:00"}
-      const showtimeDate = showtime.date; // Already in YYYY-MM-DD format
-      const matchDate = showtimeDate === selectedDate;
-      
-      // Match by theater name since API returns theaterName in showtime
-      if (selectedTheaterId === 'all') {
-        return matchDate;
-      }
-      
-      const selectedTheaterObj = theaters?.find(t => t.id === parseInt(selectedTheaterId));
-      const matchTheater = selectedTheaterObj && 
-                          showtime.theaterName === selectedTheaterObj.Name;
-      
-      console.log('Showtime:', showtime.theaterName, 'vs Selected:', selectedTheaterObj?.Name, '=', matchTheater);
-      
-      return matchDate && matchTheater;
-    }) || [];
-
-  console.log('Filtered Showtimes:', filteredShowtimes);
+  // API đã filter sẵn theo date và theater, không cần filter lại
+  const filteredShowtimes = showtimes || [];
 
   // Group showtimes by movie
   const groupedByMovie = filteredShowtimes.reduce((acc, showtime) => {
@@ -100,12 +96,12 @@ export default function ShowtimesPage() {
   });
 
   const formatDate = (date) => {
-    const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const days = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
     return {
       day: days[date.getDay()],
       date: date.getDate(),
       month: date.getMonth() + 1,
-      fullDate: date.toISOString().split('T')[0],
+      fullDate: date.toISOString().split("T")[0],
       isToday: date.toDateString() === new Date().toDateString(),
     };
   };
@@ -120,46 +116,22 @@ export default function ShowtimesPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Lịch chiếu phim</h1>
-
-          {/* Debug Info */}
-          {(theatersError || showtimesError || moviesError) && (
-            <div className="bg-red-500/10 border border-red-500 rounded-lg p-4 mb-4">
-              <p className="text-red-500 font-semibold mb-2">
-                ⚠️ Lỗi tải dữ liệu:
-              </p>
-              {theatersError && (
-                <p className="text-sm text-red-400">
-                  - Theaters: {theatersError.message}
-                </p>
-              )}
-              {showtimesError && (
-                <p className="text-sm text-red-400">
-                  - Showtimes: {showtimesError.message}
-                </p>
-              )}
-              {moviesError && (
-                <p className="text-sm text-red-400">
-                  - Movies: {moviesError.message}
-                </p>
-              )}
-            </div>
-          )}
         </div>
 
-        {/* Loading States */}
-        {(isLoadingTheaters || isLoadingMovies) && (
+        {/* Loading States - Only for theaters */}
+        {isLoadingTheaters && (
           <div className="bg-dark-light rounded-xl p-6 mb-8 border border-gray-custom/30">
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple mr-3"></div>
               <span className="text-gray-400">
-                Đang tải dữ liệu rạp chiếu và phim...
+                Đang tải danh sách rạp chiếu...
               </span>
             </div>
           </div>
         )}
 
         {/* Theater & Date Selection */}
-        {!isLoadingTheaters && !isLoadingMovies && (
+        {!isLoadingTheaters && (
           <div className="bg-dark-light rounded-xl p-6 mb-8 border border-gray-custom/30">
             {/* Theater Filter */}
             <div className="mb-6">
@@ -176,17 +148,22 @@ export default function ShowtimesPage() {
                   <option value="all">
                     Tất cả các rạp ({theaters?.length || 0})
                   </option>
-                  {theaters?.map((theater) => (
-                    <option key={theater.id} value={theater.id}>
-                      {theater.Name} - {theater.Address}
-                    </option>
-                  ))}
+                  {Array.isArray(theaters) && theaters.length > 0 ? (
+                    theaters.map((theater) => (
+                      <option key={theater.id} value={theater.id}>
+                        {theater.name || theater.Name} -{" "}
+                        {theater.address || theater.Address}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>Không có dữ liệu rạp</option>
+                  )}
                 </select>
                 <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
 
               {/* Selected Theater Info */}
-              {selectedTheater && selectedTheaterId !== 'all' && (
+              {selectedTheater && selectedTheaterId !== "all" && (
                 <div className="mt-4 p-4 bg-dark rounded-lg border border-purple/30">
                   <div className="flex items-start space-x-3">
                     <FiMapPin
@@ -225,8 +202,8 @@ export default function ShowtimesPage() {
                       onClick={() => setSelectedDate(formatted.fullDate)}
                       className={`p-3 rounded-lg text-center transition-all ${
                         isSelected
-                          ? 'bg-purple text-white shadow-lg shadow-purple/30'
-                          : 'bg-dark hover:bg-dark-lighter text-gray-400'
+                          ? "bg-purple text-white shadow-lg shadow-purple/30"
+                          : "bg-dark hover:bg-dark-lighter text-gray-400"
                       }`}
                     >
                       <div className="text-xs mb-1">{formatted.day}</div>
@@ -246,9 +223,29 @@ export default function ShowtimesPage() {
         )}
 
         {/* Showtimes */}
-        {isLoadingShowtimes ? (
+        {selectedTheaterId === "all" ? (
+          <div className="text-center py-16 bg-dark-light rounded-xl border border-gray-custom/30">
+            <FiMapPin size={48} className="mx-auto text-gray-600 mb-4" />
+            <p className="text-gray-400 text-lg mb-2">
+              Vui lòng chọn rạp chiếu
+            </p>
+            <p className="text-gray-500 text-sm">
+              Chọn một rạp cụ thể để xem lịch chiếu phim
+            </p>
+          </div>
+        ) : isLoadingShowtimes ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple"></div>
+          </div>
+        ) : showtimesError ? (
+          <div className="text-center py-16 bg-dark-light rounded-xl border border-gray-custom/30">
+            <FiCalendar size={48} className="mx-auto text-gray-600 mb-4" />
+            <p className="text-gray-400 text-lg mb-2">
+              Không thể tải danh sách phim
+            </p>
+            <p className="text-gray-500 text-sm">
+              Vui lòng thử lại sau hoặc liên hệ hỗ trợ
+            </p>
           </div>
         ) : Object.keys(groupedByMovie).length === 0 ? (
           <div className="text-center py-16 bg-dark-light rounded-xl">
@@ -281,7 +278,7 @@ export default function ShowtimesPage() {
                       />
                       {/* Overlay gradient */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      
+
                       {/* Rating badge */}
                       <div className="absolute top-3 right-3 bg-yellow-500 text-black px-2 py-1 rounded-lg font-bold text-sm flex items-center space-x-1">
                         <span>⭐</span>
@@ -310,7 +307,9 @@ export default function ShowtimesPage() {
                         <span>{movieGroup.movie?.duration} phút</span>
                       </span>
                       <span className="text-gray-600">•</span>
-                      <span className="text-sm text-gray-400">{movieGroup.movie?.genre}</span>
+                      <span className="text-sm text-gray-400">
+                        {movieGroup.movie?.genre}
+                      </span>
                     </div>
 
                     <div className="mb-5">
@@ -329,7 +328,7 @@ export default function ShowtimesPage() {
                           {movieGroup.showtimes.length} suất
                         </p>
                       </div>
-                      
+
                       {/* Time slots in clean button style */}
                       <div className="flex flex-wrap gap-2">
                         {movieGroup.showtimes
@@ -337,7 +336,7 @@ export default function ShowtimesPage() {
                           .map((showtime) => {
                             // Format time to HH:MM
                             const timeStr = showtime.start.substring(0, 5);
-                            
+
                             return (
                               <Link
                                 key={showtime.id}
@@ -351,12 +350,14 @@ export default function ShowtimesPage() {
                                       {timeStr}
                                     </span>
                                   </button>
-                                  
+
                                   {/* Tooltip on hover */}
                                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
                                     <div className="bg-dark-light border border-purple/30 rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
-                                      <p className="text-purple font-semibold">{showtime.rooomName}</p>
-                                      {selectedTheaterId === 'all' && (
+                                      <p className="text-purple font-semibold">
+                                        {showtime.rooomName}
+                                      </p>
+                                      {selectedTheaterId === "all" && (
                                         <p className="text-gray-400 text-[10px] mt-1">
                                           {showtime.theaterName}
                                         </p>
@@ -370,11 +371,17 @@ export default function ShowtimesPage() {
                             );
                           })}
                       </div>
-                      
+
                       {/* Room info below */}
-                      {selectedTheaterId !== 'all' && (
+                      {selectedTheaterId !== "all" && (
                         <div className="mt-3 text-xs text-gray-500">
-                          <p>Phòng chiếu: {movieGroup.showtimes.map(s => s.rooomName).filter((v, i, a) => a.indexOf(v) === i).join(', ')}</p>
+                          <p>
+                            Phòng chiếu:{" "}
+                            {movieGroup.showtimes
+                              .map((s) => s.rooomName)
+                              .filter((v, i, a) => a.indexOf(v) === i)
+                              .join(", ")}
+                          </p>
                         </div>
                       )}
                     </div>
