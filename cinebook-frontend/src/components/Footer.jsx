@@ -1,5 +1,12 @@
-import { Link } from 'react-router-dom'
-import { FiFacebook, FiInstagram, FiYoutube, FiMail, FiPhone, FiMapPin } from 'react-icons/fi'
+import { Link } from 'react-router-dom';
+import {
+  FiFacebook,
+  FiInstagram,
+  FiYoutube,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+} from 'react-icons/fi';
 
 export default function Footer() {
   return (
@@ -12,17 +19,26 @@ export default function Footer() {
               CINE<span className="text-purple">BOOK</span>
             </h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Nền tảng đặt vé xem phim trực tuyến hàng đầu Việt Nam. 
-              Đặt vé nhanh chóng, tiện lợi, an toàn.
+              Nền tảng đặt vé xem phim trực tuyến hàng đầu Việt Nam. Đặt vé
+              nhanh chóng, tiện lợi, an toàn.
             </p>
             <div className="flex space-x-4 mt-4">
-              <a href="#" className="text-gray-400 hover:text-purple transition-colors">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-purple transition-colors"
+              >
                 <FiFacebook size={20} />
               </a>
-              <a href="#" className="text-gray-400 hover:text-purple transition-colors">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-purple transition-colors"
+              >
                 <FiInstagram size={20} />
               </a>
-              <a href="#" className="text-gray-400 hover:text-purple transition-colors">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-purple transition-colors"
+              >
                 <FiYoutube size={20} />
               </a>
             </div>
@@ -33,23 +49,27 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">Liên kết nhanh</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/movies" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <Link
+                  to="/movies"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   Phim đang chiếu
                 </Link>
               </li>
               <li>
-                <Link to="/movies?status=upcoming" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <Link
+                  to="/movies?status=upcoming"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   Phim sắp chiếu
                 </Link>
               </li>
               <li>
-                <Link to="/theaters" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <Link
+                  to="/theaters"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   Rạp chiếu phim
-                </Link>
-              </li>
-              <li>
-                <Link to="/promotions" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  Khuyến mãi
                 </Link>
               </li>
             </ul>
@@ -60,22 +80,34 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">Hỗ trợ</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/faq" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <Link
+                  to="/faq"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   Câu hỏi thường gặp
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <Link
+                  to="/terms"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   Điều khoản sử dụng
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <Link
+                  to="/privacy"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   Chính sách bảo mật
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <Link
+                  to="/contact"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   Liên hệ
                 </Link>
               </li>
@@ -88,15 +120,15 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start space-x-3 text-sm text-gray-400">
                 <FiMapPin className="mt-1 flex-shrink-0" />
-                <span>123 Lê Lợi, Q.1, TP.HCM</span>
+                <span>Hanoi</span>
               </li>
               <li className="flex items-center space-x-3 text-sm text-gray-400">
                 <FiPhone className="flex-shrink-0" />
-                <span>1900-xxxx</span>
+                <span>13-666</span>
               </li>
               <li className="flex items-center space-x-3 text-sm text-gray-400">
                 <FiMail className="flex-shrink-0" />
-                <span>support@cinebook.vn</span>
+                <span>aot@cinebook.vn</span>
               </li>
             </ul>
           </div>
@@ -107,5 +139,5 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

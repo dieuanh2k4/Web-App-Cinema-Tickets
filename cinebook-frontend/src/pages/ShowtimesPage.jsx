@@ -1,20 +1,19 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { FiMapPin, FiCalendar, FiClock, FiRefreshCw, FiZap } from 'react-icons/fi'
-import toast from 'react-hot-toast'
-import { getTheaters, getAllShowtimes, getMovies, autoGenerateShowtimes } from '../services/api'
+import { useQuery } from '@tanstack/react-query'
+import { FiMapPin, FiCalendar, FiClock, FiChevronDown } from 'react-icons/fi'
+import { getTheaters, getAllShowtimes, getMovies } from '../services/api'
 
 export default function ShowtimesPage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-  const [showStats, setShowStats] = useState(false)
+  const [selectedTheaterId, setSelectedTheaterId] = useState('all')
 
   const { data: theaters } = useQuery({
     queryKey: ['theaters'],
     queryFn: getTheaters
   })
 
-  const { data: showtimes, isLoading: isLoadingShowtimes, refetch } = useQuery({
+  const { data: showtimes, isLoading: isLoadingShowtimes } = useQuery({
     queryKey: ['all-showtimes', selectedDate],
     queryFn: getAllShowtimes
   })
@@ -24,58 +23,27 @@ export default function ShowtimesPage() {
     queryFn: getMovies
   })
 
-  // Auto-generate mutation
-  const generateMutation = useMutation({
-    mutationFn: autoGenerateShowtimes,
-    onSuccess: (data) => {
-      if (data.isSuccess) {
-        toast.success(data.message)
-        refetch()
-      } else {
-        toast.error(data.message || 'Tạo lịch chiếu thất bại')
-      }
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra')
-    }
-  })
-
-  const handleAutoGenerate = () => {
-    if (window.confirm('Bạn có chắc muốn tạo lịch chiếu tự động? Lịch cũ sẽ bị xóa.')) {
-      generateMutation.mutate(selectedDate)
-    }
-  }
-
-  // Lấy rạp đầu tiên (chỉ có 1 rạp)
-  const mainTheater = theaters?.[0]
-
-  // Filter showtimes by date
+  // Filter showtimes by date and theater
   const filteredShowtimes = showtimes?.filter(showtime => {
     const showtimeDate = new Date(showtime.startTime).toISOString().split('T')[0]
-    return showtimeDate === selectedDate
+    const matchDate = showtimeDate === selectedDate
+    const matchTheater = selectedTheaterId === 'all' || showtime.room?.theaterId === parseInt(selectedTheaterId)
+    return matchDate && matchTheater
   }) || []
 
-  // Group showtimes by room and movie
-  const groupedByRoom = filteredShowtimes.reduce((acc, showtime) => {
-    const roomId = showtime.room?.id || 'unknown'
+  // Group showtimes by movie
+  const groupedByMovie = filteredShowtimes.reduce((acc, showtime) => {
     const movieId = showtime.movieId
     
-    if (!acc[roomId]) {
-      acc[roomId] = {
-        room: showtime.room,
-        movies: {}
-      }
-    }
-    
-    if (!acc[roomId].movies[movieId]) {
+    if (!acc[movieId]) {
       const movie = movies?.find(m => m.id === movieId)
-      acc[roomId].movies[movieId] = {
+      acc[movieId] = {
         movie,
         showtimes: []
       }
     }
     
-    acc[roomId].movies[movieId].showtimes.push(showtime)
+    acc[movieId].showtimes.push(showtime)
     return acc
   }, {})
 
@@ -97,55 +65,64 @@ export default function ShowtimesPage() {
     }
   }
 
+  const selectedTheater = theaters?.find(t => t.id === parseInt(selectedTheaterId))
+
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-[1400px] mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Lịch chiếu phim</h1>
-              {mainTheater && (
-                <div className="flex items-start space-x-2 text-gray-400">
-                  <FiMapPin className="mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-white">{mainTheater.theaterName}</p>
-                    <p className="text-sm">{mainTheater.address}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Auto-generate button */}
-            <button
-              onClick={handleAutoGenerate}
-              disabled={generateMutation.isPending}
-              className="bg-gradient-to-r from-purple to-purple-dark hover:from-purple-dark hover:to-purple text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg shadow-purple/50 disabled:opacity-50 flex items-center space-x-2"
-            >
-              {generateMutation.isPending ? (
-                <>
-                  <FiRefreshCw className="animate-spin" />
-                  <span>Đang tạo...</span>
-                </>
-              ) : (
-                <>
-                  <FiZap />
-                  <span>Tự động tạo lịch</span>
-                </>
-              )}
-            </button>
-          </div>
-          <p className="text-gray-400">
-            Hệ thống AI tự động sắp xếp lịch chiếu tối ưu theo thời gian thực
+          <h1 className="text-4xl font-bold mb-2">Lịch chiếu phim</h1>
+          <p className="text-gray-400 mb-4">
+            Hệ thống AI tự động sắp xếp lịch chiếu tối ưu
           </p>
         </div>
 
-        {/* Date selector */}
-        <div className="bg-dark-light rounded-xl p-6 mb-8">
-          <label className="block text-sm text-gray-400 mb-3">
-            <FiCalendar className="inline mr-1" />
-            Chọn ngày
-          </label>
+        {/* Theater & Date Selection */}
+        <div className="bg-dark-light rounded-xl p-6 mb-8 border border-gray-custom/30">
+          {/* Theater Filter */}
+          <div className="mb-6">
+            <label className="block text-sm text-gray-400 mb-3 flex items-center space-x-2">
+              <FiMapPin size={16} />
+              <span>Chọn rạp chiếu</span>
+            </label>
+            <div className="relative">
+              <select
+                value={selectedTheaterId}
+                onChange={(e) => setSelectedTheaterId(e.target.value)}
+                className="w-full px-4 py-3 bg-dark border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white appearance-none cursor-pointer"
+              >
+                <option value="all">Tất cả các rạp ({theaters?.length || 0})</option>
+                {theaters?.map(theater => (
+                  <option key={theater.id} value={theater.id}>
+                    {theater.theaterName} - {theater.address}
+                  </option>
+                ))}
+              </select>
+              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+            
+            {/* Selected Theater Info */}
+            {selectedTheater && selectedTheaterId !== 'all' && (
+              <div className="mt-4 p-4 bg-dark rounded-lg border border-purple/30">
+                <div className="flex items-start space-x-3">
+                  <FiMapPin className="text-purple mt-1 flex-shrink-0" size={20} />
+                  <div>
+                    <p className="font-semibold text-white text-lg">{selectedTheater.theaterName}</p>
+                    <p className="text-gray-400 text-sm mt-1">{selectedTheater.address}</p>
+                    <p className="text-purple text-sm mt-1">📍 {selectedTheater.city}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Date selector */}
+          <div>
+            <label className="block text-sm text-gray-400 mb-3 flex items-center space-x-2">
+              <FiCalendar size={16} />
+              <span>Chọn ngày</span>
+            </label>
             <div className="grid grid-cols-7 gap-2">
               {dates.map((date) => {
                 const formatted = formatDate(date)
@@ -170,6 +147,7 @@ export default function ShowtimesPage() {
                 )
               })}
             </div>
+          </div>
         </div>
 
         {/* Showtimes */}
@@ -177,118 +155,106 @@ export default function ShowtimesPage() {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple"></div>
           </div>
-        ) : Object.keys(groupedByRoom).length === 0 ? (
+        ) : Object.keys(groupedByMovie).length === 0 ? (
           <div className="text-center py-16 bg-dark-light rounded-xl">
             <FiCalendar size={48} className="mx-auto text-gray-600 mb-4" />
-            <p className="text-gray-400 text-lg mb-4">Chưa có lịch chiếu cho ngày này</p>
-            <button
-              onClick={handleAutoGenerate}
-              disabled={generateMutation.isPending}
-              className="bg-purple hover:bg-purple-dark text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 inline-flex items-center space-x-2"
-            >
-              <FiZap />
-              <span>Tự động tạo lịch chiếu</span>
-            </button>
+            <p className="text-gray-400 text-lg mb-2">Chưa có lịch chiếu cho ngày này</p>
+            <p className="text-gray-500 text-sm">Vui lòng chọn ngày khác hoặc quay lại sau</p>
           </div>
         ) : (
-          <div className="space-y-8">
-            {Object.values(groupedByRoom).map((roomGroup, idx) => (
-              <div key={idx} className="bg-dark-light rounded-xl p-6">
-                {/* Room header */}
-                <div className="mb-6 pb-4 border-b border-gray-custom">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-2xl font-bold mb-1">{roomGroup.room?.name}</h2>
-                      <p className="text-sm text-gray-400">
-                        {roomGroup.room?.type} • Sức chứa: {roomGroup.room?.capacity} ghế
+          <div className="space-y-6">
+            {Object.values(groupedByMovie).map((movieGroup, idx) => (
+              <div key={idx} className="bg-dark-light rounded-xl overflow-hidden border border-gray-custom/30 hover:border-purple/30 transition-all">
+                <div className="flex flex-col md:flex-row gap-6 p-6">
+                  {/* Movie poster & info */}
+                  <Link 
+                    to={`/movies/${movieGroup.movie?.id}`}
+                    className="flex-shrink-0 group"
+                  >
+                    <img
+                      src={movieGroup.movie?.thumbnail}
+                      alt={movieGroup.movie?.title}
+                      className="w-full md:w-48 h-64 object-cover rounded-lg group-hover:scale-105 transition-transform shadow-lg"
+                    />
+                  </Link>
+
+                  {/* Showtimes */}
+                  <div className="flex-1">
+                    <Link to={`/movies/${movieGroup.movie?.id}`} className="group">
+                      <h3 className="font-bold text-2xl group-hover:text-purple transition-colors mb-2">
+                        {movieGroup.movie?.title}
+                      </h3>
+                    </Link>
+                    
+                    <div className="flex flex-wrap items-center gap-3 mb-4 text-sm text-gray-400">
+                      <span className="flex items-center space-x-1">
+                        <FiClock size={14} />
+                        <span>{movieGroup.movie?.duration} phút</span>
+                      </span>
+                      <span>•</span>
+                      <span>{movieGroup.movie?.genre}</span>
+                      <span>•</span>
+                      <span className="px-2 py-1 bg-purple/20 text-purple rounded">
+                        {movieGroup.movie?.ageLimit}
+                      </span>
+                      <span>•</span>
+                      <span className="text-yellow-500 flex items-center">
+                        ⭐ {movieGroup.movie?.rating?.toFixed(1)}
+                      </span>
+                    </div>
+
+                    <div className="mb-4">
+                      <p className="text-gray-400 text-sm line-clamp-2">
+                        {movieGroup.movie?.description}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <div className="inline-flex items-center space-x-2 bg-purple/20 px-4 py-2 rounded-full">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        <span className="text-sm font-semibold">{roomGroup.room?.status}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Movies */}
-                <div className="space-y-6">
-                  {Object.values(roomGroup.movies).map((movieGroup, movieIdx) => (
-                    <div key={movieIdx} className="flex flex-col md:flex-row gap-4 pb-6 border-b border-gray-custom/30 last:border-0">
-                      {/* Movie poster & info */}
-                      <Link 
-                        to={`/movies/${movieGroup.movie?.id}`}
-                        className="flex-shrink-0 group"
-                      >
-                        <div className="flex md:flex-col gap-4">
-                          <img
-                            src={movieGroup.movie?.thumbnail}
-                            alt={movieGroup.movie?.title}
-                            className="w-24 md:w-32 h-32 md:h-44 object-cover rounded-lg group-hover:scale-105 transition-transform shadow-lg"
-                          />
-                          <div className="md:hidden flex-1">
-                            <h3 className="font-semibold text-lg group-hover:text-purple transition-colors mb-1">
-                              {movieGroup.movie?.title}
-                            </h3>
-                            <p className="text-sm text-gray-400 mb-2">{movieGroup.movie?.genre}</p>
-                            <div className="flex items-center space-x-2 text-xs text-gray-500">
-                              <span><FiClock className="inline" size={12} /> {movieGroup.movie?.duration} phút</span>
-                              <span>•</span>
-                              <span>{movieGroup.movie?.ageLimit}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-
-                      {/* Showtimes */}
-                      <div className="flex-1">
-                        <div className="hidden md:block mb-3">
-                          <Link to={`/movies/${movieGroup.movie?.id}`} className="group">
-                            <h3 className="font-semibold text-lg group-hover:text-purple transition-colors mb-1">
-                              {movieGroup.movie?.title}
-                            </h3>
-                            <p className="text-sm text-gray-400 mb-1">{movieGroup.movie?.genre}</p>
-                            <div className="flex items-center space-x-2 text-xs text-gray-500">
-                              <span><FiClock className="inline" size={12} /> {movieGroup.movie?.duration} phút</span>
-                              <span>•</span>
-                              <span>{movieGroup.movie?.ageLimit}</span>
-                              <span>•</span>
-                              <span className="text-yellow-500">⭐ {movieGroup.movie?.rating?.toFixed(1)}</span>
-                            </div>
-                          </Link>
-                        </div>
-
-                        <div>
-                          <p className="text-xs text-gray-500 mb-2">
-                            {movieGroup.showtimes.length} suất chiếu
-                          </p>
-                          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-                            {movieGroup.showtimes
-                              .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
-                              .map((showtime) => (
-                                <Link
-                                  key={showtime.id}
-                                  to={`/booking/${showtime.id}`}
-                                  className="bg-dark hover:bg-purple border border-gray-custom hover:border-purple text-center py-2.5 px-3 rounded-lg transition-all group relative overflow-hidden"
-                                >
-                                  <div className="absolute inset-0 bg-gradient-to-r from-purple/0 via-purple/10 to-purple/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500"></div>
-                                  <div className="relative flex items-center justify-center space-x-1">
-                                    <FiClock size={14} className="text-gray-400 group-hover:text-white" />
-                                    <span className="text-sm font-semibold">
+                    {/* Showtimes Grid */}
+                    <div>
+                      <p className="text-sm text-gray-400 mb-3 font-semibold">
+                        🎬 {movieGroup.showtimes.length} suất chiếu khả dụng
+                      </p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                        {movieGroup.showtimes
+                          .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+                          .map((showtime) => {
+                            const theater = theaters?.find(t => t.id === showtime.room?.theaterId)
+                            return (
+                              <Link
+                                key={showtime.id}
+                                to={`/booking/${showtime.id}`}
+                                className="group relative"
+                              >
+                                <div className="bg-dark hover:bg-purple border border-gray-custom hover:border-purple rounded-lg p-3 transition-all">
+                                  <div className="flex items-center justify-center space-x-2 mb-2">
+                                    <FiClock size={16} className="text-purple group-hover:text-white" />
+                                    <span className="text-lg font-bold">
                                       {new Date(showtime.startTime).toLocaleTimeString('vi-VN', {
                                         hour: '2-digit',
                                         minute: '2-digit'
                                       })}
                                     </span>
                                   </div>
-                                </Link>
-                              ))}
-                          </div>
-                        </div>
+                                  <div className="text-xs text-gray-400 text-center mb-2">
+                                    {showtime.room?.name}
+                                  </div>
+                                  {selectedTheaterId === 'all' && theater && (
+                                    <div className="text-xs text-purple text-center truncate">
+                                      {theater.theaterName}
+                                    </div>
+                                  )}
+                                  <div className="mt-2 pt-2 border-t border-gray-custom/30">
+                                    <button className="w-full bg-purple/20 group-hover:bg-purple text-purple group-hover:text-white text-xs font-semibold py-1.5 rounded transition-all">
+                                      Mua vé
+                                    </button>
+                                  </div>
+                                </div>
+                              </Link>
+                            )
+                          })}
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
             ))}
