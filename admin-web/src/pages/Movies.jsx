@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaPlus, FaEdit, FaTrash, FaSearch, FaEye } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaSearch, FaEye, FaSyncAlt } from 'react-icons/fa';
 import { movies as initialMovies } from '../data/mockData';
 import { formatDate } from '../utils/helpers';
 
@@ -11,8 +11,18 @@ const Movies = () => {
   const [filterGenre, setFilterGenre] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 10;
   const navigate = useNavigate();
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    // TODO: Load data from DB
+    setTimeout(() => {
+      setIsRefreshing(false);
+      console.log('Movies data refreshed');
+    }, 1000);
+  };
 
   // Get unique years and genres for filters
   const years = [...new Set(movies.map(m => m.releaseYear))].sort((a, b) => b - a);
@@ -57,13 +67,23 @@ const Movies = () => {
           <h1 className="text-3xl font-bold text-white mb-3">Quản lý phim</h1>
           <p className="text-gray-400 text-sm lg:text-base">Danh sách tất cả các phim trong hệ thống</p>
         </div>
-        <Link
-          to="/movies/add"
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          <FaPlus />
-          <span>Tạo phim</span>
-        </Link>
+        <div className="flex gap-3">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
+            <span>Refresh</span>
+          </button>
+          <Link
+            to="/movies/add"
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <FaPlus />
+            <span>Tạo phim</span>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
