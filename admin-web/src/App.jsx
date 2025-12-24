@@ -11,6 +11,8 @@ import Rooms from './pages/Rooms';
 import Showtimes from './pages/Showtimes';
 import ShowtimeSlots from './pages/ShowtimeSlots';
 import TicketPrices from './pages/TicketPrices';
+import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
 import Accounts from './pages/Accounts';
 import AddAccount from './pages/AddAccount';
 import AccountDetail from './pages/AccountDetail';
@@ -76,7 +78,10 @@ function App() {
             <Route path="showtimes" element={<Showtimes />} />
             <Route path="showtime-slots" element={<ShowtimeSlots />} />
             <Route path="ticket-prices" element={<TicketPrices />} />
-            <Route path="orders" element={<div className="p-6 text-white">Quản lý đơn hàng (Coming soon)</div>} />
+            <Route path="orders">
+              <Route index element={<Orders />} />
+              <Route path=":id" element={<OrderDetail />} />
+            </Route>
             <Route path="accounts">
               <Route index element={<Accounts />} />
               <Route path="add" element={<AddAccount />} />
