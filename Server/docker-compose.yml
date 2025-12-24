@@ -116,6 +116,20 @@ services:
     networks:
       - cinebook-network
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok-tunnel
+    command: "http nginx:80"
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"
+    networks:
+      - cinebook-network
+    depends_on:
+      - nginx
+    restart: unless-stopped
+
 volumes:
   postgres-data:
     driver: local
