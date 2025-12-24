@@ -9,6 +9,7 @@ import {
   FaDoorOpen,
   FaCouch,
   FaClock,
+  FaCalendarAlt,
   FaMoneyBillWave,
   FaShoppingCart,
   FaUsers,
@@ -16,8 +17,7 @@ import {
   FaUser
 } from 'react-icons/fa';
 
-const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+const Sidebar = ({ collapsed, setCollapsed }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,8 +26,8 @@ const Sidebar = () => {
     { path: '/', icon: FaHome, label: 'Tổng quan' },
     { path: '/movies', icon: FaFilm, label: 'Quản lý phim' },
     { path: '/rooms', icon: FaDoorOpen, label: 'Quản lý phòng chiếu' },
-    { path: '/seats', icon: FaCouch, label: 'Quản lý ghế ngồi' },
     { path: '/showtimes', icon: FaClock, label: 'Quản lý lịch chiếu' },
+    { path: '/showtime-slots', icon: FaCalendarAlt, label: 'Quản lý suất chiếu' },
     { path: '/ticket-prices', icon: FaMoneyBillWave, label: 'Quản lý giá vé' },
     { path: '/orders', icon: FaShoppingCart, label: 'Quản lý đơn hàng' },
     { path: '/accounts', icon: FaUsers, label: 'Quản lý tài khoản' }
@@ -42,10 +42,10 @@ const Sidebar = () => {
     <div
       className={`${
         collapsed ? 'w-20' : 'w-64'
-      } bg-gradient-to-b from-secondary to-secondary/50 border-r border-gray-700/50 min-h-screen flex flex-col transition-all duration-300 ease-in-out shadow-2xl`}
+      } bg-gradient-to-b from-secondary to-secondary/50 border-r border-gray-700/50 h-screen flex flex-col transition-all duration-300 ease-in-out shadow-2xl fixed top-0 left-0`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-700/30 flex items-center justify-between">
+      <div className="p-4 border-b border-gray-700/30 flex items-center justify-between flex-shrink-0">
         {!collapsed && (
           <div className="flex items-center animate-fade-in">
             <h1 className="text-xl font-bold text-white">
@@ -91,8 +91,8 @@ const Sidebar = () => {
         </div>
       </nav>
 
-      {/* User Info & Logout */}
-      <div className="border-t border-gray-700/30 p-4 space-y-3">
+      {/* User Info & Logout - Always visible at bottom */}
+      <div className="border-t border-gray-700/30 p-4 space-y-3 flex-shrink-0">
         <div className={`flex items-center gap-3 p-3 bg-primary/30 rounded-xl ${
           collapsed ? 'justify-center' : ''
         }`}>
@@ -126,10 +126,14 @@ const Sidebar = () => {
 };
 
 const Layout = () => {
+  const [collapsed, setCollapsed] = useState(false);
+  
   return (
     <div className="flex min-h-screen bg-primary">
-      <Sidebar />
-      <main className="flex-1 overflow-auto p-8 md:p-10">
+      <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+      <main className={`flex-1 overflow-auto p-6 md:p-8 lg:p-10 transition-all duration-300 ${
+        collapsed ? 'ml-20' : 'ml-64'
+      }`}>
         <Outlet />
       </main>
     </div>

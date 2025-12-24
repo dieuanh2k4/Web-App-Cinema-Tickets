@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaMoneyBillWave, FaTicketAlt, FaDollarSign, FaUserPlus } from 'react-icons/fa';
+import { FaMoneyBillWave, FaTicketAlt, FaDollarSign, FaUserPlus, FaSyncAlt } from 'react-icons/fa';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { dashboardStats, movies } from '../data/mockData';
 import { formatCurrency } from '../utils/helpers';
@@ -44,6 +44,16 @@ const Dashboard = () => {
     start: '2024-04-01',
     end: '2024-04-15'
   });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    // TODO: Load data from DB
+    setTimeout(() => {
+      setIsRefreshing(false);
+      console.log('Data refreshed');
+    }, 1000);
+  };
 
   return (
     <div className="space-y-10">
@@ -53,7 +63,15 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold text-white mb-3">Dashboard</h1>
           <p className="text-gray-400 text-sm lg:text-base">Tổng quan hệ thống rạp chiếu phim</p>
         </div>
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
+            <span>Refresh</span>
+          </button>
           <input
             type="date"
             value={dateRange.start}
@@ -67,10 +85,7 @@ const Dashboard = () => {
             onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
             className="px-4 py-2.5 bg-secondary border border-gray-700 rounded-lg text-white focus:outline-none focus:border-accent text-sm"
           />
-          <button className="px-6 py-2.5 bg-accent hover:bg-accent/90 text-white rounded-lg transition-colors font-medium">
-            Lọc dữ liệu
-          </button>
-          <button className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium">
+          <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
             Xuất báo cáo
           </button>
         </div>

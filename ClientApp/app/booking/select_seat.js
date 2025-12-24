@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -39,6 +40,45 @@ export default function SelectSeatScreen() {
   useEffect(() => {
     loadSeats();
   }, []);
+
+  // Cleanup hold khi unmount hoặc navigate away
+  useEffect(() => {
+    return () => {
+      if (holdId) {
+        seatService.releaseSeats(holdId).catch(console.error);
+      }
+      if (holdTimerRef.current) {
+        clearInterval(holdTimerRef.current);
+      }
+    };
+  }, [holdId]);
+
+  // Update timer mỗi giây
+  useEffect(() => {
+    if (timeRemaining > 0) {
+      holdTimerRef.current = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            clearInterval(holdTimerRef.current);
+            Alert.alert("Hết thời gian giữ ghế", "Vui lòng chọn lại ghế", [
+              {
+                text: "OK",
+                onPress: () => {
+                  setSelectedSeats([]);
+                  setHoldId(null);
+                  loadSeats(); // Reload seats
+                },
+              },
+            ]);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(holdTimerRef.current);
+    }
+  }, [timeRemaining]);
 
   const loadSeats = async () => {
     try {
