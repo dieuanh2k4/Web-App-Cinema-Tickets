@@ -17,6 +17,11 @@ export default function ShowtimesPage() {
   } = useQuery({
     queryKey: ['theaters'],
     queryFn: getTheaters,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   const {
@@ -26,6 +31,10 @@ export default function ShowtimesPage() {
   } = useQuery({
     queryKey: ['all-showtimes', selectedDate],
     queryFn: getAllShowtimes,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    enabled: !!selectedDate, // Only fetch when date is selected
   });
 
   const {
@@ -35,14 +44,12 @@ export default function ShowtimesPage() {
   } = useQuery({
     queryKey: ['movies'],
     queryFn: getMovies,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
-
-  // Debug logs
-  console.log('Theaters:', theaters);
-  console.log('Showtimes:', showtimes);
-  console.log('Movies:', movies);
-  console.log('Theaters Error:', theatersError);
-  console.log('Showtimes Error:', showtimesError);
 
   // Filter showtimes by date and theater
   const filteredShowtimes =
