@@ -8,6 +8,7 @@ RUN dotnet restore "Server.csproj"
 
 COPY . .
 
+WORKDIR "/src/Server"
 RUN dotnet build "Server.csproj" -c Release -o /app/build
 
 # Stage 2: Publish
