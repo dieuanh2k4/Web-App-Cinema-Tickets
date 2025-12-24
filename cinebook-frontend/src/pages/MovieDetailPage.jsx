@@ -63,11 +63,11 @@ export default function MovieDetailPage() {
     
     const grouped = {}
     showtimes.forEach(showtime => {
-      const theaterName = showtime.room?.theater?.theaterName || 'Unknown'
+      const theaterName = showtime.room?.theater?.Name || 'Unknown'
       if (!grouped[theaterName]) {
         grouped[theaterName] = {
           theaterName,
-          address: showtime.room?.theater?.address,
+          address: showtime.room?.theater?.Address,
           showtimes: []
         }
       }
@@ -282,7 +282,7 @@ export default function MovieDetailPage() {
                   <option value="all">-- Chọn rạp --</option>
                   {theaters?.map(theater => (
                     <option key={theater.id} value={theater.id}>
-                      {theater.theaterName}
+                      {theater.Name}
                     </option>
                   ))}
                 </select>
