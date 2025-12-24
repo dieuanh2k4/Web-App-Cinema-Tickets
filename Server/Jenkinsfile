@@ -55,7 +55,7 @@ pipeline {
                     sshagent(['ssh-credentials']) {
                         // copy env file lên server
                         sh """
-                            scp -o StrictHostKeyChecking=no .env.production jenkins@${DEPLOY_SERVER}:C:/Users/jenkins/app.env
+                            scp -o StrictHostKeyChecking=no Server/.env.production jenkins@${DEPLOY_SERVER}:C:/Users/jenkins/app.env
                         """
 
                         // lấy lại user/pass Docker để đang nhập trên server đích
