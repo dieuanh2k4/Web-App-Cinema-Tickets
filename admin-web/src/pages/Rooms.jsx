@@ -289,7 +289,7 @@ const Rooms = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className="text-sm text-white font-medium">{room.totalSeats}/{room.maxSeats} ghế</span>
+                    <span className="text-sm text-white font-medium">{room.totalSeats} ghế</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <span className="text-sm text-gray-300">{room.rows}</span>
