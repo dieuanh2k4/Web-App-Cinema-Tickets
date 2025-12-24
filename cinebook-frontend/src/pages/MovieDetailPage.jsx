@@ -14,12 +14,19 @@ export default function MovieDetailPage() {
 
   const { data: movie, isLoading: isLoadingMovie } = useQuery({
     queryKey: ['movie', id],
-    queryFn: () => getMovieById(id)
+    queryFn: () => getMovieById(id),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   })
 
   const { data: theaters } = useQuery({
     queryKey: ['theaters'],
-    queryFn: getTheaters
+    queryFn: getTheaters,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   })
 
   const { data: showtimes, isLoading: isLoadingShowtimes } = useQuery({
@@ -32,7 +39,10 @@ export default function MovieDetailPage() {
         selectedDate
       )
     },
-    enabled: selectedTheater !== 'all'
+    enabled: selectedTheater !== 'all',
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   })
 
   // Generate next 7 days
