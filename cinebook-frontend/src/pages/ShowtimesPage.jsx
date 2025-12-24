@@ -20,8 +20,6 @@ export default function ShowtimesPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
   });
 
   const {
@@ -34,7 +32,6 @@ export default function ShowtimesPage() {
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
-    enabled: !!selectedDate, // Only fetch when date is selected
   });
 
   const {
@@ -47,22 +44,37 @@ export default function ShowtimesPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
   });
+
+  // Debug logs
+  console.log('=== SHOWTIMES PAGE DEBUG ===');
+  console.log('Theaters:', theaters);
+  console.log('Showtimes raw:', showtimes);
+  console.log('Movies:', movies);
+  console.log('Selected Date:', selectedDate);
 
   // Filter showtimes by date and theater
   const filteredShowtimes =
     showtimes?.filter((showtime) => {
-      const showtimeDate = new Date(showtime.startTime)
-        .toISOString()
-        .split('T')[0];
+      // Backend returns {date: "2024-12-24", start: "19:00:00"}
+      const showtimeDate = showtime.date; // Already in YYYY-MM-DD format
       const matchDate = showtimeDate === selectedDate;
-      const matchTheater =
-        selectedTheaterId === 'all' ||
-        showtime.room?.theaterId === parseInt(selectedTheaterId);
+      
+      // Match by theater name since API returns theaterName in showtime
+      if (selectedTheaterId === 'all') {
+        return matchDate;
+      }
+      
+      const selectedTheaterObj = theaters?.find(t => t.id === parseInt(selectedTheaterId));
+      const matchTheater = selectedTheaterObj && 
+                          showtime.theaterName === selectedTheaterObj.Name;
+      
+      console.log('Showtime:', showtime.theaterName, 'vs Selected:', selectedTheaterObj?.Name, '=', matchTheater);
+      
       return matchDate && matchTheater;
     }) || [];
+
+  console.log('Filtered Showtimes:', filteredShowtimes);
 
   // Group showtimes by movie
   const groupedByMovie = filteredShowtimes.reduce((acc, showtime) => {
@@ -197,13 +209,13 @@ export default function ShowtimesPage() {
               )}
             </div>
 
-            {/* Date selector */}
+            {/* Date selector - Tab style like image */}
             <div>
               <label className="block text-sm text-gray-400 mb-3 flex items-center space-x-2">
                 <FiCalendar size={16} />
-                <span>Chọn ngày</span>
+                <span>Chọn ngày chiếu</span>
               </label>
-              <div className="grid grid-cols-7 gap-2">
+              <div className="flex flex-wrap gap-2">
                 {dates.map((date) => {
                   const formatted = formatDate(date);
                   const isSelected = formatted.fullDate === selectedDate;
@@ -211,19 +223,20 @@ export default function ShowtimesPage() {
                     <button
                       key={formatted.fullDate}
                       onClick={() => setSelectedDate(formatted.fullDate)}
-                      className={`p-3 rounded-lg text-center transition-all ${
+                      className={`px-4 py-2.5 rounded-lg text-center transition-all border ${
                         isSelected
-                          ? 'bg-purple text-white shadow-lg shadow-purple/30'
-                          : 'bg-dark hover:bg-dark-lighter text-gray-400'
+                          ? 'bg-purple text-white border-purple shadow-lg shadow-purple/30'
+                          : 'bg-dark-lighter hover:bg-dark text-gray-300 border-gray-custom hover:border-purple/50'
                       }`}
                     >
-                      <div className="text-xs mb-1">{formatted.day}</div>
-                      <div className="font-bold text-lg">{formatted.date}</div>
-                      <div className="text-xs">
-                        {formatted.month}/{new Date().getFullYear()}
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-medium">{formatted.day}</span>
+                        <span className="font-bold text-base">{formatted.date}/{formatted.month}</span>
                       </div>
                       {formatted.isToday && (
-                        <div className="text-xs text-purple mt-1">Hôm nay</div>
+                        <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-white' : 'text-purple'}`}>
+                          Hôm nay
+                        </div>
                       )}
                     </button>
                   );
@@ -253,109 +266,118 @@ export default function ShowtimesPage() {
             {Object.values(groupedByMovie).map((movieGroup, idx) => (
               <div
                 key={idx}
-                className="bg-dark-light rounded-xl overflow-hidden border border-gray-custom/30 hover:border-purple/30 transition-all"
+                className="bg-dark-light rounded-xl overflow-hidden border border-gray-custom/30 hover:border-purple/50 transition-all shadow-lg"
               >
-                <div className="flex flex-col md:flex-row gap-6 p-6">
+                <div className="flex flex-col lg:flex-row gap-6 p-6">
                   {/* Movie poster & info */}
                   <Link
                     to={`/movies/${movieGroup.movie?.id}`}
-                    className="flex-shrink-0 group"
+                    className="flex-shrink-0 group relative"
                   >
-                    <img
-                      src={movieGroup.movie?.thumbnail}
-                      alt={movieGroup.movie?.title}
-                      className="w-full md:w-48 h-64 object-cover rounded-lg group-hover:scale-105 transition-transform shadow-lg"
-                    />
+                    <div className="relative overflow-hidden rounded-lg">
+                      <img
+                        src={movieGroup.movie?.thumbnail}
+                        alt={movieGroup.movie?.title}
+                        className="w-full lg:w-56 h-80 object-cover group-hover:scale-110 transition-transform duration-500 shadow-2xl"
+                      />
+                      {/* Overlay gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      
+                      {/* Rating badge */}
+                      <div className="absolute top-3 right-3 bg-yellow-500 text-black px-2 py-1 rounded-lg font-bold text-sm flex items-center space-x-1">
+                        <span>⭐</span>
+                        <span>{movieGroup.movie?.rating?.toFixed(1)}</span>
+                      </div>
+                    </div>
                   </Link>
 
                   {/* Showtimes */}
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <Link
                       to={`/movies/${movieGroup.movie?.id}`}
-                      className="group"
+                      className="group inline-block"
                     >
-                      <h3 className="font-bold text-2xl group-hover:text-purple transition-colors mb-2">
+                      <h3 className="font-bold text-2xl lg:text-3xl group-hover:text-purple transition-colors mb-3">
                         {movieGroup.movie?.title}
                       </h3>
                     </Link>
 
-                    <div className="flex flex-wrap items-center gap-3 mb-4 text-sm text-gray-400">
-                      <span className="flex items-center space-x-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
+                      <span className="px-3 py-1 bg-purple/20 text-purple rounded-full text-xs font-semibold border border-purple/30">
+                        {movieGroup.movie?.ageLimit}
+                      </span>
+                      <span className="flex items-center space-x-1 text-sm text-gray-400">
                         <FiClock size={14} />
                         <span>{movieGroup.movie?.duration} phút</span>
                       </span>
-                      <span>•</span>
-                      <span>{movieGroup.movie?.genre}</span>
-                      <span>•</span>
-                      <span className="px-2 py-1 bg-purple/20 text-purple rounded">
-                        {movieGroup.movie?.ageLimit}
-                      </span>
-                      <span>•</span>
-                      <span className="text-yellow-500 flex items-center">
-                        ⭐ {movieGroup.movie?.rating?.toFixed(1)}
-                      </span>
+                      <span className="text-gray-600">•</span>
+                      <span className="text-sm text-gray-400">{movieGroup.movie?.genre}</span>
                     </div>
 
-                    <div className="mb-4">
-                      <p className="text-gray-400 text-sm line-clamp-2">
+                    <div className="mb-5">
+                      <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed">
                         {movieGroup.movie?.description}
                       </p>
                     </div>
 
-                    {/* Showtimes Grid */}
+                    {/* Showtimes Grid - Clean time slots */}
                     <div>
-                      <p className="text-sm text-gray-400 mb-3 font-semibold">
-                        🎬 {movieGroup.showtimes.length} suất chiếu khả dụng
-                      </p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-sm text-gray-400 font-semibold">
+                          Thời gian chiếu:
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {movieGroup.showtimes.length} suất
+                        </p>
+                      </div>
+                      
+                      {/* Time slots in clean button style */}
+                      <div className="flex flex-wrap gap-2">
                         {movieGroup.showtimes
-                          .sort(
-                            (a, b) =>
-                              new Date(a.startTime) - new Date(b.startTime)
-                          )
+                          .sort((a, b) => a.start.localeCompare(b.start))
                           .map((showtime) => {
-                            const theater = theaters?.find(
-                              (t) => t.id === showtime.room?.theaterId
-                            );
+                            // Format time to HH:MM
+                            const timeStr = showtime.start.substring(0, 5);
+                            
                             return (
                               <Link
                                 key={showtime.id}
                                 to={`/booking/${showtime.id}`}
-                                className="group relative"
+                                className="group"
                               >
-                                <div className="bg-dark hover:bg-purple border border-gray-custom hover:border-purple rounded-lg p-3 transition-all">
-                                  <div className="flex items-center justify-center space-x-2 mb-2">
-                                    <FiClock
-                                      size={16}
-                                      className="text-purple group-hover:text-white"
-                                    />
-                                    <span className="text-lg font-bold">
-                                      {new Date(
-                                        showtime.startTime
-                                      ).toLocaleTimeString('vi-VN', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      })}
+                                <div className="relative">
+                                  {/* Time button */}
+                                  <button className="min-w-[70px] px-4 py-2.5 bg-dark-lighter hover:bg-purple border border-gray-custom hover:border-purple rounded-lg transition-all group-hover:scale-105">
+                                    <span className="text-base font-bold text-white group-hover:text-white">
+                                      {timeStr}
                                     </span>
-                                  </div>
-                                  <div className="text-xs text-gray-400 text-center mb-2">
-                                    {showtime.room?.name}
-                                  </div>
-                                  {selectedTheaterId === 'all' && theater && (
-                                    <div className="text-xs text-purple text-center truncate">
-                                      {theater.Name}
+                                  </button>
+                                  
+                                  {/* Tooltip on hover */}
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                                    <div className="bg-dark-light border border-purple/30 rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+                                      <p className="text-purple font-semibold">{showtime.rooomName}</p>
+                                      {selectedTheaterId === 'all' && (
+                                        <p className="text-gray-400 text-[10px] mt-1">
+                                          {showtime.theaterName}
+                                        </p>
+                                      )}
                                     </div>
-                                  )}
-                                  <div className="mt-2 pt-2 border-t border-gray-custom/30">
-                                    <button className="w-full bg-purple/20 group-hover:bg-purple text-purple group-hover:text-white text-xs font-semibold py-1.5 rounded transition-all">
-                                      Mua vé
-                                    </button>
+                                    {/* Arrow */}
+                                    <div className="w-2 h-2 bg-dark-light border-r border-b border-purple/30 absolute top-full left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-45"></div>
                                   </div>
                                 </div>
                               </Link>
                             );
                           })}
                       </div>
+                      
+                      {/* Room info below */}
+                      {selectedTheaterId !== 'all' && (
+                        <div className="mt-3 text-xs text-gray-500">
+                          <p>Phòng chiếu: {movieGroup.showtimes.map(s => s.rooomName).filter((v, i, a) => a.indexOf(v) === i).join(', ')}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
