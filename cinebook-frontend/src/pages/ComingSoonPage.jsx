@@ -7,6 +7,10 @@ export default function ComingSoonPage() {
   const { data: movies, isLoading } = useQuery({
     queryKey: ['movies'],
     queryFn: getMovies,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const comingSoon = movies?.filter((m) => m.status === 'Sắp chiếu') || [];
