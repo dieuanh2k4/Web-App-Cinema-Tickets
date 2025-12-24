@@ -42,6 +42,9 @@ export const API_CONFIG = {
       CREATE: "/Booking/create",
       CREATE_BY_STAFF: "/Booking/create-by-staff",
       AVAILABLE_SEATS: (showtimeId) => `/Booking/available-seats/${showtimeId}`,
+      HOLD_SEATS: "/Booking/hold-seats",
+      CONFIRM_BOOKING: "/Booking/confirm-booking",
+      RELEASE_SEATS: "/Booking/release-seats",
     },
     TICKETS: {
       BOOK: "/Ticket/book",

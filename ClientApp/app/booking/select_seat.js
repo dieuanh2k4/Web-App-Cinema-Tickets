@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import {
   SafeAreaView,
   View,
@@ -7,12 +7,14 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { seatService } from "@/services/bookingService";
 import { movieService } from "@/services/movieService";
 import { showtimeService } from "@/services/showtimeService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const formatCurrency = (value) => {
   if (!value) return "0đ";
@@ -25,6 +27,9 @@ export default function SelectSeatScreen() {
   const [seats, setSeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSeats, setSelectedSeats] = useState([]);
+  const [holdId, setHoldId] = useState(null);
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const holdTimerRef = useRef(null);
 
   // Lấy thông tin showtime, movie, room từ backend
   const [showtime, setShowtime] = useState(null);
@@ -62,6 +67,45 @@ export default function SelectSeatScreen() {
     };
     loadMeta();
   }, [showtimeId, movieId]);
+
+  // Cleanup hold khi unmount hoặc navigate away
+  useEffect(() => {
+    return () => {
+      if (holdId) {
+        seatService.releaseSeats(holdId).catch(console.error);
+      }
+      if (holdTimerRef.current) {
+        clearInterval(holdTimerRef.current);
+      }
+    };
+  }, [holdId]);
+
+  // Update timer mỗi giây
+  useEffect(() => {
+    if (timeRemaining > 0) {
+      holdTimerRef.current = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            clearInterval(holdTimerRef.current);
+            Alert.alert("Hết thời gian giữ ghế", "Vui lòng chọn lại ghế", [
+              {
+                text: "OK",
+                onPress: () => {
+                  setSelectedSeats([]);
+                  setHoldId(null);
+                  loadSeats(); // Reload seats
+                },
+              },
+            ]);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(holdTimerRef.current);
+    }
+  }, [timeRemaining]);
 
   const loadSeats = async () => {
     try {
@@ -122,6 +166,61 @@ export default function SelectSeatScreen() {
     }, {});
   }, [seats]);
 
+  const toggleSeat = async (seatName) => {
+    const seat = seatLookup[seatName];
+    if (!seat) return;
+
+    // Không cho chọn ghế đã đặt
+    if (seat.status === "Đã đặt") {
+      Alert.alert("Ghế không khả dụng", "Ghế này đã được đặt");
+      return;
+    }
+
+    const isSelected = selectedSeats.includes(seatName);
+
+    if (isSelected) {
+      // Bỏ chọn ghế
+      const newSelected = selectedSeats.filter((s) => s !== seatName);
+      setSelectedSeats(newSelected);
+
+      // Nếu bỏ hết ghế thì release hold
+      if (newSelected.length === 0 && holdId) {
+        try {
+          await seatService.releaseSeats(holdId);
+          setHoldId(null);
+          setTimeRemaining(null);
+        } catch (error) {
+          console.error("Error releasing seats:", error);
+        }
+      }
+    } else {
+      // Chọn ghế mới
+      const newSelected = [...selectedSeats, seatName];
+      setSelectedSeats(newSelected);
+
+      // Hold seats trên server
+      try {
+        const seatIds = newSelected.map((name) => seatLookup[name].id);
+        const userId = await AsyncStorage.getItem("user_id");
+
+        const result = await seatService.holdSeats(
+          seatIds,
+          parseInt(showtimeId),
+          userId
+        );
+
+        if (result.success) {
+          setHoldId(result.holdId);
+          setTimeRemaining(result.ttlSeconds);
+        }
+      } catch (error) {
+        Alert.alert("Lỗi", error.message || "Không thể giữ ghế");
+        // Rollback selection
+        setSelectedSeats(selectedSeats);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -153,17 +252,6 @@ export default function SelectSeatScreen() {
       </SafeAreaView>
     );
   }
-
-  const toggleSeat = (seatName) => {
-    const seat = seatLookup[seatName];
-    if (!seat || seat.status === "Đã đặt") return;
-
-    setSelectedSeats((prev) =>
-      prev.includes(seatName)
-        ? prev.filter((name) => name !== seatName)
-        : [...prev, seatName]
-    );
-  };
 
   const selectedSeatCount = selectedSeats.length;
 
@@ -221,6 +309,19 @@ export default function SelectSeatScreen() {
               <Text style={styles.movieMeta}>
                 {showtime.start} • {showtime.date}
               </Text>
+            )}
+            {timeRemaining > 0 && (
+              <View style={styles.timerContainer}>
+                <MaterialCommunityIcons
+                  name="clock-outline"
+                  size={16}
+                  color="#FFA500"
+                />
+                <Text style={styles.timerText}>
+                  Còn {Math.floor(timeRemaining / 60)}:
+                  {(timeRemaining % 60).toString().padStart(2, "0")} để hoàn tất
+                </Text>
+              </View>
             )}
           </View>
         </View>
@@ -298,6 +399,11 @@ export default function SelectSeatScreen() {
             disabled={selectedSeats.length === 0}
             onPress={() => {
               if (selectedSeats.length > 0) {
+                // Lưu holdId để dùng ở màn hình thanh toán
+                const seatIds = selectedSeats.map(
+                  (name) => seatLookup[name].id
+                );
+
                 router.push({
                   pathname: "/booking/payment_method",
                   params: {
@@ -308,8 +414,10 @@ export default function SelectSeatScreen() {
                       showtime?.date || new Date().toISOString().split("T")[0],
                     time: showtime?.start || "00:00",
                     seats: sortedSeats.join(", "),
+                    seatIds: JSON.stringify(seatIds),
                     totalAmount: totalPrice,
                     showtimeId: showtimeId,
+                    holdId: holdId || "", // Truyền holdId sang payment
                   },
                 });
               }
@@ -363,6 +471,22 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     fontSize: 14,
     marginTop: 2,
+  },
+  timerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    backgroundColor: "rgba(255, 165, 0, 0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    alignSelf: "flex-start",
+  },
+  timerText: {
+    fontSize: 12,
+    color: "#FFA500",
+    marginLeft: 4,
+    fontWeight: "600",
   },
   screenWrapper: {
     alignItems: "center",
