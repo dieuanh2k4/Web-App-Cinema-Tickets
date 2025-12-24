@@ -25,6 +25,10 @@ export default function MoviesPage() {
   const { data: movies, isLoading } = useQuery({
     queryKey: ['movies'],
     queryFn: getMovies,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   // Map query params to actual status values
