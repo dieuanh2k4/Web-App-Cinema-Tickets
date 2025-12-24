@@ -25,7 +25,6 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     { path: '/', icon: FaHome, label: 'Tổng quan' },
     { path: '/movies', icon: FaFilm, label: 'Quản lý phim' },
     { path: '/rooms', icon: FaDoorOpen, label: 'Quản lý phòng chiếu' },
-    { path: '/seats', icon: FaCouch, label: 'Quản lý ghế ngồi' },
     { path: '/showtimes', icon: FaClock, label: 'Quản lý lịch chiếu' },
     { path: '/ticket-prices', icon: FaMoneyBillWave, label: 'Quản lý giá vé' },
     { path: '/orders', icon: FaShoppingCart, label: 'Quản lý đơn hàng' },

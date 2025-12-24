@@ -438,7 +438,16 @@ export const rooms = [
     totalSeats: 238,
     rows: 14,
     columns: 17,
-    createdDate: '2024-01-15'
+    createdDate: '2024-01-15',
+    maxSeats: 238,
+    seatLayout: Array.from({ length: 14 }, (_, i) => 
+      Array.from({ length: 17 }, (_, j) => ({
+        row: i,
+        col: j,
+        type: 'standard',
+        enabled: true
+      }))
+    )
   },
   {
     id: 2,
@@ -447,7 +456,16 @@ export const rooms = [
     totalSeats: 150,
     rows: 12,
     columns: 13,
-    createdDate: '2024-01-15'
+    createdDate: '2024-01-15',
+    maxSeats: 156,
+    seatLayout: Array.from({ length: 12 }, (_, i) => 
+      Array.from({ length: 13 }, (_, j) => ({
+        row: i,
+        col: j,
+        type: 'standard',
+        enabled: true
+      }))
+    )
   },
   {
     id: 3,
@@ -456,7 +474,16 @@ export const rooms = [
     totalSeats: 100,
     rows: 10,
     columns: 10,
-    createdDate: '2024-02-01'
+    createdDate: '2024-02-01',
+    maxSeats: 100,
+    seatLayout: Array.from({ length: 10 }, (_, i) => 
+      Array.from({ length: 10 }, (_, j) => ({
+        row: i,
+        col: j,
+        type: 'standard',
+        enabled: true
+      }))
+    )
   },
   {
     id: 4,
@@ -465,7 +492,16 @@ export const rooms = [
     totalSeats: 130,
     rows: 10,
     columns: 13,
-    createdDate: '2024-02-01'
+    createdDate: '2024-02-01',
+    maxSeats: 130,
+    seatLayout: Array.from({ length: 10 }, (_, i) => 
+      Array.from({ length: 13 }, (_, j) => ({
+        row: i,
+        col: j,
+        type: 'standard',
+        enabled: true
+      }))
+    )
   },
   {
     id: 5,
@@ -474,7 +510,16 @@ export const rooms = [
     totalSeats: 200,
     rows: 15,
     columns: 14,
-    createdDate: '2024-03-10'
+    createdDate: '2024-03-10',
+    maxSeats: 210,
+    seatLayout: Array.from({ length: 15 }, (_, i) => 
+      Array.from({ length: 14 }, (_, j) => ({
+        row: i,
+        col: j,
+        type: 'standard',
+        enabled: true
+      }))
+    )
   }
 ];
 
