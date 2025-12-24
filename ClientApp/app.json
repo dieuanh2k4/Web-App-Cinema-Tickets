@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "entryPoint": "expo-router/entry",
     "orientation": "portrait",
-    "scheme": "clientapp",
+    "scheme": "cinebook",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "icon": "./assets/images/cinebook.png",

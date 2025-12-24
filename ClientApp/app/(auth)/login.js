@@ -24,20 +24,37 @@ export default function Login() {
     console.log("Email:", email);
     console.log("Password:", password ? "***" : "empty");
 
-    try {
-      const result = await authService.login(email, password);
-      console.log("Login result:", result);
+    // TODO: Sẽ dùng sau khi có API backend
+    // try {
+    //   const result = await authService.login(email, password);
+    //   console.log("Login result:", result);
 
-      if (result.success) {
-        console.log("Login success");
-        await login({
-          token: result.data.token,
-          user: result.data.user,
-        });
-      } else {
-        console.log("Login failed:", result.error);
-        Alert.alert("Lỗi đăng nhập", JSON.stringify(result.error));
-      }
+    //   if (result.success) {
+    //     console.log("Login success");
+    //     await login({
+    //       token: result.data.token,
+    //       user: result.data.user,
+    //     });
+    //   } else {
+    //     console.log("Login failed:", result.error);
+    //     Alert.alert("Lỗi đăng nhập", JSON.stringify(result.error));
+    //   }
+    // } catch (error) {
+    //   console.log("Exception:", error);
+    //   Alert.alert("Lỗi", error.message);
+    // }
+
+    // Tạm thời bypass - đăng nhập trực tiếp không cần API
+    try {
+      await login({
+        token: "temp-token-" + Date.now(),
+        user: {
+          id: 1,
+          email: email || "user@example.com",
+          name: "User Test",
+        },
+      });
+      console.log("Đăng nhập thành công - vào trang home");
     } catch (error) {
       console.log("Exception:", error);
       Alert.alert("Lỗi", error.message);

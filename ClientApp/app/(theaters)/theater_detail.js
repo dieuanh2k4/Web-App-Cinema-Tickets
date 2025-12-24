@@ -9,11 +9,13 @@ import {
   Platform,
   StatusBar,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { theaterService } from "../../services/theaterService";
 import { showtimeService } from "../../services/showtimeService";
+import { movieService } from "../../services/movieService";
 
 export default function TheaterDetailScreen() {
   const { theaterId } = useLocalSearchParams();
@@ -21,6 +23,7 @@ export default function TheaterDetailScreen() {
   const [selectedDateIndex, setSelectedDateIndex] = useState(0);
   const [theater, setTheater] = useState(null);
   const [showtimes, setShowtimes] = useState([]);
+  const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,10 +39,13 @@ export default function TheaterDetailScreen() {
       // Load all showtimes for this theater
       const allShowtimes = await showtimeService.getAllShowtimes();
       const theaterShowtimes = allShowtimes.filter((st) => {
-        // Filter by theater name (mockDataBackend uses theaterName)
-        return st.theaterName === theaterData.name;
+        return st.theaterId === parseInt(theaterId);
       });
       setShowtimes(theaterShowtimes);
+
+      // Load movies for poster and details
+      const allMovies = await movieService.getAllMovies();
+      setMovies(allMovies);
     } catch (error) {
       console.error("Error loading theater detail:", error);
     } finally {
@@ -47,22 +53,19 @@ export default function TheaterDetailScreen() {
     }
   };
 
-  // Tạo danh sách 7 ngày
+  // Tạo danh sách 7 ngày với format DD-MM-YYYY
   const [dates] = useState(() => {
     const list = [];
     for (let i = 0; i < 7; i++) {
       const date = new Date();
       date.setDate(date.getDate() + i);
-      const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
-      const dayName = dayNames[date.getDay()];
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
       list.push({
         date,
-        label:
-          i === 0
-            ? "Hôm nay"
-            : i === 1
-            ? "Ngày mai"
-            : `${dayName}, ${date.getDate()}/${date.getMonth() + 1}`,
+        label: `${day}-${month}-${year}`,
+        fullDate: `${year}-${month}-${day}` // For filtering
       });
     }
     return list;
@@ -100,39 +103,43 @@ export default function TheaterDetailScreen() {
     );
   }
 
-  const selectedDate = dates[selectedDateIndex].date;
-  const selectedDateStr = selectedDate.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+  const selectedDate = dates[selectedDateIndex];
+  const selectedDateStr = selectedDate.fullDate; // Format: YYYY-MM-DD
 
   // Lọc suất chiếu theo ngày và nhóm theo phim
   const movieShowtimes = showtimes
     .filter((st) => {
-      // So sánh với date string từ backend (format: YYYY-MM-DD)
-      return st.date === selectedDateStr;
+      const showtimeDate = st.date?.split("T")[0] || st.date;
+      return showtimeDate === selectedDateStr;
     })
     .reduce((acc, showtime) => {
       const movieId = showtime.movieId;
-      const movieTitle = showtime.movieTitle || `Phim ${movieId}`;
+      const movie = movies.find((m) => m.id === movieId);
+      const movieTitle = movie?.title || showtime.movieTitle || `Phim ${movieId}`;
+      const moviePoster = movie?.posterUrl || null;
+      const ageRating = movie?.ageRating || "P";
 
       if (!acc[movieId]) {
         acc[movieId] = {
           movieId,
           movieTitle,
+          moviePoster,
+          ageRating,
           showtimes: [],
         };
       }
 
       acc[movieId].showtimes.push({
         id: showtime.id,
-        start: showtime.start?.substring(0, 5) || showtime.start, // Format HH:mm
-        end: showtime.end,
+        time: showtime.start?.substring(0, 5) || showtime.start,
         roomId: showtime.roomId,
-        roomType: showtime.roomName || `Phòng ${showtime.roomId}`,
+        roomName: showtime.roomName || `Phòng ${showtime.roomId}`,
       });
 
       return acc;
     }, {});
 
-  const movies = Object.values(movieShowtimes);
+  const moviesList = Object.values(movieShowtimes);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -144,31 +151,42 @@ export default function TheaterDetailScreen() {
           <MaterialCommunityIcons name="arrow-left" size={24} color="#FFFFFF" />
         </Pressable>
         <View style={styles.headerContent}>
-          <Text style={styles.theaterName}>{theater.name}</Text>
-          <Text style={styles.address}>{theater.address}</Text>
+          <Text style={styles.theaterName} numberOfLines={1}>
+            {theater.name}
+          </Text>
+          <View style={styles.addressRow}>
+            <MaterialCommunityIcons
+              name="map-marker"
+              size={14}
+              color="#9CA3AF"
+            />
+            <Text style={styles.address} numberOfLines={2}>
+              {theater.address}
+            </Text>
+          </View>
         </View>
       </View>
 
-      {/* Date Selection */}
+      {/* Date Selection - Horizontal Tabs */}
       <View style={styles.dateContainer}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.dateList}
+          contentContainerStyle={styles.dateScrollContent}
         >
           {dates.map((item, index) => (
             <Pressable
               key={index}
               style={[
-                styles.dateButton,
-                index === selectedDateIndex && styles.dateButtonActive,
+                styles.dateTab,
+                index === selectedDateIndex && styles.dateTabActive,
               ]}
               onPress={() => setSelectedDateIndex(index)}
             >
               <Text
                 style={[
-                  styles.dateText,
-                  index === selectedDateIndex && styles.dateTextActive,
+                  styles.dateTabText,
+                  index === selectedDateIndex && styles.dateTabTextActive,
                 ]}
               >
                 {item.label}
@@ -178,28 +196,49 @@ export default function TheaterDetailScreen() {
         </ScrollView>
       </View>
 
-      {/* Movie Showtimes */}
-      <ScrollView style={styles.content}>
-        {movies.length > 0 ? (
-          movies.map((movie) => (
-            <View key={movie.movieId} style={styles.movieSection}>
-              <View style={styles.movieHeader}>
-                <Text style={styles.movieTitle}>{movie.movieTitle}</Text>
-                <MaterialCommunityIcons
-                  name="movie-roll"
-                  size={24}
-                  color="#6C47DB"
-                />
+      {/* Movie Showtimes List */}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {moviesList.length > 0 ? (
+          moviesList.map((movie) => (
+            <View key={movie.movieId} style={styles.movieCard}>
+              {/* Movie Info */}
+              <View style={styles.movieInfo}>
+                {/* Poster */}
+                <View style={styles.posterContainer}>
+                  {movie.moviePoster ? (
+                    <Image
+                      source={{ uri: movie.moviePoster }}
+                      style={styles.poster}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.posterPlaceholder}>
+                      <MaterialCommunityIcons
+                        name="movie-open"
+                        size={40}
+                        color="#6C47DB"
+                      />
+                    </View>
+                  )}
+                </View>
+
+                {/* Movie Details */}
+                <View style={styles.movieDetails}>
+                  <Text style={styles.movieTitle} numberOfLines={2}>
+                    {movie.movieTitle}
+                  </Text>
+                  <View style={styles.ageRatingBadge}>
+                    <Text style={styles.ageRatingText}>{movie.ageRating}</Text>
+                  </View>
+                </View>
               </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.showtimeList}
-              >
+
+              {/* Showtimes Grid */}
+              <View style={styles.showtimesGrid}>
                 {movie.showtimes.map((showtime, idx) => (
                   <Pressable
                     key={`${showtime.id}-${idx}`}
-                    style={styles.showtimeButton}
+                    style={styles.timeButton}
                     onPress={() => {
                       router.push({
                         pathname: "/booking/select_seat",
@@ -211,22 +250,23 @@ export default function TheaterDetailScreen() {
                       });
                     }}
                   >
-                    <Text style={styles.timeText}>{showtime.start}</Text>
-                    <Text style={styles.roomText}>{showtime.roomType}</Text>
-                    <Text style={styles.priceText}>{showtime.price}</Text>
+                    <Text style={styles.timeButtonText}>{showtime.time}</Text>
                   </Pressable>
                 ))}
-              </ScrollView>
+              </View>
             </View>
           ))
         ) : (
           <View style={styles.emptyContainer}>
             <MaterialCommunityIcons
               name="calendar-blank"
-              size={48}
-              color="#6C47DB"
+              size={64}
+              color="#4A4A4A"
             />
             <Text style={styles.noShowtime}>Không có suất chiếu</Text>
+            <Text style={styles.noShowtimeSubtext}>
+              Vui lòng chọn ngày khác
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -237,7 +277,7 @@ export default function TheaterDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#0F0F0F",
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
   loadingContainer: {
@@ -274,127 +314,178 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+
+  // Header Styles
   header: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#1C1C1C",
     padding: 16,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     borderBottomWidth: 1,
     borderBottomColor: "#2A2A2A",
   },
   backButton: {
-    padding: 8,
-    marginRight: 8,
+    padding: 4,
+    marginRight: 12,
+    marginTop: 2,
   },
   headerContent: {
     flex: 1,
   },
   theaterName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     color: "#FFFFFF",
-    marginBottom: 4,
+    marginBottom: 6,
+  },
+  addressRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 4,
   },
   address: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#9CA3AF",
+    flex: 1,
+    lineHeight: 18,
   },
+
+  // Date Tabs Styles
   dateContainer: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#1C1C1C",
     borderBottomWidth: 1,
     borderBottomColor: "#2A2A2A",
+    paddingVertical: 12,
   },
-  dateList: {
-    padding: 12,
+  dateScrollContent: {
+    paddingHorizontal: 12,
+    gap: 8,
   },
-  dateButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+  dateTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: "#2A2A2A",
-    marginHorizontal: 4,
+    borderRadius: 6,
+    minWidth: 110,
+    alignItems: "center",
+  },
+  dateTabActive: {
+    backgroundColor: "#6C47DB",
+  },
+  dateTabText: {
+    color: "#9CA3AF",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  dateTabTextActive: {
+    color: "#FFFFFF",
+  },
+
+  // Content Styles
+  content: {
+    flex: 1,
+    backgroundColor: "#0F0F0F",
+  },
+
+  // Movie Card Styles
+  movieCard: {
+    backgroundColor: "#1C1C1C",
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 12,
+    overflow: "hidden",
     borderWidth: 1,
     borderColor: "#2A2A2A",
   },
-  dateButtonActive: {
-    backgroundColor: "#6C47DB",
-    borderColor: "#6C47DB",
+  movieInfo: {
+    flexDirection: "row",
+    padding: 16,
+    paddingBottom: 12,
   },
-  dateText: {
+  posterContainer: {
+    width: 90,
+    height: 120,
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: "#2A2A2A",
+  },
+  poster: {
+    width: "100%",
+    height: "100%",
+  },
+  posterPlaceholder: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#2A2A2A",
+  },
+  movieDetails: {
+    flex: 1,
+    marginLeft: 14,
+    justifyContent: "flex-start",
+  },
+  movieTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 8,
+    lineHeight: 22,
+  },
+  ageRatingBadge: {
+    backgroundColor: "#FF6B6B",
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  ageRatingText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+
+  // Showtimes Grid Styles
+  showtimesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    padding: 12,
+    paddingTop: 0,
+    gap: 8,
+  },
+  timeButton: {
+    backgroundColor: "#2A2A2A",
+    borderWidth: 1,
+    borderColor: "#4A4A4A",
+    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    minWidth: 70,
+    alignItems: "center",
+  },
+  timeButtonText: {
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "600",
   },
-  dateTextActive: {
-    color: "#FFFFFF",
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
-  movieSection: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#2A2A2A",
-  },
-  movieHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  movieTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    flex: 1,
-  },
-  showtimeList: {
-    paddingBottom: 8,
-  },
-  showtimeButton: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 8,
-    padding: 12,
-    marginRight: 12,
-    minWidth: 100,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#6C47DB",
-  },
-  timeText: {
-    color: "#6C47DB",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  roomText: {
-    color: "#9CA3AF",
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  priceText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "600",
-  },
+
+  // Empty State Styles
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 40,
+    paddingVertical: 80,
+    paddingHorizontal: 32,
   },
   noShowtime: {
     color: "#9CA3AF",
-    fontSize: 16,
-    marginTop: 12,
-  },
-  error: {
-    color: "#FFFFFF",
-    textAlign: "center",
-    marginTop: 50,
     fontSize: 18,
+    fontWeight: "600",
+    marginTop: 16,
+  },
+  noShowtimeSubtext: {
+    color: "#6B7280",
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: "center",
   },
 });

@@ -59,30 +59,91 @@ export const seatService = {
     }
   },
 
-  // Giữ ghế tạm thời (hold) - backend chưa có endpoint, giữ client-side
-  holdSeats: async (seatIds, showtimeId) => {
+  // Giữ ghế tạm thời (hold) - Phase 2 với Distributed Lock
+  holdSeats: async (seatIds, showtimeId, userId = null) => {
     try {
-      // Client-side optimistic hold
-      return { success: true, message: "Ghế đã được giữ (client-side)" };
+      const res = await apiClient.post(
+        API_CONFIG.ENDPOINTS.BOOKING.HOLD_SEATS,
+        {
+          showtimeId,
+          seatIds,
+          userId,
+        }
+      );
+
+      return {
+        success: res.data.success,
+        holdId: res.data.holdId,
+        expiresAt: res.data.expiresAt,
+        ttlSeconds: res.data.ttlSeconds,
+        message: res.data.message,
+      };
     } catch (error) {
       console.error("Error holding seats:", error);
-      throw error;
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error("Không thể giữ ghế. Vui lòng thử lại.");
     }
   },
 
   // Release ghế đang hold
-  releaseSeats: async (seatIds) => {
+  releaseSeats: async (holdId) => {
     try {
-      return { success: true, message: "Đã hủy giữ ghế (client-side)" };
+      if (!holdId) {
+        return { success: true };
+      }
+
+      const res = await apiClient.post(
+        API_CONFIG.ENDPOINTS.BOOKING.RELEASE_SEATS,
+        {
+          holdId,
+        }
+      );
+
+      return {
+        success: res.data.success,
+        message: res.data.message,
+      };
     } catch (error) {
       console.error("Error releasing seats:", error);
-      throw error;
+      // Không throw error vì release seats là cleanup operation
+      return { success: false };
     }
   },
 };
 
 export const bookingService = {
-  // Tạo booking mới (gửi tới backend)
+  // Xác nhận booking sau khi thanh toán thành công
+  confirmBooking: async (holdId, customerInfo) => {
+    try {
+      const payload = {
+        holdId,
+        customerName: customerInfo.name,
+        customerPhone: customerInfo.phone,
+        customerEmail: customerInfo.email || null,
+      };
+
+      const res = await apiClient.post(
+        API_CONFIG.ENDPOINTS.BOOKING.CONFIRM_BOOKING,
+        payload
+      );
+
+      return {
+        success: res.data.success,
+        booking: res.data.booking,
+        message: res.data.message,
+      };
+    } catch (error) {
+      console.error("Error confirming booking:", error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error("Không thể xác nhận đặt vé. Vui lòng thử lại.");
+    }
+  },
+
+  // Tạo booking mới
   createBooking: async (bookingData) => {
     try {
       // bookingData should include: showtimeId, seatIds, customerName, phoneNumber, email?, paymentMethod

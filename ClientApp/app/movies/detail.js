@@ -62,7 +62,16 @@ export default function MovieDetailScreen() {
   };
 
   const handleBookTicket = () => {
-    router.push("/booking/select_cinema");
+    if (!movie) return;
+
+    // Chuyển đến màn hình chọn rạp với thông tin phim
+    router.push({
+      pathname: "/booking/select_cinema",
+      params: {
+        movieId: movie.id,
+        movieTitle: movie.title,
+      },
+    });
   };
 
   if (!movie) {

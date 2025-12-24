@@ -8,13 +8,16 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { theaterService } from "../../services/theaterService";
 import { showtimeService } from "../../services/showtimeService";
 
 export default function SelectCinemaScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const { movieId, movieTitle } = params;
+
   const [theaters, setTheaters] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,12 +30,19 @@ export default function SelectCinemaScreen() {
       setLoading(true);
       const theatersData = await theaterService.getAllTheaters();
 
-      // Load showtimes and add to each theater
+      // Load showtimes cho phim này
       const allShowtimes = await showtimeService.getAllShowtimes();
 
+      // Nếu có movieId, chỉ lấy showtimes của phim đó
+      const relevantShowtimes = movieId
+        ? allShowtimes.filter(
+            (st) => st.movieId?.toString() === movieId?.toString()
+          )
+        : allShowtimes;
+
       const theatersWithShowtimes = theatersData.map((theater) => {
-        const theaterShowtimes = allShowtimes.filter(
-          (st) => st.theaterName === theater.name
+        const theaterShowtimes = relevantShowtimes.filter(
+          (st) => st.theaterId?.toString() === theater.id?.toString()
         );
         return {
           ...theater,
@@ -41,7 +51,12 @@ export default function SelectCinemaScreen() {
         };
       });
 
-      setTheaters(theatersWithShowtimes);
+      // Chỉ hiển thị rạp có suất chiếu nếu đang đặt vé cho phim cụ thể
+      const filteredTheaters = movieId
+        ? theatersWithShowtimes.filter((t) => t.showtimeCount > 0)
+        : theatersWithShowtimes;
+
+      setTheaters(filteredTheaters);
     } catch (error) {
       console.error("Error loading theaters:", error);
     } finally {
@@ -50,13 +65,26 @@ export default function SelectCinemaScreen() {
   };
 
   const handleCinemaSelect = (theater) => {
-    // Navigate to theater detail to see showtimes
-    router.push({
-      pathname: "/(theaters)/theater_detail",
-      params: {
-        theaterId: theater.id.toString(),
-      },
-    });
+    // Nếu đang đặt vé cho phim cụ thể, chuyển đến select_showtime
+    if (movieId && movieTitle) {
+      router.push({
+        pathname: "/booking/select_showtime",
+        params: {
+          theaterId: theater.id.toString(),
+          theaterName: theater.name,
+          movieId: movieId,
+          movieTitle: movieTitle,
+        },
+      });
+    } else {
+      // Ngược lại, xem chi tiết rạp
+      router.push({
+        pathname: "/(theaters)/theater_detail",
+        params: {
+          theaterId: theater.id.toString(),
+        },
+      });
+    }
   };
 
   return (
@@ -68,7 +96,12 @@ export default function SelectCinemaScreen() {
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chọn rạp chiếu</Text>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Chọn rạp chiếu</Text>
+          {movieTitle && (
+            <Text style={styles.headerSubtitle}>{movieTitle}</Text>
+          )}
+        </View>
         <View style={styles.backButton} />
       </View>
 
@@ -155,10 +188,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
   headerTitle: {
     color: "#FFFFFF",
     fontSize: 20,
     fontWeight: "bold",
+  },
+  headerSubtitle: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    marginTop: 2,
   },
   loadingContainer: {
     flex: 1,
