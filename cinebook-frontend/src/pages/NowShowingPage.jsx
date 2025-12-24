@@ -7,6 +7,10 @@ export default function NowShowingPage() {
   const { data: movies, isLoading } = useQuery({
     queryKey: ['movies'],
     queryFn: getMovies,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const nowShowing = movies?.filter((m) => m.status === 'Đang chiếu') || [];
