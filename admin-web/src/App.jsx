@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Movies from './pages/Movies';
 import AddMovie from './pages/AddMovie';
 import EditMovie from './pages/EditMovie';
+import Theaters from './pages/Theaters';
 import Rooms from './pages/Rooms';
 import Showtimes from './pages/Showtimes';
 import ShowtimeSlots from './pages/ShowtimeSlots';
@@ -74,6 +75,7 @@ function App() {
               <Route path="add" element={<AddMovie />} />
               <Route path="edit/:id" element={<EditMovie />} />
             </Route>
+            <Route path="theaters" element={<Theaters />} />
             <Route path="rooms" element={<Rooms />} />
             <Route path="showtimes" element={<Showtimes />} />
             <Route path="showtime-slots" element={<ShowtimeSlots />} />

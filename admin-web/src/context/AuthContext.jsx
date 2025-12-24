@@ -1,6 +1,6 @@
 import { createContext, useState } from 'react';
-import { adminAccounts } from '../data/mockData';
 import { getFromStorage, setToStorage, removeFromStorage, STORAGE_KEYS } from '../utils/helpers';
+import authService from '../services/authService';
 
 // Create context with default value
 const AuthContext = createContext(null);
@@ -14,21 +14,48 @@ export function AuthProvider({ children }) {
     // Initialize state from localStorage
     return getFromStorage(STORAGE_KEYS.USER);
   });
+  const [loading, setLoading] = useState(false);
 
-  const login = (username, password) => {
-    const account = adminAccounts.find(
-      acc => acc.username === username && acc.password === password
-    );
-
-    if (account) {
-      const { password: _, ...userWithoutPassword } = account;
-      setUser(userWithoutPassword);
-      setToStorage(STORAGE_KEYS.USER, userWithoutPassword);
-      setToStorage(STORAGE_KEYS.TOKEN, `token_${account.id}_${Date.now()}`);
-      return { success: true, user: userWithoutPassword };
+  const login = async (username, password) => {
+    try {
+      setLoading(true);
+      
+      // Call API login
+      const response = await authService.login(username, password);
+      
+      // BE returns: { isSuccess, message, data: { username, role, token } }
+      const { data } = response;
+      
+      if (!data) {
+        throw new Error('Invalid response from server');
+      }
+      
+      const { username: userName, role, token } = data;
+      
+      // Create user object
+      const userData = {
+        username: userName,
+        role: role.toLowerCase(), // Convert to lowercase (Admin -> admin, Staff -> staff)
+        fullName: userName, // Use username as fullName (placeholder)
+        email: '', // Not available from BE
+        phone: '', // Not available from BE
+        avatar: `https://ui-avatars.com/api/?name=${userName}&background=6366f1&color=fff`,
+      };
+      
+      setUser(userData);
+      setToStorage(STORAGE_KEYS.USER, userData);
+      setToStorage(STORAGE_KEYS.TOKEN, token);
+      
+      return { success: true, user: userData };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { 
+        success: false, 
+        message: error.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản và mật khẩu.' 
+      };
+    } finally {
+      setLoading(false);
     }
-
-    return { success: false, message: 'Tài khoản hoặc mật khẩu không đúng' };
   };
 
   const logout = () => {
@@ -41,7 +68,7 @@ export function AuthProvider({ children }) {
     user,
     login,
     logout,
-    loading: false,
+    loading,
     isAuthenticated: !!user
   };
 

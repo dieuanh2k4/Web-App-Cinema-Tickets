@@ -120,6 +120,7 @@ namespace Server.src.Services.Implements
             movie.Language = updateMovieDto.Language;
             movie.AgeLimit = updateMovieDto.AgeLimit;
             movie.StartDate = updateMovieDto.StartDate;
+            movie.EndDate = updateMovieDto.EndDate;
             movie.Description = updateMovieDto.Description;
             movie.Director = updateMovieDto.Director;
             movie.Actors = updateMovieDto.Actors;

@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaEye, FaSyncAlt } from 'react-icons/fa';
-import { movies as initialMovies } from '../data/mockData';
 import { formatDate } from '../utils/helpers';
+import movieService from '../services/movieService';
 
 const Movies = () => {
-  const [movies, setMovies] = useState(initialMovies);
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterYear, setFilterYear] = useState('');
   const [filterGenre, setFilterGenre] = useState('');
@@ -15,27 +16,70 @@ const Movies = () => {
   const itemsPerPage = 10;
   const navigate = useNavigate();
 
-  const handleRefresh = () => {
+  // Load movies from API
+  useEffect(() => {
+    loadMovies();
+  }, []);
+
+  const loadMovies = async () => {
+    try {
+      setLoading(true);
+      const data = await movieService.getAllMovies();
+      setMovies(data || []);
+    } catch (error) {
+      console.error('Error loading movies:', error);
+      alert('Không thể tải danh sách phim. Vui lòng thử lại sau.');
+      setMovies([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    // TODO: Load data from DB
-    setTimeout(() => {
-      setIsRefreshing(false);
-      console.log('Movies data refreshed');
-    }, 1000);
+    await loadMovies();
+    setIsRefreshing(false);
+  };
+
+  // Helper function to get movie status based on dates
+  const getMovieStatus = (movie) => {
+    if (!movie.startDate || !movie.endDate) return 'unknown';
+    const today = new Date();
+    const start = new Date(movie.startDate);
+    const end = new Date(movie.endDate);
+    
+    if (today >= start && today <= end) return 'showing';
+    if (today < start) return 'coming-soon';
+    return 'ended';
+  };
+
+  // Helper function to parse genre string to array
+  const parseGenre = (genreString) => {
+    if (!genreString) return [];
+    if (Array.isArray(genreString)) return genreString;
+    return genreString.split(',').map(g => g.trim());
   };
 
   // Get unique years and genres for filters
-  const years = [...new Set(movies.map(m => m.releaseYear))].sort((a, b) => b - a);
-  const allGenres = [...new Set(movies.flatMap(m => m.genre))].sort();
+  const years = [...new Set(movies.map(m => {
+    if (m.startDate) {
+      return new Date(m.startDate).getFullYear();
+    }
+    return null;
+  }).filter(Boolean))].sort((a, b) => b - a);
+
+  const allGenres = [...new Set(movies.flatMap(m => parseGenre(m.genre)))].sort();
 
   // Filter movies
   const filteredMovies = movies.filter(movie => {
-    const matchSearch = movie.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       movie.originalTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       movie.director.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchYear = !filterYear || movie.releaseYear.toString() === filterYear;
-    const matchGenre = !filterGenre || movie.genre.includes(filterGenre);
-    const matchStatus = !filterStatus || movie.status === filterStatus;
+    const genres = parseGenre(movie.genre);
+    const status = getMovieStatus(movie);
+    
+    const matchSearch = (movie.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                       (movie.director?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    const matchYear = !filterYear || (movie.startDate && new Date(movie.startDate).getFullYear().toString() === filterYear);
+    const matchGenre = !filterGenre || genres.includes(filterGenre);
+    const matchStatus = !filterStatus || status === filterStatus;
     
     return matchSearch && matchYear && matchGenre && matchStatus;
   });
@@ -45,9 +89,16 @@ const Movies = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentMovies = filteredMovies.slice(startIndex, startIndex + itemsPerPage);
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa phim này?')) {
-      setMovies(movies.filter(m => m.id !== id));
+      try {
+        await movieService.deleteMovie(id);
+        await loadMovies();
+        alert('Xóa phim thành công!');
+      } catch (error) {
+        console.error('Error deleting movie:', error);
+        alert('Không thể xóa phim. Vui lòng thử lại sau.');
+      }
     }
   };
 
@@ -58,6 +109,17 @@ const Movies = () => {
     setFilterStatus('');
     setCurrentPage(1);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+          <p className="text-gray-400">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10">
@@ -170,79 +232,101 @@ const Movies = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
-              {currentMovies.map((movie) => (
-                <tr key={movie.id} className="hover:bg-primary/50 transition-colors">
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-16 bg-gray-700 rounded overflow-hidden flex-shrink-0">
-                        {movie.poster ? (
-                          <img src={movie.poster} alt={movie.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-500">
-                            <FaEye />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-white font-medium">{movie.title}</p>
-                        <p className="text-sm text-gray-400">{movie.originalTitle}</p>
-                        <p className="text-xs text-gray-500">{movie.director}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-5 text-center text-white">{movie.releaseYear}</td>
-                  <td className="px-8 py-5">
-                    <div className="flex flex-wrap gap-1 justify-center">
-                      {movie.genre.slice(0, 2).map((g, i) => (
-                        <span key={i} className="px-2 py-1 bg-blue-600/20 text-blue-400 text-xs rounded">
-                          {g}
-                        </span>
-                      ))}
-                      {movie.genre.length > 2 && (
-                        <span className="px-2 py-1 bg-gray-600 text-gray-300 text-xs rounded">
-                          +{movie.genre.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-8 py-5 text-center text-white">{movie.duration} phút</td>
-                  <td className="px-8 py-5 text-center">
-                    <span className="px-3 py-1 bg-orange-600/20 text-orange-400 text-sm rounded-full">
-                      Xem lịch
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-3 py-1 text-sm rounded-full ${
-                      movie.status === 'showing' 
-                        ? 'bg-green-600/20 text-green-400' 
-                        : 'bg-yellow-600/20 text-yellow-400'
-                    }`}>
-                      {movie.status === 'showing' ? 'Đang chiếu' : 'Sắp chiếu'}
-                    </span>
-                  </td>
-                  <td className="px-8 py-5 text-center text-gray-400 text-sm">
-                    {formatDate(new Date())}
-                  </td>
-                  <td className="px-8 py-5">
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => navigate(`/movies/edit/${movie.id}`)}
-                        className="p-2 text-blue-400 hover:bg-blue-600/20 rounded transition-colors"
-                        title="Sửa"
-                      >
-                        <FaEdit />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(movie.id)}
-                        className="p-2 text-red-400 hover:bg-red-600/20 rounded transition-colors"
-                        title="Xóa"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
+              {currentMovies.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="px-8 py-12 text-center text-gray-400">
+                    Không có phim nào
                   </td>
                 </tr>
-              ))}
+              ) : (
+                currentMovies.map((movie) => {
+                  const genres = parseGenre(movie.genre);
+                  const status = getMovieStatus(movie);
+                  const year = movie.startDate ? new Date(movie.startDate).getFullYear() : '-';
+                  
+                  return (
+                    <tr key={movie.id} className="hover:bg-primary/50 transition-colors">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-16 bg-gray-700 rounded overflow-hidden flex-shrink-0">
+                            {movie.thumbnail ? (
+                              <img src={movie.thumbnail} alt={movie.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-500">
+                                <FaEye />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-white font-medium">{movie.title || 'N/A'}</p>
+                            <p className="text-xs text-gray-500">{movie.director || 'N/A'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-center text-white">{year}</td>
+                      <td className="px-8 py-5">
+                        <div className="flex flex-wrap gap-1 justify-center">
+                          {genres.slice(0, 2).map((g, i) => (
+                            <span key={i} className="px-2 py-1 bg-blue-600/20 text-blue-400 text-xs rounded">
+                              {g}
+                            </span>
+                          ))}
+                          {genres.length > 2 && (
+                            <span className="px-2 py-1 bg-gray-600 text-gray-300 text-xs rounded">
+                              +{genres.length - 2}
+                            </span>
+                          )}
+                          {genres.length === 0 && (
+                            <span className="text-gray-500 text-xs">N/A</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-center text-white">{movie.duration || 0} phút</td>
+                      <td className="px-8 py-5 text-center">
+                        <div className="text-xs text-gray-400">
+                          {movie.startDate && movie.endDate ? (
+                            <>
+                              {formatDate(new Date(movie.startDate))} - {formatDate(new Date(movie.endDate))}
+                            </>
+                          ) : 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-3 py-1 text-sm rounded-full ${
+                          status === 'showing' 
+                            ? 'bg-green-600/20 text-green-400' 
+                            : status === 'coming-soon'
+                            ? 'bg-yellow-600/20 text-yellow-400'
+                            : 'bg-gray-600/20 text-gray-400'
+                        }`}>
+                          {status === 'showing' ? 'Đang chiếu' : status === 'coming-soon' ? 'Sắp chiếu' : 'Đã kết thúc'}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5 text-center text-gray-400 text-sm">
+                        {movie.startDate ? formatDate(new Date(movie.startDate)) : 'N/A'}
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => navigate(`/movies/edit/${movie.id}`)}
+                            className="p-2 text-blue-400 hover:bg-blue-600/20 rounded transition-colors"
+                            title="Sửa"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(movie.id)}
+                            className="p-2 text-red-400 hover:bg-red-600/20 rounded transition-colors"
+                            title="Xóa"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
