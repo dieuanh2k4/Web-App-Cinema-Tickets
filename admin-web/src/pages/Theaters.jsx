@@ -1,32 +1,31 @@
 import { useState, useEffect } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaTimes, FaSyncAlt } from 'react-icons/fa';
-import { formatCurrency } from '../utils/helpers';
-import ticketPriceService from '../services/ticketPriceService';
+import theaterService from '../services/theaterService';
 
-const TicketPrices = () => {
-  const [prices, setPrices] = useState([]);
+const Theaters = () => {
+  const [theaters, setTheaters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
-  const [selectedPrice, setSelectedPrice] = useState(null);
+  const [selectedTheater, setSelectedTheater] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 10;
 
-  // Load prices from API
+  // Load theaters from API
   useEffect(() => {
-    loadPrices();
+    loadTheaters();
   }, []);
 
-  const loadPrices = async () => {
+  const loadTheaters = async () => {
     try {
       setLoading(true);
-      const data = await ticketPriceService.getAllTicketPrices();
-      setPrices(data || []);
+      const data = await theaterService.getAllTheaters();
+      setTheaters(data || []);
     } catch (error) {
-      console.error('Error loading ticket prices:', error);
-      alert('Không thể tải danh sách giá vé. Vui lòng thử lại sau.');
-      setPrices([]);
+      console.error('Error loading theaters:', error);
+      alert('Không thể tải danh sách rạp chiếu. Vui lòng thử lại sau.');
+      setTheaters([]);
     } finally {
       setLoading(false);
     }
@@ -34,55 +33,52 @@ const TicketPrices = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await loadPrices();
+    await loadTheaters();
     setIsRefreshing(false);
   };
 
-  // Form state - BE only has: roomType, seatType, price
+  // Form state - BE has: name, address, city
   const [formData, setFormData] = useState({
-    roomType: '',
-    seatType: '',
-    price: ''
+    name: '',
+    address: '',
+    city: ''
   });
 
-  const roomTypes = ['2D', '3D', 'IMAX'];
-  const seatTypes = ['Standard', 'VIP', 'Couple'];
-
   // Pagination
-  const totalPages = Math.ceil(prices.length / itemsPerPage);
+  const totalPages = Math.ceil(theaters.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentPrices = prices.slice(startIndex, startIndex + itemsPerPage);
+  const currentTheaters = theaters.slice(startIndex, startIndex + itemsPerPage);
 
   const handleAdd = () => {
     setModalMode('add');
     setFormData({
-      roomType: '',
-      seatType: '',
-      price: ''
+      name: '',
+      address: '',
+      city: ''
     });
     setShowModal(true);
   };
 
-  const handleEdit = (price) => {
+  const handleEdit = (theater) => {
     setModalMode('edit');
-    setSelectedPrice(price);
+    setSelectedTheater(theater);
     setFormData({
-      roomType: price.roomType || '',
-      seatType: price.seatType || '',
-      price: price.price || ''
+      name: theater.name || '',
+      address: theater.address || '',
+      city: theater.city || ''
     });
     setShowModal(true);
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa giá vé này?')) {
+    if (window.confirm('Bạn có chắc chắn muốn xóa rạp chiếu này?')) {
       try {
-        await ticketPriceService.deleteTicketPrice(id);
-        await loadPrices();
-        alert('Xóa giá vé thành công!');
+        await theaterService.deleteTheater(id);
+        await loadTheaters();
+        alert('Xóa rạp chiếu thành công!');
       } catch (error) {
-        console.error('Error deleting ticket price:', error);
-        alert('Không thể xóa giá vé. Vui lòng thử lại sau.');
+        console.error('Error deleting theater:', error);
+        alert('Không thể xóa rạp chiếu. Vui lòng thử lại sau.');
       }
     }
   };
@@ -90,30 +86,30 @@ const TicketPrices = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.roomType || !formData.seatType || !formData.price) {
+    if (!formData.name || !formData.address || !formData.city) {
       alert('Vui lòng điền đầy đủ thông tin!');
       return;
     }
 
     try {
-      const priceData = {
-        roomType: formData.roomType,
-        seatType: formData.seatType,
-        price: parseInt(formData.price)
+      const theaterData = {
+        name: formData.name,
+        address: formData.address,
+        city: formData.city
       };
 
       if (modalMode === 'add') {
-        await ticketPriceService.createTicketPrice(priceData);
+        await theaterService.createTheater(theaterData);
       } else {
-        await ticketPriceService.updateTicketPrice(selectedPrice.id, priceData);
+        await theaterService.updateTheater(selectedTheater.id, theaterData);
       }
 
-      await loadPrices();
+      await loadTheaters();
       setShowModal(false);
-      alert(modalMode === 'add' ? 'Thêm giá vé thành công!' : 'Cập nhật giá vé thành công!');
+      alert(modalMode === 'add' ? 'Thêm rạp chiếu thành công!' : 'Cập nhật rạp chiếu thành công!');
     } catch (error) {
-      console.error('Error saving ticket price:', error);
-      alert('Không thể lưu giá vé. Vui lòng thử lại sau.');
+      console.error('Error saving theater:', error);
+      alert('Không thể lưu rạp chiếu. Vui lòng thử lại sau.');
     }
   };
 
@@ -123,24 +119,6 @@ const TicketPrices = () => {
       ...prev,
       [name]: value
     }));
-  };
-
-  const getRoomTypeBadgeColor = (roomType) => {
-    switch(roomType) {
-      case '2D': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case '3D': return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'IMAX': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-    }
-  };
-
-  const getSeatTypeBadgeColor = (seatType) => {
-    switch(seatType?.toLowerCase()) {
-      case 'standard': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-      case 'couple': return 'bg-pink-500/20 text-pink-400 border-pink-500/30';
-      case 'vip': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-    }
   };
 
   if (loading) {
@@ -155,30 +133,28 @@ const TicketPrices = () => {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl lg:text-4xl font-bold text-white mb-3 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-            Quản lý giá vé
-          </h1>
-          <p className="text-gray-400 text-sm lg:text-base">Cấu hình giá vé theo loại phòng, ghế và suất chiếu</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Quản lý rạp chiếu</h1>
+          <p className="text-gray-400">Quản lý thông tin các rạp chiếu</p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-3 bg-primary hover:bg-accent text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
-            <span>Refresh</span>
+            <span>Làm mới</span>
           </button>
           <button
             onClick={handleAdd}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl transition-all shadow-lg shadow-blue-600/25 font-medium"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-accent to-purple-600 hover:from-purple-600 hover:to-accent text-white rounded-xl transition-all shadow-lg shadow-accent/25 font-medium"
           >
             <FaPlus />
-            <span>Tạo giá vé</span>
+            <span>Tạo rạp chiếu</span>
           </button>
         </div>
       </div>
@@ -189,39 +165,35 @@ const TicketPrices = () => {
           <table className="w-full">
             <thead className="bg-primary/50">
               <tr>
-                <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Loại ghế</th>
-                <th className="px-8 py-5 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Hình thức chiếu</th>
-                <th className="px-8 py-5 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Giá vé</th>
+                <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Tên rạp</th>
+                <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Địa chỉ</th>
+                <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Thành phố</th>
                 <th className="px-8 py-5 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700/50">
-              {currentPrices.map((price) => (
-                <tr key={price.id} className="hover:bg-primary/30 transition-colors group">
+              {currentTheaters.map((theater) => (
+                <tr key={theater.id} className="hover:bg-primary/30 transition-colors group">
                   <td className="px-8 py-5">
-                    <span className={`px-3 py-1.5 text-sm rounded-lg border ${getSeatTypeBadgeColor(price.seatType)}`}>
-                      {price.seatType}
-                    </span>
+                    <span className="text-white font-medium">{theater.name}</span>
                   </td>
-                  <td className="px-8 py-5 text-center">
-                    <span className={`px-3 py-1.5 text-sm rounded-lg border ${getRoomTypeBadgeColor(price.roomType)}`}>
-                      {price.roomType}
-                    </span>
+                  <td className="px-8 py-5">
+                    <span className="text-gray-300">{theater.address}</span>
                   </td>
-                  <td className="px-8 py-5 text-right">
-                    <span className="text-white font-bold text-lg">{formatCurrency(price.price)}</span>
+                  <td className="px-8 py-5">
+                    <span className="text-gray-300">{theater.city}</span>
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center justify-center gap-2">
                       <button
-                        onClick={() => handleEdit(price)}
+                        onClick={() => handleEdit(theater)}
                         className="p-2 text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors"
                         title="Sửa"
                       >
                         <FaEdit size={18} />
                       </button>
                       <button
-                        onClick={() => handleDelete(price.id)}
+                        onClick={() => handleDelete(theater.id)}
                         className="p-2 text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
                         title="Xóa"
                       >
@@ -239,7 +211,7 @@ const TicketPrices = () => {
         {totalPages > 1 && (
           <div className="px-8 py-5 border-t border-gray-700/50 flex items-center justify-between">
             <div className="text-sm text-gray-400">
-              Hiển thị {startIndex + 1} - {Math.min(startIndex + itemsPerPage, prices.length)} trong {prices.length} giá vé
+              Hiển thị {startIndex + 1} - {Math.min(startIndex + itemsPerPage, theaters.length)} trong {theaters.length} rạp
             </div>
             <div className="flex gap-2">
               <button
@@ -281,7 +253,7 @@ const TicketPrices = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
               <h2 className="text-xl font-bold text-white">
-                {modalMode === 'add' ? 'Tạo giá vé' : 'Cập nhật giá vé'}
+                {modalMode === 'add' ? 'Tạo rạp chiếu' : 'Cập nhật rạp chiếu'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -293,53 +265,45 @@ const TicketPrices = () => {
 
             {/* Modal Body */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Loại ghế */}
+              {/* Tên rạp */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Loại ghế</label>
-                <select
-                  name="seatType"
-                  value={formData.seatType}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
-                  required
-                >
-                  <option value="">Select a seat type</option>
-                  {seatTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Hình thức chiếu */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Hình thức chiếu</label>
-                <select
-                  name="roomType"
-                  value={formData.roomType}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
-                  required
-                >
-                  <option value="">Select a graphics type</option>
-                  {roomTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Giá tiền */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Giá tiền</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Tên rạp</label>
                 <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
+                  type="text"
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
-                  placeholder="Nhập giá vé (VNĐ)"
+                  placeholder="Nhập tên rạp"
                   className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
                   required
-                  min="0"
-                  step="1000"
+                />
+              </div>
+
+              {/* Địa chỉ */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Địa chỉ</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Nhập địa chỉ"
+                  className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
+                  required
+                />
+              </div>
+
+              {/* Thành phố */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Thành phố</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  placeholder="Nhập thành phố"
+                  className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
+                  required
                 />
               </div>
 
@@ -367,4 +331,4 @@ const TicketPrices = () => {
   );
 };
 
-export default TicketPrices;
+export default Theaters;

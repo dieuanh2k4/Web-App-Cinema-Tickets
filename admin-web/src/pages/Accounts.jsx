@@ -1,39 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlus, FaTrash, FaSearch, FaEye, FaUserCircle, FaSyncAlt } from 'react-icons/fa';
-import { adminAccounts as initialAccounts } from '../data/mockData';
 import { formatDate } from '../utils/helpers';
+import userService from '../services/userService';
 
 const Accounts = () => {
-  const [accounts, setAccounts] = useState(initialAccounts);
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 10;
 
-  const handleRefresh = () => {
+  // Load accounts from API
+  useEffect(() => {
+    loadAccounts();
+  }, []);
+
+  const loadAccounts = async () => {
+    try {
+      setLoading(true);
+      const data = await userService.getAllUsers();
+      setAccounts(data || []);
+    } catch (error) {
+      console.error('Error loading accounts:', error);
+      alert('Không thể tải danh sách tài khoản. Vui lòng thử lại sau.');
+      setAccounts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    // TODO: Load data from DB
-    setTimeout(() => {
-      setIsRefreshing(false);
-      console.log('Accounts data refreshed');
-    }, 1000);
+    await loadAccounts();
+    setIsRefreshing(false);
+  };
+
+  // Helper to convert userType number to role text
+  const getUserRole = (userType) => {
+    // BE: 0 = Admin, 1 = Staff, 2 = Customer
+    const roles = {
+      0: 'admin',
+      1: 'staff'
+    };
+    return roles[userType] || 'unknown';
   };
 
   // Get unique roles for filter
-  const roles = [...new Set(accounts.map(a => a.role))].sort();
+  const roles = [...new Set(accounts.map(a => getUserRole(a.userType)))].filter(r => r !== 'unknown').sort();
 
   // Filter accounts
   const filteredAccounts = accounts.filter(account => {
-    const matchSearch = account.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       account.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       account.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchRole = !filterRole || account.role === filterRole;
-    const matchStatus = !filterStatus || account.status === filterStatus;
+    const role = getUserRole(account.userType);
+    const matchSearch = (account.username?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    const matchRole = !filterRole || role === filterRole;
     
-    return matchSearch && matchRole && matchStatus;
+    return matchSearch && matchRole;
   });
 
   // Pagination
@@ -41,23 +65,28 @@ const Accounts = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentAccounts = filteredAccounts.slice(startIndex, startIndex + itemsPerPage);
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
-      setAccounts(accounts.filter(a => a.id !== id));
+      try {
+        await userService.deleteUser(id);
+        await loadAccounts();
+        alert('Xóa tài khoản thành công!');
+      } catch (error) {
+        console.error('Error deleting account:', error);
+        alert('Không thể xóa tài khoản. Vui lòng thử lại sau.');
+      }
     }
   };
 
   const handleResetFilters = () => {
     setSearchTerm('');
     setFilterRole('');
-    setFilterStatus('');
     setCurrentPage(1);
   };
 
   const getRoleBadge = (role) => {
     const badges = {
       admin: 'bg-red-500/20 text-red-400 border-red-500/30',
-      manager: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       staff: 'bg-green-500/20 text-green-400 border-green-500/30'
     };
     return badges[role] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
@@ -66,21 +95,21 @@ const Accounts = () => {
   const getRoleLabel = (role) => {
     const labels = {
       admin: 'Quản trị viên',
-      manager: 'Quản lý',
       staff: 'Nhân viên'
     };
     return labels[role] || role;
   };
 
-  const getStatusBadge = (status) => {
-    return status === 'active' 
-      ? 'bg-green-500/20 text-green-400 border-green-500/30'
-      : 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-  };
-
-  const getStatusLabel = (status) => {
-    return status === 'active' ? 'Hoạt động' : 'Không hoạt động';
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+          <p className="text-gray-400">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10">
@@ -111,14 +140,14 @@ const Accounts = () => {
 
       {/* Filters */}
       <div className="bg-secondary rounded-lg p-8 border border-gray-700">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
           {/* Search */}
           <div className="md:col-span-2">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Tìm kiếm theo tên, username, email..."
+                placeholder="Tìm kiếm theo username..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent"
@@ -139,19 +168,6 @@ const Accounts = () => {
               ))}
             </select>
           </div>
-
-          {/* Status Filter */}
-          <div>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-4 py-2 bg-primary border border-gray-600 rounded-lg text-white focus:outline-none focus:border-accent"
-            >
-              <option value="">Tất cả trạng thái</option>
-              <option value="active">Hoạt động</option>
-              <option value="inactive">Không hoạt động</option>
-            </select>
-          </div>
         </div>
 
         <div className="flex justify-between items-center">
@@ -159,7 +175,7 @@ const Accounts = () => {
             Hiển thị <span className="text-white font-medium">{currentAccounts.length}</span> trong tổng số{' '}
             <span className="text-white font-medium">{filteredAccounts.length}</span> tài khoản
           </p>
-          {(searchTerm || filterRole || filterStatus) && (
+          {(searchTerm || filterRole) && (
             <button
               onClick={handleResetFilters}
               className="text-sm text-accent hover:text-accent/80 transition-colors"
@@ -178,70 +194,65 @@ const Accounts = () => {
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Tài khoản</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vai trò</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email / SĐT</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Trạng thái</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Ngày tạo</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">User ID</th>
                 <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
-              {currentAccounts.map((account) => (
-                <tr key={account.id} className="hover:bg-primary/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-12 w-12">
-                        {account.avatar ? (
-                          <img src={account.avatar} alt={account.fullName} className="h-12 w-12 rounded-full object-cover" />
-                        ) : (
-                          <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center">
-                            <FaUserCircle className="text-accent" size={24} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-white">{account.fullName}</div>
-                        <div className="text-sm text-gray-400">@{account.username}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getRoleBadge(account.role)}`}>
-                      {getRoleLabel(account.role)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-white">{account.email}</div>
-                    <div className="text-sm text-gray-400">{account.phone}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusBadge(account.status)}`}>
-                      {getStatusLabel(account.status)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-white">{formatDate(account.createdDate)}</div>
-                    <div className="text-xs text-gray-400">Đăng nhập: {formatDate(account.lastLogin)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <Link
-                        to={`/accounts/${account.id}`}
-                        className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
-                        title="Xem chi tiết"
-                      >
-                        <FaEye size={16} />
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(account.id)}
-                        className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                        title="Xóa"
-                      >
-                        <FaTrash size={16} />
-                      </button>
-                    </div>
+              {currentAccounts.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="px-6 py-12 text-center text-gray-400">
+                    Không có tài khoản nào
                   </td>
                 </tr>
-              ))}
+              ) : (
+                currentAccounts.map((account) => {
+                  const role = getUserRole(account.userType);
+                  return (
+                    <tr key={account.id} className="hover:bg-primary/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-12 w-12">
+                            <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center">
+                              <FaUserCircle className="text-accent" size={24} />
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-white">{account.username || 'N/A'}</div>
+                            <div className="text-sm text-gray-400">ID: {account.id}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getRoleBadge(role)}`}>
+                          {getRoleLabel(role)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-400">Type: {account.userType}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Link
+                            to={`/accounts/${account.id}`}
+                            className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                            title="Xem chi tiết"
+                          >
+                            <FaEye size={16} />
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(account.id)}
+                            className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            title="Xóa"
+                          >
+                            <FaTrash size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
