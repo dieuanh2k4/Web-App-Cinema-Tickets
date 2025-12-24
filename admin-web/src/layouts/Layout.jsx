@@ -9,6 +9,7 @@ import {
   FaDoorOpen,
   FaCouch,
   FaClock,
+  FaCalendarAlt,
   FaMoneyBillWave,
   FaShoppingCart,
   FaUsers,
@@ -26,6 +27,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     { path: '/movies', icon: FaFilm, label: 'Quản lý phim' },
     { path: '/rooms', icon: FaDoorOpen, label: 'Quản lý phòng chiếu' },
     { path: '/showtimes', icon: FaClock, label: 'Quản lý lịch chiếu' },
+    { path: '/showtime-slots', icon: FaCalendarAlt, label: 'Quản lý suất chiếu' },
     { path: '/ticket-prices', icon: FaMoneyBillWave, label: 'Quản lý giá vé' },
     { path: '/orders', icon: FaShoppingCart, label: 'Quản lý đơn hàng' },
     { path: '/accounts', icon: FaUsers, label: 'Quản lý tài khoản' }

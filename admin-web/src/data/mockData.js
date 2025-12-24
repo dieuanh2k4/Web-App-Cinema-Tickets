@@ -593,3 +593,105 @@ export const showtimesSchedules = [
     createdDate: '2024-04-10'
   }
 ];
+
+// Mock Showtime Slots (Suất chiếu cụ thể)
+export const showtimeSlots = [
+  {
+    id: 1,
+    movieId: 1,
+    movieTitle: 'Spirited Away',
+    roomId: 1,
+    roomName: 'Phòng 1',
+    date: '2024-04-15',
+    time: '14:00',
+    format: '2D', // 2D, 3D, IMAX
+    version: 'subtitle', // subtitle (Phụ đề), dubbed (Lồng tiếng), voiceover (Thuyết minh)
+    slotType: 'scheduled', // scheduled (Theo lịch), special (Đặc biệt), urgent (Đột xuất)
+    status: 'completed', // upcoming, ongoing, completed
+    createdDate: '2024-04-10'
+  },
+  {
+    id: 2,
+    movieId: 1,
+    movieTitle: 'Spirited Away',
+    roomId: 1,
+    roomName: 'Phòng 1',
+    date: '2024-04-15',
+    time: '17:30',
+    format: '2D',
+    version: 'dubbed',
+    slotType: 'scheduled',
+    status: 'completed',
+    createdDate: '2024-04-10'
+  },
+  {
+    id: 3,
+    movieId: 2,
+    movieTitle: 'Your Name',
+    roomId: 2,
+    roomName: 'Phòng 2',
+    date: '2024-04-20',
+    time: '19:00',
+    format: '3D',
+    version: 'subtitle',
+    slotType: 'scheduled',
+    status: 'ongoing',
+    createdDate: '2024-04-15'
+  },
+  {
+    id: 4,
+    movieId: 4,
+    movieTitle: 'Princess Mononoke',
+    roomId: 5,
+    roomName: 'Phòng IMAX',
+    date: '2024-05-01',
+    time: '20:00',
+    format: 'IMAX',
+    version: 'subtitle',
+    slotType: 'special',
+    status: 'ongoing',
+    createdDate: '2024-04-25'
+  },
+  {
+    id: 5,
+    movieId: 7,
+    movieTitle: 'Weathering with You',
+    roomId: 3,
+    roomName: 'Phòng 3',
+    date: '2024-04-21',
+    time: '15:30',
+    format: '3D',
+    version: 'voiceover',
+    slotType: 'special',
+    status: 'upcoming',
+    createdDate: '2024-04-20'
+  },
+  {
+    id: 6,
+    movieId: 1,
+    movieTitle: 'Spirited Away',
+    roomId: 4,
+    roomName: 'Phòng 4',
+    date: '2024-04-16',
+    time: '10:00',
+    format: '3D',
+    version: 'subtitle',
+    slotType: 'scheduled',
+    status: 'completed',
+    createdDate: '2024-04-10'
+  },
+  {
+    id: 7,
+    movieId: 2,
+    movieTitle: 'Your Name',
+    roomId: 1,
+    roomName: 'Phòng 1',
+    date: '2024-04-18',
+    time: '21:00',
+    format: '2D',
+    version: 'dubbed',
+    slotType: 'scheduled',
+    status: 'completed',
+    createdDate: '2024-04-15'
+  }
+];

@@ -9,6 +9,7 @@ import AddMovie from './pages/AddMovie';
 import EditMovie from './pages/EditMovie';
 import Rooms from './pages/Rooms';
 import Showtimes from './pages/Showtimes';
+import ShowtimeSlots from './pages/ShowtimeSlots';
 import TicketPrices from './pages/TicketPrices';
 import Accounts from './pages/Accounts';
 import AddAccount from './pages/AddAccount';
@@ -73,6 +74,7 @@ function App() {
             </Route>
             <Route path="rooms" element={<Rooms />} />
             <Route path="showtimes" element={<Showtimes />} />
+            <Route path="showtime-slots" element={<ShowtimeSlots />} />
             <Route path="ticket-prices" element={<TicketPrices />} />
             <Route path="orders" element={<div className="p-6 text-white">Quản lý đơn hàng (Coming soon)</div>} />
             <Route path="accounts">
