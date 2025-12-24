@@ -32,6 +32,8 @@ namespace Server.src.Controllers
             {
                 var showtime = await _context.Showtimes
                     .Include(s => s.Rooms)
+                        .ThenInclude(r => r.Theater)
+                    .Include(s => s.Movie)
                     .FirstOrDefaultAsync(s => s.Id == showtimeId);
 
                 if (showtime == null)
@@ -65,6 +67,12 @@ namespace Server.src.Controllers
                 {
                     showtimeId = showtimeId,
                     roomName = showtime.Rooms?.Name,
+                    movieTitle = showtime.Movie?.Title,
+                    theaterName = showtime.Rooms?.Theater?.Name,
+                    theaterAddress = showtime.Rooms?.Theater?.Address,
+                    theaterCity = showtime.Rooms?.Theater?.City,
+                    showtimeDate = showtime.StartTime.ToString("yyyy-MM-dd"),
+                    showtimeTime = showtime.StartTime.ToString("HH:mm"),
                     totalSeats = seats.Count,
                     availableSeats = seatAvailability.Count(s => s.IsAvailable),
                     bookedSeats = seatAvailability.Count(s => !s.IsAvailable),

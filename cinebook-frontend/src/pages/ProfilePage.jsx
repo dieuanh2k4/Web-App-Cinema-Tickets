@@ -14,13 +14,19 @@ export default function ProfilePage() {
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile'],
     queryFn: getUserProfile,
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   })
 
   const { data: tickets, isLoading: isLoadingTickets } = useQuery({
     queryKey: ['user-tickets'],
     queryFn: getUserTickets,
-    enabled: !!user && activeTab === 'tickets'
+    enabled: !!user && activeTab === 'tickets',
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   })
 
   const handleLogout = () => {

@@ -44,41 +44,59 @@ namespace Server.src.Data
                 Console.WriteLine("Đã tạo 3 users");
             }
 
-            // 2. Seed Theaters
+            // 2. Seed Theaters - 6 rạp tại Hà Nội
             if (!context.Theater.Any())
             {
                 var theaters = new List<Theater>
                 {
                     new Theater
                     {
-                        Name = "CGV Vincom Center",
-                        Address = "72 Lê Thánh Tôn, Quận 1, TP.HCM",
-                        City = "TP.HCM"
+                        Name = "CGV Vincom Bà Triệu",
+                        Address = "191 Bà Triệu, Hai Bà Trưng, Hà Nội",
+                        City = "Hà Nội"
+                    },
+                    new Theater
+                    {
+                        Name = "CGV Royal City",
+                        Address = "72A Nguyễn Trãi, Thanh Xuân, Hà Nội",
+                        City = "Hà Nội"
+                    },
+                    new Theater
+                    {
+                        Name = "Lotte Cinema Tây Hồ",
+                        Address = "50 Liễu Giai, Ba Đình, Hà Nội",
+                        City = "Hà Nội"
                     },
                     new Theater
                     {
                         Name = "Galaxy Nguyễn Du",
-                        Address = "116 Nguyễn Du, Quận 1, TP.HCM",
-                        City = "TP.HCM"
+                        Address = "116 Nguyễn Du, Hai Bà Trưng, Hà Nội",
+                        City = "Hà Nội"
                     },
                     new Theater
                     {
-                        Name = "Lotte Cinema Cộng Hòa",
-                        Address = "180 Cộng Hòa, Tân Bình, TP.HCM",
-                        City = "TP.HCM"
+                        Name = "BHD Star Phạm Ngọc Thạch",
+                        Address = "11 Phạm Ngọc Thạch, Đống Đa, Hà Nội",
+                        City = "Hà Nội"
+                    },
+                    new Theater
+                    {
+                        Name = "Platinum Cineplex Times City",
+                        Address = "458 Minh Khai, Hai Bà Trưng, Hà Nội",
+                        City = "Hà Nội"
                     }
                 };
 
                 context.Theater.AddRange(theaters);
                 context.SaveChanges();
-                Console.WriteLine("✅ Đã tạo 3 theaters");
+                Console.WriteLine("✅ Đã tạo 6 rạp chiếu tại Hà Nội");
             }
 
             // 3. Seed Rooms
             if (!context.Rooms.Any())
             {
-                var theater1 = context.Theater.First(t => t.Name == "CGV Vincom Center");
-                var theater2 = context.Theater.First(t => t.Name == "Galaxy Nguyễn Du");
+                var theater1 = context.Theater.First(t => t.Name == "CGV Vincom Bà Triệu");
+                var theater2 = context.Theater.First(t => t.Name == "CGV Royal City");
 
                 var rooms = new List<Rooms>
                 {

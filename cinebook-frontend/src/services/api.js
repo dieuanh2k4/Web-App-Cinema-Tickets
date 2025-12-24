@@ -145,6 +145,13 @@ export const getAvailableSeats = async (showtimeId) => {
 };
 
 // ============================================
+// CHATBOT AI APIs
+// ============================================
+export const sendChatMessage = async (messageData) => {
+  return api.post("/Chat/send-message", messageData);
+};
+
+// ============================================
 // PAYMENT APIs
 // ============================================
 export const createVNPayPayment = async (paymentData) => {
