@@ -305,11 +305,9 @@ using (var scope = app.Services.CreateScope())
 // ==========================
 // Middleware Pipeline
 // ==========================
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Enable Swagger in all environments (Development & Production)
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // ==========================
 // Cấu hình Hangfire Dashboard
