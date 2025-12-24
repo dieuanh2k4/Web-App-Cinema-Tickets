@@ -224,5 +224,50 @@ namespace Server.src.Services.Implements
 
             return showtimes;
         }
+
+        public async Task<List<ShowtimeDto>> GetShowtimeByTheater(int theaterId, DateOnly date)
+        {
+            // lấy roomid theo theaterid
+            var rooms = await _context.Rooms
+                .Where(r => r.TheaterId == theaterId)
+                .ToListAsync();
+
+            if (rooms == null || !rooms.Any())
+            {
+                throw new Result($"Không có phòng nào tại rạp {theaterId}");
+            }
+
+            // Lấy danh sách roomId
+            var roomIds = rooms.Select(r => r.Id).ToList();
+
+            // Lấy các showtime có date bằng với date truyền vào, 
+            // có roomId nằm trong list roomIds và trả về DTO
+            var showtimes = await _context.Showtimes
+                .Include(s => s.Movies)
+                .Include(s => s.Rooms)
+                .Include(s => s.Rooms.Theater)
+                .Where(s => s.Date == date && 
+                           roomIds.Contains(s.RoomId))
+                .Select(s => new ShowtimeDto
+                {
+                    Id = s.Id,
+                    Start = s.Start,
+                    End = s.End,
+                    Date = s.Date,
+                    MovieId = s.MovieId,
+                    MovieTitle = s.Movies.Title,
+                    RoomType = s.Rooms.Type,
+                    RooomName = s.Rooms.Name,
+                    TheaterName = s.Rooms.Theater.Name
+                })
+                .ToListAsync();
+
+            if (!showtimes.Any())
+            {
+                throw new Result($"Không có suất chiếu nào tại rạp {theaterId} vào ngày {date}");
+            }
+
+            return showtimes;
+        }
     }
 }

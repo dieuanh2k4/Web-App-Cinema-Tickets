@@ -94,7 +94,7 @@ export const getAllShowtimes = async (date = null, theaterId = null) => {
   const params = {};
   if (date) params.date = date;
   if (theaterId) params.theaterId = theaterId;
-  
+
   return api.get("/Showtimes/get_all_showtime", {
     params: Object.keys(params).length > 0 ? params : undefined,
   });
@@ -106,20 +106,34 @@ export const getShowtimesByMovie = async (theaterId, movieId, date) => {
   });
 };
 
+export const getShowtimesByTheater = async (theaterId, date) => {
+  console.log("📡 Calling getShowtimesByTheater with:", { theaterId, date });
+  try {
+    const response = await api.get("/Showtimes/get-showtime-by-theaterid", {
+      params: { theaterId, date },
+    });
+    console.log("getShowtimesByTheater response:", response);
+    return response;
+  } catch (error) {
+    console.error("getShowtimesByTheater error:", error.response || error);
+    throw error;
+  }
+};
+
 export const getShowtimesByDate = async (date) => {
   return api.get("/Showtimes/get_all_showtime", {
     params: { date },
   });
 };
 
-export const getShowtimesByTheater = async (theaterId, date = null) => {
-  const params = { theaterId };
-  if (date) params.date = date;
-  
-  return api.get("/Showtimes/get_all_showtime", {
-    params,
-  });
-};
+// export const getShowtimesByTheater = async (theaterId, date = null) => {
+//   const params = { theaterId };
+//   if (date) params.date = date;
+
+//   return api.get("/Showtimes/get_all_showtime", {
+//     params,
+//   });
+// };
 
 // Auto-generate showtimes
 export const autoGenerateShowtimes = async (date) => {

@@ -107,12 +107,29 @@ namespace Server.src.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpGet("get-showtime-by-movieId")]
         public async Task<IActionResult> GetShowtimeByMovie(int theaterId, int movieId, DateOnly date)
         {
-             try
+            try
             {
                 var showtimes = await _showtimeService.GetShowtimeByMovie(theaterId, movieId, date);
+
+                return Ok(showtimes);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("get-showtime-by-theaterid")]
+        public async Task<IActionResult> GetShowtimeByTheater(int theaterId,  DateOnly date)
+        {
+            try
+            {
+                var showtimes = await _showtimeService.GetShowtimeByTheater(theaterId, date);
 
                 return Ok(showtimes);
             }
