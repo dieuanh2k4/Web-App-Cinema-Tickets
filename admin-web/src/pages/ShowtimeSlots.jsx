@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaPlus, FaSyncAlt, FaTimes, FaFilm, FaClock } from 'react-icons/fa';
+import { FaPlus, FaSyncAlt, FaTimes, FaFilm, FaClock, FaEdit, FaTrash } from 'react-icons/fa';
 import { formatDate } from '../utils/helpers';
 import showtimeService from '../services/showtimeService';
 import movieService from '../services/movieService';
@@ -11,14 +11,16 @@ const ShowtimeSlots = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
+  const [selectedSlot, setSelectedSlot] = useState(null);
   const itemsPerPage = 10;
 
-  // Form state - BE ShowtimeDto has: id, start (TimeOnly), end (TimeOnly), movieTitle, roomType, roomName, theaterName, date (DateOnly), movieId, roomId
+  // Form state - BE CreateShowtimeDto: Start, Date, MovieId, RoomId. End is auto-calculated from movie duration.
   const [formData, setFormData] = useState({
     movieId: '',
     roomId: '',
     date: '',
-    time: ''
+    startTime: ''
   });
 
   // Load data from API
@@ -51,39 +53,93 @@ const ShowtimeSlots = () => {
     setIsRefreshing(false);
   };
 
+  const parseDateTimeToTime = (dateTimeString) => {
+    if (!dateTimeString) return '';
+    try {
+      const date = new Date(dateTimeString);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    } catch (error) {
+      console.error('Error parsing time:', error);
+      return '';
+    }
+  };
+
   const handleAdd = () => {
+    setModalMode('add');
+    setSelectedSlot(null);
     setFormData({
       movieId: '',
       roomId: '',
       date: '',
-      time: ''
+      startTime: ''
     });
     setShowModal(true);
+  };
+
+  const handleEdit = (slot) => {
+    setModalMode('edit');
+    setSelectedSlot(slot);
+    setFormData({
+      movieId: slot.movieId?.toString() || '',
+      roomId: slot.roomId?.toString() || '',
+      date: slot.date || '',
+      startTime: parseDateTimeToTime(slot.start) || ''
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa suất chiếu này?')) {
+      try {
+        await showtimeService.deleteShowtime(id);
+        await loadData();
+        alert('Xóa suất chiếu thành công!');
+      } catch (error) {
+        console.error('Error deleting showtime:', error);
+        alert(error.response?.data?.message || 'Không thể xóa suất chiếu. Vui lòng thử lại sau.');
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.movieId || !formData.roomId || !formData.date || !formData.time) {
+    if (!formData.movieId || !formData.roomId || !formData.date || !formData.startTime) {
       alert('Vui lòng điền đầy đủ thông tin!');
       return;
     }
 
     try {
-      // BE expects CreateShowtimeDto with Start (TimeOnly), Date (DateOnly)
+      // BE expects: roomId as query param (for validation) + in DTO body (for mapping)
+      // BE auto-calculates End time from movie duration (will override this value)
+      // Use PascalCase to match C# DTO properties
       const showtimeData = {
-        movieId: parseInt(formData.movieId),
-        start: formData.time, // TimeOnly format HH:mm
-        date: formData.date // DateOnly format YYYY-MM-DD
+        Start: `${formData.startTime}:00`, // TimeOnly format HH:mm:ss (add seconds)
+        End: `${formData.startTime}:00`, // Dummy value, BE will recalculate based on movie duration
+        Date: formData.date, // DateOnly format YYYY-MM-DD
+        MovieId: parseInt(formData.movieId),
+        RoomId: parseInt(formData.roomId)
       };
 
-      await showtimeService.createShowtime(showtimeData, parseInt(formData.roomId));
+      console.log('=== SHOWTIME PAYLOAD ===');
+      console.log('Full payload:', JSON.stringify(showtimeData, null, 2));
+      console.log('RoomId query param:', parseInt(formData.roomId));
+      console.log('========================');
+
+      if (modalMode === 'add') {
+        await showtimeService.createShowtime(showtimeData, parseInt(formData.roomId));
+      } else {
+        await showtimeService.updateShowtime(selectedSlot.id, showtimeData, parseInt(formData.roomId));
+      }
       await loadData();
       setShowModal(false);
-      alert('Thêm suất chiếu thành công!');
+      alert(modalMode === 'add' ? 'Thêm suất chiếu thành công!' : 'Cập nhật suất chiếu thành công!');
     } catch (error) {
       console.error('Error creating showtime:', error);
-      alert('Không thể tạo suất chiếu. Vui lòng thử lại sau.');
+      console.error('Error response:', error.response?.data);
+      alert(error.response?.data?.message || 'Không thể tạo suất chiếu. Vui lòng thử lại sau.');
     }
   };
 
@@ -203,6 +259,9 @@ const ShowtimeSlots = () => {
                 <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Trạng thái
                 </th>
+                <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Thao tác
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
@@ -256,6 +315,24 @@ const ShowtimeSlots = () => {
                         {getStatusText(slot)}
                       </span>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleEdit(slot)}
+                          className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all"
+                          title="Chỉnh sửa"
+                        >
+                          <FaEdit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(slot.id)}
+                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
+                          title="Xóa"
+                        >
+                          <FaTrash size={18} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -308,7 +385,7 @@ const ShowtimeSlots = () => {
           <div className="bg-secondary rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-700/50 animate-scale-in max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-700/50 sticky top-0 bg-secondary z-10">
-              <h2 className="text-xl font-bold text-white">Thêm suất chiếu</h2>
+              <h2 className="text-xl font-bold text-white">{modalMode === 'add' ? 'Thêm suất chiếu' : 'Cập nhật suất chiếu'}</h2>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-primary/50 rounded-lg"
@@ -351,7 +428,7 @@ const ShowtimeSlots = () => {
                 <p className="text-xs text-gray-500 mt-1">Lưu ý: Nhập ID phòng chiếu từ database</p>
               </div>
 
-              {/* Ngày và Giờ */}
+              {/* Ngày và Giờ bắt đầu */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Ngày chiếu *</label>
@@ -365,15 +442,16 @@ const ShowtimeSlots = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Giờ chiếu *</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Giờ bắt đầu *</label>
                   <input
                     type="time"
-                    name="time"
-                    value={formData.time}
+                    name="startTime"
+                    value={formData.startTime}
                     onChange={handleChange}
                     className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">Giờ kết thúc sẽ tự động tính từ thời lượng phim</p>
                 </div>
               </div>
 

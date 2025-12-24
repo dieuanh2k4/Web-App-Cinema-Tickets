@@ -24,14 +24,14 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
   const location = useLocation();
 
   const menuItems = [
-    { path: '/', icon: FaHome, label: 'Tổng quan' },
+    // { path: '/', icon: FaHome, label: 'Tổng quan' },
     { path: '/movies', icon: FaFilm, label: 'Quản lý phim' },
     { path: '/theaters', icon: FaTheaterMasks, label: 'Quản lý rạp chiếu' },
     { path: '/rooms', icon: FaDoorOpen, label: 'Quản lý phòng chiếu' },
-    { path: '/showtimes', icon: FaClock, label: 'Quản lý lịch chiếu' },
+    // { path: '/showtimes', icon: FaClock, label: 'Quản lý lịch chiếu' },
     { path: '/showtime-slots', icon: FaCalendarAlt, label: 'Quản lý suất chiếu' },
     { path: '/ticket-prices', icon: FaMoneyBillWave, label: 'Quản lý giá vé' },
-    { path: '/orders', icon: FaShoppingCart, label: 'Quản lý đơn hàng' },
+    // { path: '/orders', icon: FaShoppingCart, label: 'Quản lý đơn hàng' },
     { path: '/accounts', icon: FaUsers, label: 'Quản lý tài khoản' }
   ];
 

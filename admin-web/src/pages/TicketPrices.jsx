@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaTimes, FaSyncAlt } from 'react-icons/fa';
 import { formatCurrency } from '../utils/helpers';
 import ticketPriceService from '../services/ticketPriceService';
+import roomService from '../services/roomService';
 
 const TicketPrices = () => {
   const [prices, setPrices] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [roomTypes, setRoomTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
@@ -13,20 +16,34 @@ const TicketPrices = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 10;
 
-  // Load prices from API
+  // Load prices and room types from API
   useEffect(() => {
-    loadPrices();
+    loadData();
   }, []);
 
-  const loadPrices = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const data = await ticketPriceService.getAllTicketPrices();
-      setPrices(data || []);
+      const [pricesData, roomsData] = await Promise.all([
+        ticketPriceService.getAllTicketPrices(),
+        roomService.getAllRooms()
+      ]);
+      console.log('Prices data from API:', pricesData);
+      console.log('Sample price:', pricesData?.[0]);
+      console.log('Rooms data:', roomsData);
+      setPrices(pricesData || []);
+      setRooms(roomsData || []);
+      
+      // Extract unique room types from rooms
+      const types = [...new Set(roomsData?.map(room => room.type).filter(Boolean))];
+      console.log('Room types from API:', types);
+      setRoomTypes(types.length > 0 ? types : ['2D', '3D', 'IMAX']); // Fallback to defaults if empty
     } catch (error) {
-      console.error('Error loading ticket prices:', error);
-      alert('Không thể tải danh sách giá vé. Vui lòng thử lại sau.');
+      console.error('Error loading data:', error);
+      alert('Không thể tải dữ liệu. Vui lòng thử lại sau.');
       setPrices([]);
+      setRooms([]);
+      setRoomTypes(['2D', '3D', 'IMAX']); // Fallback
     } finally {
       setLoading(false);
     }
@@ -34,7 +51,7 @@ const TicketPrices = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await loadPrices();
+    await loadData();
     setIsRefreshing(false);
   };
 
@@ -45,8 +62,7 @@ const TicketPrices = () => {
     price: ''
   });
 
-  const roomTypes = ['2D', '3D', 'IMAX'];
-  const seatTypes = ['Standard', 'VIP', 'Couple'];
+  const seatTypes = ['Thường', 'Vip', 'Đôi']; // Match BE Vietnamese names
 
   // Pagination
   const totalPages = Math.ceil(prices.length / itemsPerPage);
@@ -56,8 +72,8 @@ const TicketPrices = () => {
   const handleAdd = () => {
     setModalMode('add');
     setFormData({
-      roomType: '',
-      seatType: '',
+      roomType: roomTypes.length > 0 ? roomTypes[0] : '',
+      seatType: 'Thường', // Default to first Vietnamese option
       price: ''
     });
     setShowModal(true);
@@ -78,7 +94,7 @@ const TicketPrices = () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa giá vé này?')) {
       try {
         await ticketPriceService.deleteTicketPrice(id);
-        await loadPrices();
+        await loadData();
         alert('Xóa giá vé thành công!');
       } catch (error) {
         console.error('Error deleting ticket price:', error);
@@ -98,9 +114,11 @@ const TicketPrices = () => {
     try {
       const priceData = {
         roomType: formData.roomType,
-        seatType: formData.seatType,
+        seatType: formData.seatType, // Already in Vietnamese
         price: parseInt(formData.price)
       };
+
+      console.log('Sending price data:', priceData);
 
       if (modalMode === 'add') {
         await ticketPriceService.createTicketPrice(priceData);
@@ -108,7 +126,7 @@ const TicketPrices = () => {
         await ticketPriceService.updateTicketPrice(selectedPrice.id, priceData);
       }
 
-      await loadPrices();
+      await loadData();
       setShowModal(false);
       alert(modalMode === 'add' ? 'Thêm giá vé thành công!' : 'Cập nhật giá vé thành công!');
     } catch (error) {
@@ -135,12 +153,11 @@ const TicketPrices = () => {
   };
 
   const getSeatTypeBadgeColor = (seatType) => {
-    switch(seatType?.toLowerCase()) {
-      case 'standard': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-      case 'couple': return 'bg-pink-500/20 text-pink-400 border-pink-500/30';
-      case 'vip': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-    }
+    const type = seatType?.toLowerCase();
+    if (type === 'thường' || type === 'standard') return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    if (type === 'đôi' || type === 'couple') return 'bg-pink-500/20 text-pink-400 border-pink-500/30';
+    if (type === 'vip') return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+    return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
   };
 
   if (loading) {

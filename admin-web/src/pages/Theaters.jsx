@@ -98,10 +98,15 @@ const Theaters = () => {
         city: formData.city
       };
 
+      console.log('Saving theater:', modalMode, theaterData);
+
       if (modalMode === 'add') {
-        await theaterService.createTheater(theaterData);
+        const result = await theaterService.createTheater(theaterData);
+        console.log('Theater created:', result);
       } else {
-        await theaterService.updateTheater(selectedTheater.id, theaterData);
+        console.log('Updating theater ID:', selectedTheater.id);
+        const result = await theaterService.updateTheater(selectedTheater.id, theaterData);
+        console.log('Theater updated:', result);
       }
 
       await loadTheaters();
@@ -109,6 +114,7 @@ const Theaters = () => {
       alert(modalMode === 'add' ? 'Thêm rạp chiếu thành công!' : 'Cập nhật rạp chiếu thành công!');
     } catch (error) {
       console.error('Error saving theater:', error);
+      console.error('Error details:', error.message, error.status);
       alert('Không thể lưu rạp chiếu. Vui lòng thử lại sau.');
     }
   };
@@ -144,14 +150,14 @@ const Theaters = () => {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-3 bg-primary hover:bg-accent text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
-            <span>Làm mới</span>
+            <span>Refresh</span>
           </button>
           <button
             onClick={handleAdd}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-accent to-purple-600 hover:from-purple-600 hover:to-accent text-white rounded-xl transition-all shadow-lg shadow-accent/25 font-medium"
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             <FaPlus />
             <span>Tạo rạp chiếu</span>

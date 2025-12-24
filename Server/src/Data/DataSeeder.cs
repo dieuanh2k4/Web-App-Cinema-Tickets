@@ -14,17 +14,38 @@ namespace Server.src.Data
             // Migration đã được chạy rồi, không cần gọi lại
             // context.Database.Migrate();
 
-            // 1. Seed Users
-            if (!context.User.Any())
+            // 1. Seed Users - Always ensure Admin exists and has correct role
+            var adminUser = context.User.FirstOrDefault(u => u.username == "admin");
+            if (adminUser == null)
+            {
+                // Admin không tồn tại → Tạo mới
+                adminUser = new User
+                {
+                    username = "admin",
+                    password = PasswordHelper.HashPassword("admin123"),
+                    userType = 0 // 0 = Admin
+                };
+                context.User.Add(adminUser);
+                context.SaveChanges();
+                Console.WriteLine("✅ Đã tạo Admin user");
+            }
+            else if (adminUser.userType != 0)
+            {
+                // Admin tồn tại nhưng role sai → Sửa lại
+                adminUser.userType = 0;
+                context.User.Update(adminUser);
+                context.SaveChanges();
+                Console.WriteLine("✅ Đã sửa role của admin về Admin (userType = 0)");
+            }
+            else
+            {
+                Console.WriteLine("ℹ️ Admin user đã tồn tại với role đúng");
+            }
+
+            if (!context.User.Any(u => u.username != "admin"))
             {
                 var users = new List<User>
                 {
-                    new User
-                    {
-                        username = "admin",
-                        password = PasswordHelper.HashPassword("admin123"),
-                        userType = 0 // 0 = Admin
-                    },
                     new User
                     {
                         username = "staff",
@@ -41,7 +62,7 @@ namespace Server.src.Data
 
                 context.User.AddRange(users);
                 context.SaveChanges();
-                Console.WriteLine("Đã tạo 3 users");
+                Console.WriteLine("✅ Đã tạo Staff và Customer users");
             }
 
             // 2. Seed Theaters
@@ -167,7 +188,7 @@ namespace Server.src.Data
                         AgeLimit = "T13",
                         StartDate = DateTime.UtcNow.Date.AddDays(-7),
                         EndDate = DateTime.UtcNow.Date.AddDays(30),
-                        Thumbnail = "https://m.media-amazon.com/images/I/71s3cEqEZTL._AC_UF1000,1000_QL80_.jpg",
+                        Thumbnail = "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg",
                         Rating = 8.5
                     },
                     new Movies

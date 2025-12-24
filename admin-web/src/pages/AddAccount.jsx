@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSave, FaTimes, FaUserCircle } from 'react-icons/fa';
+import userService from '../services/userService';
 
 const AddAccount = () => {
   const navigate = useNavigate();
@@ -8,11 +9,7 @@ const AddAccount = () => {
     username: '',
     password: '',
     confirmPassword: '',
-    fullName: '',
-    email: '',
-    phone: '',
-    role: 'staff',
-    status: 'active'
+    userType: 'Staff' // Default to Staff (string)
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -37,14 +34,14 @@ const AddAccount = () => {
 
     if (!formData.username.trim()) {
       newErrors.username = 'Vui lòng nhập tên đăng nhập';
-    } else if (formData.username.length < 4) {
-      newErrors.username = 'Tên đăng nhập phải có ít nhất 4 ký tự';
+    } else if (formData.username.length < 3 || formData.username.length > 20) {
+      newErrors.username = 'Tên đăng nhập phải có từ 3 đến 20 ký tự';
     }
 
     if (!formData.password) {
       newErrors.password = 'Vui lòng nhập mật khẩu';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    } else if (formData.password.length < 5 || formData.password.length > 20) {
+      newErrors.password = 'Mật khẩu phải có từ 5 đến 20 ký tự';
     }
 
     if (!formData.confirmPassword) {
@@ -53,24 +50,8 @@ const AddAccount = () => {
       newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
     }
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Vui lòng nhập họ và tên';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Vui lòng nhập email';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Email không hợp lệ';
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Vui lòng nhập số điện thoại';
-    } else if (!/^0\d{9}$/.test(formData.phone)) {
-      newErrors.phone = 'Số điện thoại không hợp lệ (10 số, bắt đầu bằng 0)';
-    }
-
-    if (!formData.role) {
-      newErrors.role = 'Vui lòng chọn vai trò';
+    if (!formData.userType) {
+      newErrors.userType = 'Vui lòng chọn vai trò';
     }
 
     setErrors(newErrors);
@@ -86,13 +67,24 @@ const AddAccount = () => {
 
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Creating account:', formData);
+    try {
+      const userData = {
+        username: formData.username,
+        password: formData.password,
+        userType: formData.userType // Send as string ("Admin", "Staff", or "Customer")
+      };
+
+      console.log('Creating account:', userData);
+      await userService.createUser(userData);
+      
       alert('Tạo tài khoản thành công!');
       navigate('/accounts');
+    } catch (error) {
+      console.error('Error creating account:', error);
+      alert(error.response?.data?.message || 'Có lỗi xảy ra khi tạo tài khoản');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleCancel = () => {
@@ -140,30 +132,32 @@ const AddAccount = () => {
                 className={`w-full px-4 py-2.5 bg-primary border ${
                   errors.username ? 'border-red-500' : 'border-gray-600'
                 } rounded-lg text-white focus:outline-none focus:border-accent`}
-                placeholder="Nhập tên đăng nhập"
+                placeholder="Nhập tên đăng nhập (3-20 ký tự)"
               />
               {errors.username && (
                 <p className="mt-1 text-sm text-red-400">{errors.username}</p>
               )}
             </div>
 
-            {/* Full Name */}
+            {/* User Type / Role */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Họ và tên <span className="text-red-500">*</span>
+                Vai trò <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
+              <select
+                name="userType"
+                value={formData.userType}
                 onChange={handleChange}
                 className={`w-full px-4 py-2.5 bg-primary border ${
-                  errors.fullName ? 'border-red-500' : 'border-gray-600'
+                  errors.userType ? 'border-red-500' : 'border-gray-600'
                 } rounded-lg text-white focus:outline-none focus:border-accent`}
-                placeholder="Nhập họ và tên"
-              />
-              {errors.fullName && (
-                <p className="mt-1 text-sm text-red-400">{errors.fullName}</p>
+              >
+                <option value="Admin">Quản trị viên</option>
+                <option value="Staff">Nhân viên</option>
+                <option value="Customer">Khách hàng</option>
+              </select>
+              {errors.userType && (
+                <p className="mt-1 text-sm text-red-400">{errors.userType}</p>
               )}
             </div>
 
@@ -180,7 +174,7 @@ const AddAccount = () => {
                 className={`w-full px-4 py-2.5 bg-primary border ${
                   errors.password ? 'border-red-500' : 'border-gray-600'
                 } rounded-lg text-white focus:outline-none focus:border-accent`}
-                placeholder="Nhập mật khẩu"
+                placeholder="Nhập mật khẩu (5-20 ký tự)"
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-400">{errors.password}</p>
@@ -205,85 +199,6 @@ const AddAccount = () => {
               {errors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-400">{errors.confirmPassword}</p>
               )}
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full px-4 py-2.5 bg-primary border ${
-                  errors.email ? 'border-red-500' : 'border-gray-600'
-                } rounded-lg text-white focus:outline-none focus:border-accent`}
-                placeholder="example@email.com"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-400">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Số điện thoại <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className={`w-full px-4 py-2.5 bg-primary border ${
-                  errors.phone ? 'border-red-500' : 'border-gray-600'
-                } rounded-lg text-white focus:outline-none focus:border-accent`}
-                placeholder="0901234567"
-              />
-              {errors.phone && (
-                <p className="mt-1 text-sm text-red-400">{errors.phone}</p>
-              )}
-            </div>
-
-            {/* Role */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Vai trò <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className={`w-full px-4 py-2.5 bg-primary border ${
-                  errors.role ? 'border-red-500' : 'border-gray-600'
-                } rounded-lg text-white focus:outline-none focus:border-accent`}
-              >
-                <option value="">Chọn vai trò</option>
-                <option value="admin">Quản trị viên</option>
-                <option value="manager">Quản lý</option>
-                <option value="staff">Nhân viên</option>
-              </select>
-              {errors.role && (
-                <p className="mt-1 text-sm text-red-400">{errors.role}</p>
-              )}
-            </div>
-
-            {/* Status */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Trạng thái
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-primary border border-gray-600 rounded-lg text-white focus:outline-none focus:border-accent"
-              >
-                <option value="active">Hoạt động</option>
-                <option value="inactive">Không hoạt động</option>
-              </select>
             </div>
           </div>
         </div>

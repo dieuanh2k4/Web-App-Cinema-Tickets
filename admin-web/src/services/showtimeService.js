@@ -13,8 +13,8 @@ const showtimeService = {
 
   /**
    * Create new showtime
-   * @param {Object} showtimeData 
-   * @param {number} roomId 
+   * @param {Object} showtimeData - {start, date, movieId, roomId}
+   * @param {number} roomId - also sent as query param for validation
    * @returns {Promise<Object>}
    */
   async createShowtime(showtimeData, roomId) {

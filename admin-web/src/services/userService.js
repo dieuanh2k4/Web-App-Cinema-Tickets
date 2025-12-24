@@ -17,7 +17,21 @@ const userService = {
    * @returns {Promise<Object>}
    */
   async createUser(userData) {
-    const response = await api.post(API_ENDPOINTS.USERS.CREATE, userData);
+    // Convert to FormData because BE expects [FromForm]
+    const formData = new FormData();
+    
+    // Append all fields to FormData
+    Object.keys(userData).forEach(key => {
+      if (userData[key] !== null && userData[key] !== undefined) {
+        formData.append(key, userData[key]);
+      }
+    });
+    
+    const response = await api.post(API_ENDPOINTS.USERS.CREATE, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    });
     return response.data;
   },
 
@@ -28,7 +42,21 @@ const userService = {
    * @returns {Promise<Object>}
    */
   async updateUser(id, userData) {
-    const response = await api.put(API_ENDPOINTS.USERS.UPDATE(id), userData);
+    // Convert to FormData because BE expects [FromForm]
+    const formData = new FormData();
+    
+    // Append all fields to FormData
+    Object.keys(userData).forEach(key => {
+      if (userData[key] !== null && userData[key] !== undefined) {
+        formData.append(key, userData[key]);
+      }
+    });
+    
+    const response = await api.put(API_ENDPOINTS.USERS.UPDATE(id), formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    });
     return response.data;
   },
 
