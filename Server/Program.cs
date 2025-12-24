@@ -181,6 +181,9 @@ builder.Services.AddScoped<VNPayService>();
 builder.Services.AddScoped<QRCodeService>();
 builder.Services.AddScoped<EmailService>();
 
+// Chat AI service
+builder.Services.AddScoped<IChatService, ChatService>();
+
 // ==========================
 // Thêm Repository
 // ==========================
