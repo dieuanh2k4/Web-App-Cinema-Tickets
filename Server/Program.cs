@@ -18,6 +18,36 @@ using Minio;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ==========================
+// Lấy hostname của máy và thay thế placeholder {HOSTNAME} trong config
+// ==========================
+var hostname = Environment.MachineName;
+
+// Thay thế {HOSTNAME} trong tất cả config
+var config = builder.Configuration as IConfigurationRoot;
+if (config != null)
+{
+    foreach (var provider in config.Providers)
+    {
+        if (provider is Microsoft.Extensions.Configuration.Json.JsonConfigurationProvider jsonProvider)
+        {
+            var data = new Dictionary<string, string?>();
+            foreach (var key in jsonProvider.GetChildKeys(new List<string>(), null))
+            {
+                if (jsonProvider.TryGet(key, out var value) && value != null)
+                {
+                    data[key] = value.Replace("{HOSTNAME}", hostname);
+                }
+            }
+            // Rebuild config với hostname thay thế
+            foreach (var kvp in data)
+            {
+                jsonProvider.Set(kvp.Key, kvp.Value);
+            }
+        }
+    }
+}
+
 // Trong Docker chỉ dùng HTTP, HTTPS sẽ được xử lý bởi reverse proxy (nginx)
 // Port 8080 trong container sẽ được map ra port 5000 ở host
 builder.WebHost.ConfigureKestrel(options =>
