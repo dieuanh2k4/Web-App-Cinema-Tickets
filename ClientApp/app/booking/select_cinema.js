@@ -29,20 +29,15 @@ export default function SelectCinemaScreen() {
     try {
       setLoading(true);
       const theatersData = await theaterService.getAllTheaters();
-
-      // Load showtimes cho phim này
       const allShowtimes = await showtimeService.getAllShowtimes();
-
-      // Nếu có movieId, chỉ lấy showtimes của phim đó
       const relevantShowtimes = movieId
         ? allShowtimes.filter(
             (st) => st.movieId?.toString() === movieId?.toString()
           )
         : allShowtimes;
-
       const theatersWithShowtimes = theatersData.map((theater) => {
         const theaterShowtimes = relevantShowtimes.filter(
-          (st) => st.theaterId?.toString() === theater.id?.toString()
+          (st) => st.rooms?.theaterId?.toString() === theater.id?.toString()
         );
         return {
           ...theater,
@@ -50,16 +45,13 @@ export default function SelectCinemaScreen() {
           showtimeCount: theaterShowtimes.length,
         };
       });
-
-      // Chỉ hiển thị rạp có suất chiếu nếu đang đặt vé cho phim cụ thể
       const filteredTheaters = movieId
         ? theatersWithShowtimes.filter((t) => t.showtimeCount > 0)
         : theatersWithShowtimes;
-
       setTheaters(filteredTheaters);
+      setLoading(false);
     } catch (error) {
       console.error("Error loading theaters:", error);
-    } finally {
       setLoading(false);
     }
   };

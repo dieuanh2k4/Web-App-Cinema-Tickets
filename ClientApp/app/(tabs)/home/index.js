@@ -54,15 +54,14 @@ export default function HomeScreen() {
         movieService.getNowPlaying(),
         movieService.getUpcoming(),
       ]);
-
       setMovies({
         featured: nowPlaying.slice(0, 3),
         nowPlaying,
         upcoming,
       });
+      setLoading(false);
     } catch (error) {
       console.error("Error loading movies:", error);
-    } finally {
       setLoading(false);
     }
   };

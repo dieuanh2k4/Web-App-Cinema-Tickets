@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Text,
   View,
@@ -6,54 +6,44 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { bookingService } from "../../../services/bookingService";
 
 export default function TicketsScreen() {
-  const [bookings, setBookings] = useState([
-    {
-      id: 1,
-      movieTitle: "Mai",
-      theater: "CGV Vincom Center",
-      room: "Phòng 3",
-      date: "15/12/2025",
-      time: "19:30",
-      seats: ["E5", "E6"],
-      totalAmount: 180000,
-      status: "upcoming", // upcoming, used, cancelled
-      bookingCode: "CINE2512001",
-      poster:
-        "https://i.vtvgiaitri.vn/2024/12/12/mai-pham-thi-hong-anh-nhat-kim-anh-1-06ccae.jpg",
-    },
-    {
-      id: 2,
-      movieTitle: "Mufasa: The Lion King",
-      theater: "Galaxy Nguyễn Du",
-      room: "Phòng 5",
-      date: "10/12/2025",
-      time: "21:00",
-      seats: ["D8"],
-      totalAmount: 90000,
-      status: "used",
-      bookingCode: "CINE2512002",
-      poster:
-        "https://lumiere-a.akamaihd.net/v1/images/p_disneymufasa_21777_v2_8a5cb6c7.jpeg",
-    },
-    {
-      id: 3,
-      movieTitle: "Wicked",
-      theater: "BHD Star Bitexco",
-      room: "Phòng 2",
-      date: "18/12/2025",
-      time: "15:45",
-      seats: ["F10", "F11", "F12"],
-      totalAmount: 270000,
-      status: "upcoming",
-      bookingCode: "CINE2512003",
-      poster:
-        "https://www.cgv.vn/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/w/i/wicked-payoff-poster-1-691x1024-vi_1_.jpg",
-    },
-  ]);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadBookings();
+  }, []);
+
+  const loadBookings = async () => {
+    try {
+      setLoading(true);
+      const data = await bookingService.getUserBookings();
+      setBookings(data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error loading bookings:", error);
+      setBookings([]);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Vé của tôi</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6C47DB" />
+        </View>
+      </View>
+    );
+  }
 
   if (bookings.length === 0) {
     return (
@@ -225,6 +215,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0F0F0F",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
     paddingTop: 60,

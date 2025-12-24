@@ -30,9 +30,9 @@ export default function NowPlayingScreen() {
       setRefreshing(true);
       const moviesData = await movieService.getNowPlaying();
       setMovies(moviesData);
+      setRefreshing(false);
     } catch (error) {
       console.error("Error loading movies:", error);
-    } finally {
       setRefreshing(false);
     }
   };

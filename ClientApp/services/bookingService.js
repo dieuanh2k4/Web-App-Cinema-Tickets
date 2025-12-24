@@ -229,6 +229,39 @@ export const bookingService = {
       return { success: false, error: error?.response?.data || error.message };
     }
   },
+
+  // Lấy danh sách bookings/tickets của user hiện tại
+  getUserBookings: async () => {
+    try {
+      // Nếu có auth, có thể dùng email từ context
+      // Tạm thời get all tickets (sẽ cần filter theo user khi có auth)
+      const res = await apiClient.get(API_CONFIG.ENDPOINTS.TICKETS.GET_ALL);
+      const tickets = res.data?.data || [];
+
+      // Map sang format phù hợp với UI
+      return tickets.map((ticket) => ({
+        id: ticket.id,
+        movieTitle: ticket.showtime?.movie?.title || "Unknown Movie",
+        theater: ticket.showtime?.rooms?.theater?.name || "Unknown Theater",
+        room: ticket.showtime?.rooms?.name || "Unknown Room",
+        date: ticket.showtime?.date || new Date().toISOString().split("T")[0],
+        time: ticket.showtime?.startTime || "00:00",
+        seats: ticket.seatNumbers?.split(",") || [],
+        totalAmount: ticket.totalPrice || 0,
+        status:
+          ticket.status === "Confirmed"
+            ? "upcoming"
+            : ticket.status === "Used"
+            ? "used"
+            : "cancelled",
+        bookingCode: ticket.bookingCode || `CINE${ticket.id}`,
+        poster: ticket.showtime?.movie?.thumbnail || "",
+      }));
+    } catch (error) {
+      console.error("Error fetching user bookings:", error);
+      return [];
+    }
+  },
 };
 
 export default {
