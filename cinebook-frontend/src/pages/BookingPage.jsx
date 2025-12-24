@@ -246,20 +246,61 @@ export default function BookingPage() {
               <div>
                 <h3 className="text-lg font-bold mb-4">Thông tin suất chiếu</h3>
                 <div className="space-y-3">
+                  {/* Movie Title */}
+                  {seatData?.movieTitle && (
+                    <div className="flex items-start space-x-3 text-sm">
+                      <FiFilm className="w-5 h-5 text-purple mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-gray-400">Phim</p>
+                        <p className="text-white font-semibold text-base">{seatData.movieTitle}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Theater Info */}
+                  {seatData?.theaterName && (
+                    <div className="flex items-start space-x-3 text-sm">
+                      <FiMapPin className="w-5 h-5 text-purple mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-gray-400">Rạp chiếu</p>
+                        <p className="text-white font-semibold">{seatData.theaterName}</p>
+                        {seatData?.theaterAddress && (
+                          <p className="text-gray-500 text-xs mt-1">{seatData.theaterAddress}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Room */}
                   <div className="flex items-start space-x-3 text-sm">
-                    <FiFilm className="w-5 h-5 text-purple mt-0.5" />
-                    <div>
+                    <FiFilm className="w-5 h-5 text-purple mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
                       <p className="text-gray-400">Phòng chiếu</p>
-                      <p className="text-white font-semibold">{seatData?.roomName}</p>
+                      <p className="text-white font-semibold">{seatData?.roomName || 'Đang tải...'}</p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3 text-sm">
-                    <FiCalendar className="w-5 h-5 text-purple mt-0.5" />
-                    <div>
-                      <p className="text-gray-400">Suất chiếu</p>
-                      <p className="text-white font-semibold">ID: {showtimeId}</p>
+                  
+                  {/* Date & Time */}
+                  {seatData?.showtimeDate && seatData?.showtimeTime && (
+                    <div className="flex items-start space-x-3 text-sm">
+                      <FiCalendar className="w-5 h-5 text-purple mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-gray-400">Lịch chiếu</p>
+                        <p className="text-white font-semibold">
+                          {new Date(seatData.showtimeDate).toLocaleDateString('vi-VN', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                        <p className="text-purple font-bold text-lg mt-1">
+                          <FiClock className="inline mr-1" size={16} />
+                          {seatData.showtimeTime}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
