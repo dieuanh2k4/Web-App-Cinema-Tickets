@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaTimes, FaSyncAlt } from 'react-icons/fa';
 import { ticketPrices as initialPrices } from '../data/mockData';
 import { formatCurrency } from '../utils/helpers';
 
@@ -9,7 +9,17 @@ const TicketPrices = () => {
   const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
   const [selectedPrice, setSelectedPrice] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 10;
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    // TODO: Load data from DB
+    setTimeout(() => {
+      setIsRefreshing(false);
+      console.log('Ticket prices data refreshed');
+    }, 1000);
+  };
 
   // Form state
   const [formData, setFormData] = useState({
@@ -135,13 +145,23 @@ const TicketPrices = () => {
           </h1>
           <p className="text-gray-400 text-sm lg:text-base">Cấu hình giá vé theo loại phòng, ghế và suất chiếu</p>
         </div>
-        <button
-          onClick={handleAdd}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl transition-all shadow-lg shadow-blue-600/25 font-medium"
-        >
-          <FaPlus />
-          <span>Tạo giá vé</span>
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
+            <span>Refresh</span>
+          </button>
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl transition-all shadow-lg shadow-blue-600/25 font-medium"
+          >
+            <FaPlus />
+            <span>Tạo giá vé</span>
+          </button>
+        </div>
       </div>
 
       {/* Table */}

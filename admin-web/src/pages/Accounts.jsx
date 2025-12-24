@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaTrash, FaSearch, FaEye, FaUserCircle } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaSearch, FaEye, FaUserCircle, FaSyncAlt } from 'react-icons/fa';
 import { adminAccounts as initialAccounts } from '../data/mockData';
 import { formatDate } from '../utils/helpers';
 
@@ -10,7 +10,17 @@ const Accounts = () => {
   const [filterRole, setFilterRole] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 10;
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    // TODO: Load data from DB
+    setTimeout(() => {
+      setIsRefreshing(false);
+      console.log('Accounts data refreshed');
+    }, 1000);
+  };
 
   // Get unique roles for filter
   const roles = [...new Set(accounts.map(a => a.role))].sort();
@@ -80,13 +90,23 @@ const Accounts = () => {
           <h1 className="text-3xl font-bold text-white mb-3">Quản lý tài khoản</h1>
           <p className="text-gray-400 text-sm lg:text-base">Danh sách tất cả tài khoản trong hệ thống</p>
         </div>
-        <Link
-          to="/accounts/add"
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          <FaPlus />
-          <span>Thêm tài khoản</span>
-        </Link>
+        <div className="flex gap-3">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
+            <span>Refresh</span>
+          </button>
+          <Link
+            to="/accounts/add"
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <FaPlus />
+            <span>Thêm tài khoản</span>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
