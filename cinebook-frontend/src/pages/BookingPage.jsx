@@ -26,7 +26,11 @@ export default function BookingPage() {
   const { data: seatData, isLoading } = useQuery({
     queryKey: ['seats', showtimeId],
     queryFn: () => getSeatsByShowtime(showtimeId),
-    enabled: !!showtimeId
+    enabled: !!showtimeId,
+    staleTime: 30 * 1000, // 30 seconds (seats data should be fresh)
+    gcTime: 60 * 1000, // 1 minute
+    refetchOnWindowFocus: false,
+    refetchInterval: 30000, // Auto-refresh every 30s for real-time seat availability
   })
 
   // Countdown timer - 5 minutes to hold seats
