@@ -544,3 +544,52 @@ export const dashboardStats = {
     { movieId: 7, title: 'Weathering with You', ticketsSold: 23, revenue: 8118000 }
   ]
 };
+
+// Mock Showtimes Schedules (Lịch chiếu)
+export const showtimesSchedules = [
+  {
+    id: 1,
+    movieId: 1,
+    movieTitle: 'Spirited Away',
+    startDate: '2024-04-01',
+    endDate: '2024-04-30',
+    status: 'active', // active, upcoming, ended
+    createdDate: '2024-03-20'
+  },
+  {
+    id: 2,
+    movieId: 2,
+    movieTitle: 'Your Name',
+    startDate: '2024-04-15',
+    endDate: '2024-05-15',
+    status: 'active',
+    createdDate: '2024-04-01'
+  },
+  {
+    id: 3,
+    movieId: 4,
+    movieTitle: 'Princess Mononoke',
+    startDate: '2024-05-01',
+    endDate: '2024-05-31',
+    status: 'upcoming',
+    createdDate: '2024-04-15'
+  },
+  {
+    id: 4,
+    movieId: 5,
+    movieTitle: 'A Silent Voice',
+    startDate: '2024-03-01',
+    endDate: '2024-03-31',
+    status: 'ended',
+    createdDate: '2024-02-20'
+  },
+  {
+    id: 5,
+    movieId: 7,
+    movieTitle: 'Weathering with You',
+    startDate: '2024-04-20',
+    endDate: '2024-05-20',
+    status: 'active',
+    createdDate: '2024-04-10'
+  }
+];
