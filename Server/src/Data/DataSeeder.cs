@@ -14,17 +14,38 @@ namespace Server.src.Data
             // Migration đã được chạy rồi, không cần gọi lại
             // context.Database.Migrate();
 
-            // 1. Seed Users
-            if (!context.User.Any())
+            // 1. Seed Users - Always ensure Admin exists and has correct role
+            var adminUser = context.User.FirstOrDefault(u => u.username == "admin");
+            if (adminUser == null)
+            {
+                // Admin không tồn tại → Tạo mới
+                adminUser = new User
+                {
+                    username = "admin",
+                    password = PasswordHelper.HashPassword("admin123"),
+                    userType = 0 // 0 = Admin
+                };
+                context.User.Add(adminUser);
+                context.SaveChanges();
+                Console.WriteLine("✅ Đã tạo Admin user");
+            }
+            else if (adminUser.userType != 0)
+            {
+                // Admin tồn tại nhưng role sai → Sửa lại
+                adminUser.userType = 0;
+                context.User.Update(adminUser);
+                context.SaveChanges();
+                Console.WriteLine("✅ Đã sửa role của admin về Admin (userType = 0)");
+            }
+            else
+            {
+                Console.WriteLine("ℹ️ Admin user đã tồn tại với role đúng");
+            }
+
+            if (!context.User.Any(u => u.username != "admin"))
             {
                 var users = new List<User>
                 {
-                    new User
-                    {
-                        username = "admin",
-                        password = PasswordHelper.HashPassword("admin123"),
-                        userType = 0 // 0 = Admin
-                    },
                     new User
                     {
                         username = "staff",
@@ -41,44 +62,62 @@ namespace Server.src.Data
 
                 context.User.AddRange(users);
                 context.SaveChanges();
-                Console.WriteLine("Đã tạo 3 users");
+                Console.WriteLine("✅ Đã tạo Staff và Customer users");
             }
 
-            // 2. Seed Theaters
+            // 2. Seed Theaters - 6 rạp tại Hà Nội
             if (!context.Theater.Any())
             {
                 var theaters = new List<Theater>
                 {
                     new Theater
                     {
-                        Name = "CGV Vincom Center",
-                        Address = "72 Lê Thánh Tôn, Quận 1, TP.HCM",
-                        City = "TP.HCM"
+                        Name = "CGV Vincom Bà Triệu",
+                        Address = "191 Bà Triệu, Hai Bà Trưng, Hà Nội",
+                        City = "Hà Nội"
+                    },
+                    new Theater
+                    {
+                        Name = "CGV Royal City",
+                        Address = "72A Nguyễn Trãi, Thanh Xuân, Hà Nội",
+                        City = "Hà Nội"
+                    },
+                    new Theater
+                    {
+                        Name = "Lotte Cinema Tây Hồ",
+                        Address = "50 Liễu Giai, Ba Đình, Hà Nội",
+                        City = "Hà Nội"
                     },
                     new Theater
                     {
                         Name = "Galaxy Nguyễn Du",
-                        Address = "116 Nguyễn Du, Quận 1, TP.HCM",
-                        City = "TP.HCM"
+                        Address = "116 Nguyễn Du, Hai Bà Trưng, Hà Nội",
+                        City = "Hà Nội"
                     },
                     new Theater
                     {
-                        Name = "Lotte Cinema Cộng Hòa",
-                        Address = "180 Cộng Hòa, Tân Bình, TP.HCM",
-                        City = "TP.HCM"
+                        Name = "BHD Star Phạm Ngọc Thạch",
+                        Address = "11 Phạm Ngọc Thạch, Đống Đa, Hà Nội",
+                        City = "Hà Nội"
+                    },
+                    new Theater
+                    {
+                        Name = "Platinum Cineplex Times City",
+                        Address = "458 Minh Khai, Hai Bà Trưng, Hà Nội",
+                        City = "Hà Nội"
                     }
                 };
 
                 context.Theater.AddRange(theaters);
                 context.SaveChanges();
-                Console.WriteLine("✅ Đã tạo 3 theaters");
+                Console.WriteLine("✅ Đã tạo 6 rạp chiếu tại Hà Nội");
             }
 
             // 3. Seed Rooms
             if (!context.Rooms.Any())
             {
-                var theater1 = context.Theater.First(t => t.Name == "CGV Vincom Center");
-                var theater2 = context.Theater.First(t => t.Name == "Galaxy Nguyễn Du");
+                var theater1 = context.Theater.First(t => t.Name == "CGV Vincom Bà Triệu");
+                var theater2 = context.Theater.First(t => t.Name == "CGV Royal City");
 
                 var rooms = new List<Rooms>
                 {
@@ -167,7 +206,7 @@ namespace Server.src.Data
                         AgeLimit = "T13",
                         StartDate = DateTime.UtcNow.Date.AddDays(-7),
                         EndDate = DateTime.UtcNow.Date.AddDays(30),
-                        Thumbnail = "https://m.media-amazon.com/images/I/71s3cEqEZTL._AC_UF1000,1000_QL80_.jpg",
+                        Thumbnail = "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg",
                         Rating = 8.5
                     },
                     new Movies

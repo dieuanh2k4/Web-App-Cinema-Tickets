@@ -2,12 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY ["Server.csproj", "."]
+COPY ["Server/Server.csproj", "Server/"]
 
-RUN dotnet restore "Server.csproj"
+RUN dotnet restore "Server/Server.csproj"
 
 COPY . .
 
+WORKDIR "/src/Server"
 RUN dotnet build "Server.csproj" -c Release -o /app/build
 
 # Stage 2: Publish

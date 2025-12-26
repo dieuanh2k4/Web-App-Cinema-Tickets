@@ -24,7 +24,7 @@ pipeline {
                     sh 'ls -la Server'
 
                     sh """ 
-                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f Server/Dockerfile
+                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f Server/Dockerfile .
                     """
                 }
             }
@@ -55,7 +55,7 @@ pipeline {
                     sshagent(['ssh-credentials']) {
                         // copy env file lên server
                         sh """
-                            scp -o StrictHostKeyChecking=no .env.production jenkins@${DEPLOY_SERVER}:C:/Users/jenkins/app.env
+                            scp -o StrictHostKeyChecking=no Server/.env.production jenkins@${DEPLOY_SERVER}:C:/Users/jenkins/app.env
                         """
 
                         // lấy lại user/pass Docker để đang nhập trên server đích
@@ -77,6 +77,7 @@ pipeline {
                                     docker stop ${IMAGE_NAME} || true
                                     docker rm ${IMAGE_NAME} || true
                                     docker run -d --name ${IMAGE_NAME} -p 80:8080 --restart always \\
+                                        --add-host=host.docker.internal:host-gateway \\
                                         --env-file C:/Users/jenkins/app.env \\
                                         ${REGISTRY_URL}/${IMAGE_NAME}:${IMAGE_TAG}
                 

@@ -36,9 +36,14 @@ namespace Server.src.Services.Implements
                 // Convert to stream for upload
                 using var stream = new MemoryStream(qrCodeBytes);
                 
-                // Upload to MinIO
-                var fileName = $"qr-codes/ticket-{ticketId}-{Guid.NewGuid()}.png";
-                var qrUrl = await _minioService.UploadFileAsync(stream, fileName, "image/png");
+                // Upload to MinIO - create IFormFile from stream
+                var formFile = new FormFile(stream, 0, qrCodeBytes.Length, "qrcode", $"ticket-{ticketId}.png")
+                {
+                    Headers = new HeaderDictionary(),
+                    ContentType = "image/png"
+                };
+                
+                var qrUrl = await _minioService.UploadImageAsync(formFile, "qr-codes");
 
                 return qrUrl;
             }

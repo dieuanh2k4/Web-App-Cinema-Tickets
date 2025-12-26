@@ -1,34 +1,54 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSave, FaTimes, FaUserCircle, FaEdit, FaHistory } from 'react-icons/fa';
-import { adminAccounts } from '../data/mockData';
+import { FaArrowLeft, FaSave, FaTimes, FaUserCircle, FaEdit } from 'react-icons/fa';
+import userService from '../services/userService';
 import { formatDate } from '../utils/helpers';
 
 const AccountDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  // Find account by id using useMemo
-  const account = useMemo(() => {
-    const foundAccount = adminAccounts.find(acc => acc.id === parseInt(id));
-    if (!foundAccount) {
-      alert('Không tìm thấy tài khoản!');
-      navigate('/accounts');
-      return null;
-    }
-    return foundAccount;
-  }, [id, navigate]);
-
+  const [account, setAccount] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: account?.fullName || '',
-    email: account?.email || '',
-    phone: account?.phone || '',
-    role: account?.role || '',
-    status: account?.status || ''
+    username: '',
+    userType: 'Staff' // Default to Staff (string)
   });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Load account from API
+  useEffect(() => {
+    loadAccount();
+  }, [id]);
+
+  const loadAccount = async () => {
+    try {
+      setLoading(true);
+      // BE doesn't have getUserById, so we get all and filter
+      const users = await userService.getAllUsers();
+      const foundAccount = users.find(acc => acc.id === parseInt(id));
+      
+      if (!foundAccount) {
+        alert('Không tìm thấy tài khoản!');
+        navigate('/accounts');
+        return;
+      }
+      
+      setAccount(foundAccount);
+      setFormData({
+        username: foundAccount.username || '',
+        userType: getUserTypeString(foundAccount.userType)
+      });
+    } catch (error) {
+      console.error('Error loading account:', error);
+      alert('Không thể tải thông tin tài khoản. Vui lòng thử lại sau.');
+      navigate('/accounts');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -48,24 +68,8 @@ const AccountDetail = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Vui lòng nhập họ và tên';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Vui lòng nhập email';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Email không hợp lệ';
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Vui lòng nhập số điện thoại';
-    } else if (!/^0\d{9}$/.test(formData.phone)) {
-      newErrors.phone = 'Số điện thoại không hợp lệ';
-    }
-
-    if (!formData.role) {
-      newErrors.role = 'Vui lòng chọn vai trò';
+    if (!formData.username || !formData.username.trim()) {
+      newErrors.username = 'Vui lòng nhập tên đăng nhập';
     }
 
     setErrors(newErrors);
@@ -79,57 +83,73 @@ const AccountDetail = () => {
       return;
     }
 
-    setLoading(true);
+    try {
+      setSaving(true);
+      
+      const userData = {
+        username: formData.username,
+        userType: formData.userType // Send as string ("Admin" or "Staff")
+      };
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Updating account:', formData);
+      console.log('Updating account:', userData);
+      await userService.updateUser(account.id, userData);
+      
       alert('Cập nhật tài khoản thành công!');
-      // In a real app, you would update the data in the backend
-      // For now, just close edit mode
       setIsEditing(false);
-      setLoading(false);
-    }, 1000);
+      await loadAccount(); // Reload to get updated data
+    } catch (error) {
+      console.error('Error updating account:', error);
+      alert('Không thể cập nhật tài khoản. Vui lòng thử lại sau.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
     setFormData({
-      fullName: account.fullName,
-      email: account.email,
-      phone: account.phone,
-      role: account.role,
-      status: account.status
+      username: account.username,
+      userType: getUserTypeString(account.userType)
     });
     setErrors({});
     setIsEditing(false);
   };
 
-  const getRoleBadge = (role) => {
+  // Helper to convert userType int to string
+  const getUserTypeString = (userType) => {
+    // BE DB: 0 = Admin, 1 = Staff, 2 = Customer, but API expects string
+    const types = {
+      0: 'Admin',
+      1: 'Staff',
+      2: 'Customer'
+    };
+    return types[userType] || 'Staff';
+  };
+
+  const getUserRole = (userType) => {
+    // If already string, return lowercase
+    if (typeof userType === 'string') {
+      return userType.toLowerCase();
+    }
+    // Convert int to string then lowercase
+    return getUserTypeString(userType).toLowerCase();
+  };
+
+  const getRoleBadge = (userType) => {
+    const role = getUserRole(userType);
     const badges = {
       admin: 'bg-red-500/20 text-red-400 border-red-500/30',
-      manager: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       staff: 'bg-green-500/20 text-green-400 border-green-500/30'
     };
     return badges[role] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
   };
 
-  const getRoleLabel = (role) => {
+  const getRoleLabel = (userType) => {
+    const role = getUserRole(userType);
     const labels = {
       admin: 'Quản trị viên',
-      manager: 'Quản lý',
       staff: 'Nhân viên'
     };
     return labels[role] || role;
-  };
-
-  const getStatusBadge = (status) => {
-    return status === 'active' 
-      ? 'bg-green-500/20 text-green-400 border-green-500/30'
-      : 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-  };
-
-  const getStatusLabel = (status) => {
-    return status === 'active' ? 'Hoạt động' : 'Không hoạt động';
   };
 
   if (!account) {
@@ -173,45 +193,16 @@ const AccountDetail = () => {
           {/* Profile Card */}
           <div className="bg-secondary rounded-lg p-8 border border-gray-700 text-center">
             <div className="mb-6">
-              {account.avatar ? (
-                <img 
-                  src={account.avatar} 
-                  alt={account.fullName} 
-                  className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-accent/20"
-                />
-              ) : (
-                <div className="w-32 h-32 rounded-full mx-auto bg-accent/20 flex items-center justify-center border-4 border-accent/20">
-                  <FaUserCircle className="text-accent" size={64} />
-                </div>
-              )}
+              <div className="w-32 h-32 rounded-full mx-auto bg-accent/20 flex items-center justify-center border-4 border-accent/20">
+                <FaUserCircle className="text-accent" size={64} />
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">{account.fullName}</h2>
-            <p className="text-gray-400 mb-4">@{account.username}</p>
+            <h2 className="text-2xl font-bold text-white mb-2">@{account.username}</h2>
+            <p className="text-gray-400 mb-4">ID: {account.id}</p>
             <div className="flex justify-center gap-3 mb-6">
-              <span className={`px-4 py-2 text-sm font-medium rounded-full border ${getRoleBadge(account.role)}`}>
-                {getRoleLabel(account.role)}
+              <span className={`px-4 py-2 text-sm font-medium rounded-full border ${getRoleBadge(account.userType)}`}>
+                {getRoleLabel(account.userType)}
               </span>
-              <span className={`px-4 py-2 text-sm font-medium rounded-full border ${getStatusBadge(account.status)}`}>
-                {getStatusLabel(account.status)}
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Info */}
-          <div className="bg-secondary rounded-lg p-6 border border-gray-700">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <FaHistory className="text-accent" />
-              Thông tin hệ thống
-            </h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Ngày tạo:</span>
-                <span className="text-white">{formatDate(account.createdDate)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Đăng nhập lần cuối:</span>
-                <span className="text-white">{formatDate(account.lastLogin)}</span>
-              </div>
             </div>
           </div>
         </div>
@@ -223,112 +214,52 @@ const AccountDetail = () => {
             <div className="bg-secondary rounded-lg p-8 border border-gray-700">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                 <FaUserCircle className="text-accent" />
-                Thông tin cá nhân
+                Thông tin tài khoản
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Full Name */}
-                <div className="md:col-span-2">
+              <div className="grid grid-cols-1 gap-6">
+                {/* Username */}
+                <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Họ và tên {isEditing && <span className="text-red-500">*</span>}
+                    Tên đăng nhập {isEditing && <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="text"
-                    name="fullName"
-                    value={formData.fullName}
+                    name="username"
+                    value={formData.username}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={`w-full px-4 py-2.5 bg-primary border ${
-                      errors.fullName ? 'border-red-500' : 'border-gray-600'
+                      errors.username ? 'border-red-500' : 'border-gray-600'
                     } rounded-lg text-white focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed`}
-                    placeholder="Nhập họ và tên"
+                    placeholder="Nhập tên đăng nhập"
                   />
-                  {errors.fullName && (
-                    <p className="mt-1 text-sm text-red-400">{errors.fullName}</p>
+                  {errors.username && (
+                    <p className="mt-1 text-sm text-red-400">{errors.username}</p>
                   )}
                 </div>
 
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Email {isEditing && <span className="text-red-500">*</span>}
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className={`w-full px-4 py-2.5 bg-primary border ${
-                      errors.email ? 'border-red-500' : 'border-gray-600'
-                    } rounded-lg text-white focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed`}
-                    placeholder="example@email.com"
-                  />
-                  {errors.email && (
-                    <p className="mt-1 text-sm text-red-400">{errors.email}</p>
-                  )}
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Số điện thoại {isEditing && <span className="text-red-500">*</span>}
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className={`w-full px-4 py-2.5 bg-primary border ${
-                      errors.phone ? 'border-red-500' : 'border-gray-600'
-                    } rounded-lg text-white focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed`}
-                    placeholder="0901234567"
-                  />
-                  {errors.phone && (
-                    <p className="mt-1 text-sm text-red-400">{errors.phone}</p>
-                  )}
-                </div>
-
-                {/* Role */}
+                {/* User Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Vai trò {isEditing && <span className="text-red-500">*</span>}
                   </label>
                   <select
-                    name="role"
-                    value={formData.role}
+                    name="userType"
+                    value={formData.userType}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={`w-full px-4 py-2.5 bg-primary border ${
-                      errors.role ? 'border-red-500' : 'border-gray-600'
+                      errors.userType ? 'border-red-500' : 'border-gray-600'
                     } rounded-lg text-white focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    <option value="">Chọn vai trò</option>
-                    <option value="admin">Quản trị viên</option>
-                    <option value="manager">Quản lý</option>
-                    <option value="staff">Nhân viên</option>
+                    <option value="Admin">Quản trị viên</option>
+                    <option value="Staff">Nhân viên</option>
+                    <option value="Customer">Khách hàng</option>
                   </select>
-                  {errors.role && (
-                    <p className="mt-1 text-sm text-red-400">{errors.role}</p>
+                  {errors.userType && (
+                    <p className="mt-1 text-sm text-red-400">{errors.userType}</p>
                   )}
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Trạng thái
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-2.5 bg-primary border border-gray-600 rounded-lg text-white focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <option value="active">Hoạt động</option>
-                    <option value="inactive">Không hoạt động</option>
-                  </select>
                 </div>
               </div>
             </div>
@@ -346,11 +277,11 @@ const AccountDetail = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={saving}
                   className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <FaSave />
-                  <span>{loading ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
+                  <span>{saving ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
                 </button>
               </div>
             )}

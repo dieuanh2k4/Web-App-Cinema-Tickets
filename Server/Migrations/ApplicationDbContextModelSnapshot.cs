@@ -18,7 +18,7 @@ namespace Server.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.20")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -72,7 +72,7 @@ namespace Server.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Customer", null, t =>
+                    b.ToTable("Customers", t =>
                         {
                             t.HasCheckConstraint("CK_Customer_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
                         });
@@ -110,7 +110,7 @@ namespace Server.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Genre")
                         .IsRequired()
@@ -128,7 +128,7 @@ namespace Server.Migrations
                         .HasDefaultValue(0.0);
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Thumbnail")
                         .IsRequired()
@@ -142,14 +142,47 @@ namespace Server.Migrations
                         .IsUnicode(true)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Trailer")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Movies", null, t =>
+                    b.ToTable("Movies", t =>
                         {
                             t.HasCheckConstraint("CK_Movie_Duration", "\"Duration\" > 0");
 
                             t.HasCheckConstraint("CK_Movie_Rating", "\"Rating\" >= 0 AND \"Rating\" <= 10");
                         });
+                });
+
+            modelBuilder.Entity("Server.src.Models.OTPCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OTPCodes");
                 });
 
             modelBuilder.Entity("Server.src.Models.Payment", b =>
@@ -182,7 +215,7 @@ namespace Server.Migrations
                     b.HasIndex("TicketId")
                         .IsUnique();
 
-                    b.ToTable("Payment", null, t =>
+                    b.ToTable("Payment", t =>
                         {
                             t.HasCheckConstraint("CK_Payment_Status", "\"Status\" IN('Đã Thanh toán', 'Chưa Thanh toán', 'Thanh toán thất bại')");
 
@@ -224,7 +257,7 @@ namespace Server.Migrations
 
                     b.HasIndex("TheaterId");
 
-                    b.ToTable("Rooms", (string)null);
+                    b.ToTable("Rooms");
                 });
 
             modelBuilder.Entity("Server.src.Models.Seats", b =>
@@ -260,7 +293,7 @@ namespace Server.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Seats", (string)null);
+                    b.ToTable("Seats");
                 });
 
             modelBuilder.Entity("Server.src.Models.Showtimes", b =>
@@ -292,7 +325,7 @@ namespace Server.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Showtimes", (string)null);
+                    b.ToTable("Showtimes");
                 });
 
             modelBuilder.Entity("Server.src.Models.StatusSeat", b =>
@@ -324,7 +357,7 @@ namespace Server.Migrations
 
                     b.HasIndex("ShowtimesId");
 
-                    b.ToTable("StatusSeat", (string)null);
+                    b.ToTable("StatusSeat");
                 });
 
             modelBuilder.Entity("Server.src.Models.Theater", b =>
@@ -352,7 +385,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Theater", (string)null);
+                    b.ToTable("Theater");
                 });
 
             modelBuilder.Entity("Server.src.Models.Ticket", b =>
@@ -411,7 +444,7 @@ namespace Server.Migrations
 
                     b.HasIndex("ShowtimesId");
 
-                    b.ToTable("Ticket", (string)null);
+                    b.ToTable("Tickets");
                 });
 
             modelBuilder.Entity("Server.src.Models.TicketPrice", b =>
@@ -437,7 +470,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TicketPrices", null, t =>
+                    b.ToTable("TicketPrices", t =>
                         {
                             t.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
                         });
@@ -451,8 +484,17 @@ namespace Server.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("createdDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("email")
+                        .HasColumnType("text");
+
                     b.Property<string>("password")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("phoneNumber")
                         .HasColumnType("text");
 
                     b.Property<int>("userType")
@@ -465,7 +507,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("User", (string)null);
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("Server.src.Models.Customer", b =>

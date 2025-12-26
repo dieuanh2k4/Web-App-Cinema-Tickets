@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://192.168.102.7:5000/api";
+  import.meta.env.VITE_API_URL || "http://desktop-qedcej1/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -90,8 +90,14 @@ export const getTheatersByCity = async (city) => {
 // ============================================
 // SHOWTIMES APIs
 // ============================================
-export const getAllShowtimes = async () => {
-  return api.get("/Showtimes/get_all_showtime");
+export const getAllShowtimes = async (date = null, theaterId = null) => {
+  const params = {};
+  if (date) params.date = date;
+  if (theaterId) params.theaterId = theaterId;
+
+  return api.get("/Showtimes/get_all_showtime", {
+    params: Object.keys(params).length > 0 ? params : undefined,
+  });
 };
 
 export const getShowtimesByMovie = async (theaterId, movieId, date) => {
@@ -99,6 +105,35 @@ export const getShowtimesByMovie = async (theaterId, movieId, date) => {
     params: { theaterId, movieId, date },
   });
 };
+
+export const getShowtimesByTheater = async (theaterId, date) => {
+  console.log("📡 Calling getShowtimesByTheater with:", { theaterId, date });
+  try {
+    const response = await api.get("/Showtimes/get-showtime-by-theaterid", {
+      params: { theaterId, date },
+    });
+    console.log("getShowtimesByTheater response:", response);
+    return response;
+  } catch (error) {
+    console.error("getShowtimesByTheater error:", error.response || error);
+    throw error;
+  }
+};
+
+export const getShowtimesByDate = async (date) => {
+  return api.get("/Showtimes/get_all_showtime", {
+    params: { date },
+  });
+};
+
+// export const getShowtimesByTheater = async (theaterId, date = null) => {
+//   const params = { theaterId };
+//   if (date) params.date = date;
+
+//   return api.get("/Showtimes/get_all_showtime", {
+//     params,
+//   });
+// };
 
 // Auto-generate showtimes
 export const autoGenerateShowtimes = async (date) => {
@@ -142,6 +177,13 @@ export const createBooking = async (bookingData) => {
 
 export const getAvailableSeats = async (showtimeId) => {
   return api.get(`/Booking/available-seats/${showtimeId}`);
+};
+
+// ============================================
+// CHATBOT AI APIs
+// ============================================
+export const sendChatMessage = async (messageData) => {
+  return api.post("/Chat/send-message", messageData);
 };
 
 // ============================================

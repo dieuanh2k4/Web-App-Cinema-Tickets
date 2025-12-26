@@ -10,6 +10,9 @@ namespace Server.src.Models
         public int Id { get; set; }
         public string? username { get; set; }
         public string? password { get; set; }
+        public string? email { get; set; }
+        public string? phoneNumber { get; set; }
         public int userType { get; set; } // 0 = Admin, 1 = Staff
+        public DateTime createdDate { get; set; }
     }
 }
