@@ -27,8 +27,10 @@ namespace Server.src.Services.Implements
 
         public async Task<AuthResult> LoginAsync(LoginRequestDto request)
         {
-            // Tìm user theo username
+            // Tìm user theo username và include roles
             var user = await _context.User
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.username == request.Username);
 
             if (user == null)
@@ -38,8 +40,8 @@ namespace Server.src.Services.Implements
             if (!PasswordHelper.VerifyPassword(request.Password, user.password))
                 return AuthResult.Fail("Sai tài khoản hoặc mật khẩu");
 
-            string role = user.userType == 0 ? "Admin" : 
-                          user.userType == 1 ? "Staff" : "Customer"; // 0=Admin, 1=Staff, 2=Customer
+            // Lấy role đầu tiên của user (hoặc "User" nếu không có role)
+            string role = user.UserRoles?.FirstOrDefault()?.Role?.Name ?? "User";
 
             var token = _jwtHelper.GenerateToken(user.username, role, user.Id);
 
