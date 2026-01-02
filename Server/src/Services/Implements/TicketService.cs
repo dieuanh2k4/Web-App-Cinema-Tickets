@@ -86,7 +86,7 @@ namespace Server.src.Services.Implements
                 var ticket = new Ticket
                 {
                     ShowtimeId = showtime.Id,
-                    CustomerId = customer.Id,
+                    UserId = customer.Id,
                     SeatId = seat.Id,
                     RoomId = showtime.RoomId,
                     MovieId = showtime.MovieId,
@@ -109,8 +109,11 @@ namespace Server.src.Services.Implements
             await _context.SaveChangesAsync();
 
             // 8. Return the first ticket with all information (they all have same info except SeatId)
+            var user = await _context.User
+                .FirstOrDefaultAsync(u => u.Id == customer.Id);
+                
             var mainTicket = tickets.First();
-            mainTicket.Customer = customer;
+            mainTicket.User = user;
             mainTicket.Showtimes = showtime;
             mainTicket.Movies = showtime.Movies;
             mainTicket.Rooms = showtime.Rooms;
@@ -121,12 +124,12 @@ namespace Server.src.Services.Implements
         public async Task<List<TicketDto>> GetAllTickets()
         {
             var tickets = await _context.Tickets
-                .Include(t => t.Customer)
+                .Include(t => t.User)
                 .Include(t => t.Showtimes)
                 .Include(t => t.Movies)
                 .Include(t => t.Rooms)
                 .Include(t => t.Seats)
-                .GroupBy(t => new { t.ShowtimeId, t.CustomerId, t.Date })
+                .GroupBy(t => new { t.ShowtimeId, t.UserId, t.Date })
                 .ToListAsync();
 
             var ticketDtos = new List<TicketDto>();
@@ -143,7 +146,7 @@ namespace Server.src.Services.Implements
         public async Task<TicketDto> GetTicketById(int id)
         {
             var ticket = await _context.Tickets
-                .Include(t => t.Customer)
+                .Include(t => t.User)
                 .Include(t => t.Showtimes)
                 .Include(t => t.Movies)
                 .Include(t => t.Rooms)
@@ -159,7 +162,7 @@ namespace Server.src.Services.Implements
             var relatedTickets = await _context.Tickets
                 .Include(t => t.Seats)
                 .Where(t => t.ShowtimeId == ticket.ShowtimeId && 
-                           t.CustomerId == ticket.CustomerId && 
+                           t.UserId == ticket.UserId && 
                            t.Date == ticket.Date)
                 .ToListAsync();
 
@@ -178,12 +181,12 @@ namespace Server.src.Services.Implements
             }
 
             var tickets = await _context.Tickets
-                .Include(t => t.Customer)
+                .Include(t => t.User)
                 .Include(t => t.Showtimes)
                 .Include(t => t.Movies)
                 .Include(t => t.Rooms)
                 .Include(t => t.Seats)
-                .Where(t => t.CustomerId == customer.Id)
+                .Where(t => t.UserId == customer.Id)
                 .GroupBy(t => new { t.ShowtimeId, t.Date })
                 .ToListAsync();
 
@@ -213,7 +216,7 @@ namespace Server.src.Services.Implements
             var relatedTickets = await _context.Tickets
                 .Include(t => t.Seats)
                 .Where(t => t.ShowtimeId == ticket.ShowtimeId && 
-                           t.CustomerId == ticket.CustomerId && 
+                           t.UserId == ticket.UserId && 
                            t.Date == ticket.Date)
                 .ToListAsync();
 

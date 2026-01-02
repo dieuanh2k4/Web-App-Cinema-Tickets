@@ -80,7 +80,7 @@ namespace Server.src.Services.Implements
                 // → Tạm thời tạo 1 ticket cho ghế đầu tiên, sau này cần sửa lại model
                 var ticket = new Ticket
                 {
-                    CustomerId = customer.Id,
+                    UserId = customer.Id,
                     ShowtimeId = dto.ShowtimeId,
                     SeatId = seats.First().Id, // Tạm thời
                     RoomId = showtime.RoomId,
@@ -206,7 +206,7 @@ namespace Server.src.Services.Implements
                 // 7. Tạo Ticket
                 var ticket = new Ticket
                 {
-                    CustomerId = customer.Id,
+                    UserId = customer.Id,
                     ShowtimeId = dto.ShowtimeId,
                     SeatId = seats.First().Id, // Tạm thời
                     RoomId = showtime.RoomId,

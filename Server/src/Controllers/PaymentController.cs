@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Server.src.Data;
+using Server.src.Dtos.VNPay;
 using Server.src.Services.Implements;
 
 namespace Server.src.Controllers
@@ -113,7 +114,7 @@ namespace Server.src.Controllers
                             .ThenInclude(s => s.Movies)
                         .Include(t => t.Showtimes)
                             .ThenInclude(s => s.Rooms)
-                        .Include(t => t.Customer)
+                        .Include(t => t.User)
                         .FirstOrDefaultAsync(t => t.Id == ticketId);
 
                     if (ticket != null)
@@ -139,24 +140,24 @@ namespace Server.src.Controllers
                         {
                             var qrUrl = await _qrCodeService.GenerateQRCodeAsync(
                                 ticket.Id, 
-                                ticket.Customer?.Name ?? "Customer"
+                                ticket.User?.Name ?? "Customer"
                             );
-                            Console.WriteLine($"✅ QR Code generated: {qrUrl}");
+                            Console.WriteLine($"QR Code generated: {qrUrl}");
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"❌ QR Code generation failed: {ex.Message}");
+                            Console.WriteLine($"QR Code generation failed: {ex.Message}");
                         }
 
                         // Send confirmation email
-                        if (!string.IsNullOrEmpty(ticket.Customer?.Email))
+                        if (!string.IsNullOrEmpty(ticket.User?.Email))
                         {
                             try
                             {
                                 await _emailService.SendTicketConfirmationAsync(
-                                    ticket.Customer.Email,
+                                    ticket.User.Email,
                                     ticket.Id,
-                                    ticket.Customer.Name ?? "Customer",
+                                    ticket.User.Name ?? "Customer",
                                     ticket.Showtimes?.Movies?.Title ?? "Movie",
                                     ticket.Showtimes?.Rooms?.Name ?? "Room",
                                     new DateTime(
@@ -170,11 +171,11 @@ namespace Server.src.Controllers
                                     seatNumbers,
                                     ticket.TotalPrice
                                 );
-                                Console.WriteLine($"✅ Email sent to {ticket.Customer.Email}");
+                                Console.WriteLine($"Email sent to {ticket.User.Email}");
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Email sending failed: {ex.Message}");
+                                Console.WriteLine($"Email sending failed: {ex.Message}");
                             }
                         }
                     }
@@ -215,10 +216,4 @@ namespace Server.src.Controllers
         }
     }
 
-    public class VNPayRequestDto
-    {
-        public int TicketId { get; set; }
-        public int Amount { get; set; }
-        public string OrderInfo { get; set; } = string.Empty;
-    }
 }
