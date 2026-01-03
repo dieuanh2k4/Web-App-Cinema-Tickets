@@ -54,7 +54,7 @@ namespace Server.Controllers
             }
         }
 
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPost("create-movie")]
         public async Task<IActionResult> CreateMovie([FromForm] CreateMovieDto movieDto, IFormFile? imageFile)
         {
@@ -79,6 +79,7 @@ namespace Server.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("update-subject/{id}")]
         public async Task<IActionResult> UpdateMovie([FromForm] UpdateMovieDto updateMovieDto, IFormFile? imageFile, int id)
         {

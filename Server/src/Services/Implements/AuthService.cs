@@ -102,7 +102,7 @@ namespace Server.src.Services.Implements
             // Tạo Customer mới liên kết với User
             var newCustomer = new Customer
             {
-                Name = register.username,
+                Name = register.Name,
                 Email = register.Email,
                 Phone = register.phoneNumber,
                 Birth = register.Birth,
