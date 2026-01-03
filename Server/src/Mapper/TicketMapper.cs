@@ -39,15 +39,15 @@ namespace Server.src.Mapper
             };
         }
 
-        public static Customer ToCustomer(this CustomerInfoDto customerDto)
+        public static User ToCustomer(this CustomerInfoDto customerDto)
         {
-            return new Customer
+            return new User
             {
                 Name = customerDto.Name,
                 Email = customerDto.Email,
-                Phone = customerDto.Phone,
+                phoneNumber = customerDto.Phone,
                 Birth = customerDto.Birth ?? DateOnly.FromDateTime(DateTime.Now),
-                gender = customerDto.Gender,
+                Gender = customerDto.Gender,
                 Address = customerDto.Address
             };
         }
