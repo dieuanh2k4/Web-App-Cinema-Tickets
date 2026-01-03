@@ -2,6 +2,7 @@ using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Server.src.Data;
 using Server.src.Dtos.Auth;
 using Server.src.Services.Interfaces;
 
@@ -9,15 +10,20 @@ namespace Server.src.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    public class AuthController : ApiControllerBase
     {
+        private readonly ApplicationDbContext _context;
         private readonly IAuthService _authService;
+        private readonly IMinioStorageService _minio;
 
-        public AuthController(IAuthService authService)
+        public AuthController(ApplicationDbContext context, IAuthService authService, IMinioStorageService minio, ILogger<AuthController> logger) : base(logger)
         {
+            _context = context;
             _authService = authService;
+            _minio = minio;
         }
-
+        
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
@@ -27,14 +33,41 @@ namespace Server.src.Controllers
             return Ok(result);
         }
 
-        // [HttpPost("register")]
-        // public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
-        // {
-        //     var result = await _authService.RegisterAsync(request);
-        //     if (!result.IsSuccess)
-        //         return BadRequest(result);
-        //     return Ok(result);
-        // }
+        [AllowAnonymous]
+        [HttpPost("customer-register")]
+        public async Task<IActionResult> Register([FromForm] RegisterDto register, IFormFile? imageFile)
+        {
+            try
+            {
+                // Upload avatar nếu có
+                if (imageFile != null)
+                {
+                    try
+                    {
+                        var imageName = await _minio.UploadImageAsync(imageFile);
+                        var imageUrl = _minio.GetImageUrl(imageName);
+                        register.Avatar = imageUrl;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log lỗi nhưng vẫn cho phép đăng ký mà không có avatar
+                        Console.WriteLine($"Lỗi upload avatar: {ex.Message}");
+                        register.Avatar = null;
+                    }
+                }
+
+                var newUser = await _authService.RegisterAsync(register);
+                
+                return Ok(new { 
+                    message = "Đăng ký thành công",
+                    user = newUser 
+                });  
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi: " + ex.Message });
+            }
+        }
 
         // [HttpPost("forgot-password")]
         // public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)

@@ -71,7 +71,12 @@ namespace Server.src.Services.Implements
 
             if (customer == null)
             {
-                customer = createTicketDto.Customer!.ToCustomer();
+                customer = new Customer
+                {
+                    Email = createTicketDto.Customer!.Email,
+                    Name = createTicketDto.Customer!.Name,
+                    Phone = createTicketDto.Customer!.Phone
+                };
                 _context.Customers.Add(customer);
                 await _context.SaveChangesAsync();
             }
