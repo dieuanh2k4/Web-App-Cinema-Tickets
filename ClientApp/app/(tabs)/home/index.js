@@ -10,6 +10,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { MovieCard } from "../../../components/MovieCard";
@@ -89,206 +90,242 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
-  const renderSectionHeader = (title, onSeeAll) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <TouchableOpacity onPress={onSeeAll} style={styles.seeAllButton}>
-        <Text style={styles.seeAllText}>Xem thêm</Text>
-        <MaterialCommunityIcons
-          name="chevron-right"
-          size={20}
-          color="#6C47DB"
-        />
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <View style={styles.headerSpacer} />
-        <Image
-          source={require("../../../assets/icons/logo.png")}
-          style={styles.logo}
-        />
-        <TouchableOpacity
-          style={styles.accountIcon}
-          onPress={() => router.push("/(tabs)/account")}
-        >
-          <MaterialCommunityIcons
-            name="account-circle"
-            size={32}
-            color="#FFFFFF"
+    <View style={styles.container}>
+      <LinearGradient
+        colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
+        locations={[0, 0.7, 1]}
+        style={styles.gradient}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.headerIcon}>
+            <MaterialCommunityIcons
+              name="account-outline"
+              size={24}
+              color="#FFFFFF"
+            />
+          </TouchableOpacity>
+          <Image
+            source={require("../../../assets/icons/logo.png")}
+            style={styles.logoImage}
+            resizeMode="contain"
           />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.featuredContainer}>
-        <FlatList
-          ref={flatListRef}
-          data={movies.featured}
-          renderItem={renderFeaturedItem}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={(event) => {
-            const slideIndex = Math.round(
-              event.nativeEvent.contentOffset.x / (windowWidth - 32)
-            );
-            setActiveSlide(slideIndex);
-          }}
-        />
-        <View style={styles.paginationDots}>
-          {movies.featured.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.dot,
-                {
-                  backgroundColor:
-                    index === activeSlide ? "#6C47DB" : "#FFFFFF",
-                },
-              ]}
+          <TouchableOpacity style={styles.headerIcon}>
+            <MaterialCommunityIcons
+              name="bell-outline"
+              size={24}
+              color="#FFFFFF"
             />
-          ))}
+          </TouchableOpacity>
         </View>
-      </View>
 
-      {/* now playing */}
-      <View style={styles.section}>
-        {renderSectionHeader("Đang Chiếu", () =>
-          router.push("/movies/now-playing")
-        )}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.movieList}
-        >
-          {movies.nowPlaying.map((movie) => (
-            <MovieCard
-              key={movie.id}
-              title={movie.title}
-              poster={movie.posterUrl}
-              onPress={() => handleMoviePress(movie.id)}
-            />
-          ))}
-        </ScrollView>
-      </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Section: Nổi bật */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderContainer}>
+              <View style={styles.dotIndicator} />
+              <Text style={styles.sectionTitle}>Nổi bật</Text>
+            </View>
+            <View style={styles.featuredContainer}>
+              <FlatList
+                ref={flatListRef}
+                data={movies.featured}
+                renderItem={renderFeaturedItem}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(event) => {
+                  const slideIndex = Math.round(
+                    event.nativeEvent.contentOffset.x / (windowWidth - 32)
+                  );
+                  setActiveSlide(slideIndex);
+                }}
+              />
+              <View style={styles.paginationDots}>
+                {movies.featured.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      {
+                        backgroundColor:
+                          index === activeSlide
+                            ? "#6C47DB"
+                            : "rgba(255,255,255,0.3)",
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+          </View>
 
-      {/* upcoming */}
-      <View style={styles.section}>
-        {renderSectionHeader("Sắp Chiếu", () =>
-          router.push("/movies/upcoming")
-        )}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.movieList}
-        >
-          {movies.upcoming.map((movie) => (
-            <MovieCard
-              key={movie.id}
-              title={movie.title}
-              poster={movie.posterUrl}
-              onPress={() => handleMoviePress(movie.id)}
-            />
-          ))}
+          {/* Section: Phim đang chiếu */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionHeaderContainer}>
+                <View style={styles.dotIndicator} />
+                <Text style={styles.sectionTitle}>Phim đang chiếu</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => router.push("/movies/now-playing")}
+              >
+                <Text style={styles.viewAllText}>Xem tất cả</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.movieList}
+            >
+              {movies.nowPlaying.map((movie) => (
+                <MovieCard
+                  key={movie.id}
+                  title={movie.title}
+                  poster={movie.posterUrl}
+                  onPress={() => handleMoviePress(movie.id)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Section: Phim sắp chiếu */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionHeaderContainer}>
+                <View style={styles.dotIndicator} />
+                <Text style={styles.sectionTitle}>Phim sắp chiếu</Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push("/movies/upcoming")}>
+                <Text style={styles.viewAllText}>Xem tất cả</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.movieList}
+            >
+              {movies.upcoming.map((movie) => (
+                <MovieCard
+                  key={movie.id}
+                  title={movie.title}
+                  poster={movie.posterUrl}
+                  onPress={() => handleMoviePress(movie.id)}
+                />
+              ))}
+            </ScrollView>
+          </View>
         </ScrollView>
-      </View>
-    </ScrollView>
+      </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#0F0F0F",
   },
-
-  featuredContainer: {
-    height: 250,
-    marginTop: 20,
-    marginBottom: 20,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    overflow: "hidden",
+  gradient: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: "#1A1A1A",
+    paddingTop: 50,
+    paddingBottom: 15,
+    backgroundColor: "transparent",
   },
-  headerSpacer: {
-    width: 32,
-  },
-  logo: {
-    width: 100,
-    height: 100,
-    resizeMode: "contain",
-  },
-  accountIcon: {
+  headerIcon: {
     padding: 4,
   },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 2,
+  },
+  headerTitlePurple: {
+    color: "#6C47DB",
+  },
+  section: {
+    marginTop: 20,
+  },
+  sectionHeaderContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  logoImage: {
+    width: 120,
+    height: 120,
+  },
+  dotIndicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#FFFFFF",
+    marginRight: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingRight: 16,
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: "#6C47DB",
+  },
+  featuredContainer: {
+    height: 200,
+    marginHorizontal: 16,
+  },
   featuredItem: {
-    height: 250,
+    height: 200,
+    borderRadius: 12,
+    overflow: "hidden",
   },
   featuredImage: {
     width: "100%",
     height: "100%",
-    borderRadius: 12,
   },
   featuredOverlay: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 20,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 12,
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
   featuredTitle: {
     color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "600",
   },
   paginationDots: {
     flexDirection: "row",
     position: "absolute",
-    bottom: 20,
+    bottom: 10,
     alignSelf: "center",
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
-  },
-  section: {
-    padding: 16,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  seeAllButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  seeAllText: {
-    color: "#6C47DB",
-    fontSize: 14,
-    marginRight: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginHorizontal: 3,
   },
   movieList: {
+    paddingLeft: 16,
     paddingRight: 16,
   },
 });

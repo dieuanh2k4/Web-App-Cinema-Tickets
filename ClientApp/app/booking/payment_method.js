@@ -6,59 +6,65 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Linking,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { paymentService, bookingService } from "../../services";
 
 export default function PaymentMethodScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const [selectedMethod, setSelectedMethod] = useState(null);
+  const [selectedMethod, setSelectedMethod] = useState("vnpay");
+  const [processing, setProcessing] = useState(false);
 
   const totalAmount = parseInt(params.totalAmount || 0);
   const finalAmount = totalAmount;
 
   const paymentMethods = [
     {
-      id: "momo",
-      name: "Ví MoMo",
-      icon: "M",
-      color: "#A50064",
-    },
-    {
-      id: "zalopay",
-      name: "ZaloPay",
-      icon: "Z",
-      color: "#0068FF",
-    },
-    {
       id: "vnpay",
       name: "VNPay",
       icon: "V",
       color: "#0F3B82",
     },
-    {
-      id: "banking",
-      name: "Chuyển khoản",
-      icon: "B",
-      color: "#00BFA5",
-    },
   ];
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!selectedMethod) {
       Alert.alert("Thông báo", "Vui lòng chọn phương thức thanh toán");
       return;
     }
 
-    router.push({
-      pathname: "/booking/payment_result",
-      params: {
-        ...params,
-        paymentMethod: selectedMethod,
-        finalAmount: finalAmount,
-      },
-    });
+    try {
+      setProcessing(true);
+
+      const booking = await bookingService.createBooking({
+        ShowtimeId: parseInt(params.showtimeId),
+        SeatIds: params.seats.split(", ").map((s) => parseInt(s)),
+        TotalAmount: finalAmount,
+      });
+
+      const paymentData = {
+        TicketId: booking.ticketId,
+        Amount: finalAmount,
+        OrderInfo: `Thanh toán vé ${params.movieTitle}`,
+      };
+
+      const paymentResult = await paymentService.createVNPayPayment(
+        paymentData
+      );
+
+      if (paymentResult.paymentUrl) {
+        await Linking.openURL(paymentResult.paymentUrl);
+      } else {
+        Alert.alert("Lỗi", "Không thể tạo thanh toán");
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", error.message || "Không thể xử lý thanh toán");
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (

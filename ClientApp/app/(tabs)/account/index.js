@@ -7,18 +7,33 @@ import {
   Alert,
   Image,
   StatusBar,
-  LinearGradient,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { authService } from "../../../services/authService";
+import { authService, userService } from "../../../services";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAuth } from "../../../contexts/AuthContext";
 
 export default function AccountScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const [profile, setProfile] = useState(null);
 
-  const userName = user?.user?.name || user?.user?.email || "Phong Pham";
+  const userName =
+    user?.user?.name || user?.user?.email || profile?.fullName || "Phong Pham";
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const data = await userService.getProfile();
+      setProfile(data);
+    } catch (error) {
+      console.error("Error loading profile:", error);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
@@ -51,55 +66,68 @@ export default function AccountScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <LinearGradient
+      colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
+      locations={[0, 0.7, 1]}
+      style={styles.gradient}
+    >
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Tài khoản</Text>
-      </View>
-
-      {/* Profile Section */}
-      <View style={styles.profileSection}>
-        <View style={styles.avatarContainer}>
-          <Image
-            source={{ uri: "https://i.pravatar.cc/200" }}
-            style={styles.avatar}
-          />
-          <View style={styles.editBadge}>
-            <MaterialCommunityIcons name="camera" size={16} color="#FFFFFF" />
-          </View>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Tài khoản</Text>
         </View>
-        <Text style={styles.userName}>{userName}</Text>
-      </View>
 
-      {/* Menu Items */}
-      <View style={styles.menuContainer}>
-        <MenuItem
-          icon="square-edit-outline"
-          label="Cập nhật thông tin"
-          onPress={() => Alert.alert("Thông báo", "Chức năng đang phát triển")}
-        />
-        <MenuItem
-          icon="lock-outline"
-          label="Thay đổi mật khẩu"
-          onPress={() => Alert.alert("Thông báo", "Chức năng đang phát triển")}
-        />
-        <MenuItem
-          icon="ticket-outline"
-          label="Vé của tôi"
-          onPress={() => router.push("/(tabs)/tickets")}
-        />
-        <MenuItem icon="logout" label="Đăng xuất" onPress={handleLogout} />
+        {/* Profile Section */}
+        <View style={styles.profileSection}>
+          <View style={styles.avatarContainer}>
+            <Image
+              source={{ uri: "https://i.pravatar.cc/200" }}
+              style={styles.avatar}
+            />
+            <View style={styles.editBadge}>
+              <MaterialCommunityIcons name="camera" size={16} color="#FFFFFF" />
+            </View>
+          </View>
+          <Text style={styles.userName}>{userName}</Text>
+        </View>
+
+        {/* Menu Items */}
+        <View style={styles.menuContainer}>
+          <MenuItem
+            icon="square-edit-outline"
+            label="Cập nhật thông tin"
+            onPress={() =>
+              Alert.alert("Thông báo", "Chức năng đang phát triển")
+            }
+          />
+          <MenuItem
+            icon="lock-outline"
+            label="Thay đổi mật khẩu"
+            onPress={() =>
+              Alert.alert("Thông báo", "Chức năng đang phát triển")
+            }
+          />
+          <MenuItem
+            icon="ticket-outline"
+            label="Vé của tôi"
+            onPress={() => router.push("/(tabs)/tickets")}
+          />
+          <MenuItem icon="logout" label="Đăng xuất" onPress={handleLogout} />
+        </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: "#1A1532",
+    backgroundColor: "transparent",
   },
   header: {
     paddingTop: 50,

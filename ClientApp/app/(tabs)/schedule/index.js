@@ -174,6 +174,7 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { theaterService } from "../../../services/theaterService";
@@ -237,137 +238,150 @@ export default function ScheduleScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.screenTitle}>Khám phá rạp phim</Text>
-      <Text style={styles.screenSubtitle}>
-        Chọn rạp yêu thích và suất chiếu phù hợp trong ngày
-      </Text>
+    <LinearGradient
+      colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
+      locations={[0, 0.7, 1]}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.screenTitle}>Khám phá rạp phim</Text>
+        <Text style={styles.screenSubtitle}>
+          Chọn rạp yêu thích và suất chiếu phù hợp trong ngày
+        </Text>
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#6C47DB" />
-        </View>
-      ) : (
-        <ScrollView
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => {
-                setRefreshing(true);
-                loadTheaters();
-              }}
-              tintColor="#6C47DB"
-              colors={["#6C47DB"]}
-            />
-          }
-        >
-          {theaters.map((theater) => {
-            return (
-              <View
-                key={theater.id || theater.theaterId}
-                style={styles.theaterCard}
-              >
-                {theater.imageUrl && (
-                  <Image
-                    source={{ uri: theater.imageUrl }}
-                    style={styles.theaterImage}
-                  />
-                )}
-                <View style={styles.cardBody}>
-                  <View style={styles.headerRow}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.theaterName}>{theater.name}</Text>
-                      <Text style={styles.theaterAddress}>
-                        {theater.address}
-                      </Text>
-                    </View>
-                    <View style={styles.ratingBadge}>
-                      <MaterialCommunityIcons
-                        name="star"
-                        size={16}
-                        color="#F5B301"
-                      />
-                      <Text style={styles.ratingText}>
-                        {theater.rating?.toFixed(1) || "4.5"}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text style={styles.description}>{theater.description}</Text>
-
-                  <View style={styles.metaRow}>
-                    <MaterialCommunityIcons
-                      name="map-marker"
-                      size={16}
-                      color="#6C47DB"
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#6C47DB" />
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.list}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => {
+                  setRefreshing(true);
+                  loadTheaters();
+                }}
+                tintColor="#6C47DB"
+                colors={["#6C47DB"]}
+              />
+            }
+          >
+            {theaters.map((theater) => {
+              return (
+                <View
+                  key={theater.id || theater.theaterId}
+                  style={styles.theaterCard}
+                >
+                  {theater.imageUrl && (
+                    <Image
+                      source={{ uri: theater.imageUrl }}
+                      style={styles.theaterImage}
                     />
-                    <Text style={styles.metaText}>
-                      {formatDistance(theater.distance)}
-                    </Text>
-                    <View style={styles.dot} />
-                    <MaterialCommunityIcons
-                      name="seat"
-                      size={16}
-                      color="#6C47DB"
-                    />
-                    <Text style={styles.metaText}>
-                      {theater.screenType || theater.features?.[0] || "ScreenX"}
-                    </Text>
-                  </View>
-
-                  <View style={styles.badgeRow}>
-                    {formatFeatures(theater).map((feature, index) => (
-                      <View
-                        key={`${
-                          theater.id || theater.theaterId
-                        }-feature-${index}`}
-                        style={styles.badge}
-                      >
-                        <Text style={styles.badgeText}>{feature}</Text>
+                  )}
+                  <View style={styles.cardBody}>
+                    <View style={styles.headerRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.theaterName}>{theater.name}</Text>
+                        <Text style={styles.theaterAddress}>
+                          {theater.address}
+                        </Text>
                       </View>
-                    ))}
-                  </View>
+                      <View style={styles.ratingBadge}>
+                        <MaterialCommunityIcons
+                          name="star"
+                          size={16}
+                          color="#F5B301"
+                        />
+                        <Text style={styles.ratingText}>
+                          {theater.rating?.toFixed(1) || "4.5"}
+                        </Text>
+                      </View>
+                    </View>
 
-                  <View style={styles.divider} />
-
-                  <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>
-                      Lịch chiếu ({theater.showtimeCount || 0} suất)
+                    <Text style={styles.description}>
+                      {theater.description}
                     </Text>
-                    <Pressable
-                      onPress={() =>
-                        router.push({
-                          pathname: "/(theaters)/theater_detail",
-                          params: { theaterId: theater.id.toString() },
-                        })
-                      }
-                      style={styles.viewAllButton}
-                    >
-                      <Text style={styles.sectionLink}>Xem tất cả</Text>
+
+                    <View style={styles.metaRow}>
                       <MaterialCommunityIcons
-                        name="chevron-right"
-                        size={20}
+                        name="map-marker"
+                        size={16}
                         color="#6C47DB"
                       />
-                    </Pressable>
+                      <Text style={styles.metaText}>
+                        {formatDistance(theater.distance)}
+                      </Text>
+                      <View style={styles.dot} />
+                      <MaterialCommunityIcons
+                        name="seat"
+                        size={16}
+                        color="#6C47DB"
+                      />
+                      <Text style={styles.metaText}>
+                        {theater.screenType ||
+                          theater.features?.[0] ||
+                          "ScreenX"}
+                      </Text>
+                    </View>
+
+                    <View style={styles.badgeRow}>
+                      {formatFeatures(theater).map((feature, index) => (
+                        <View
+                          key={`${
+                            theater.id || theater.theaterId
+                          }-feature-${index}`}
+                          style={styles.badge}
+                        >
+                          <Text style={styles.badgeText}>{feature}</Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    <View style={styles.divider} />
+
+                    <View style={styles.sectionHeader}>
+                      <Text style={styles.sectionTitle}>
+                        Lịch chiếu ({theater.showtimeCount || 0} suất)
+                      </Text>
+                      <Pressable
+                        onPress={() =>
+                          router.push({
+                            pathname: "/(theaters)/theater_detail",
+                            params: { theaterId: theater.id.toString() },
+                          })
+                        }
+                        style={styles.viewAllButton}
+                      >
+                        <Text style={styles.sectionLink}>Xem tất cả</Text>
+                        <MaterialCommunityIcons
+                          name="chevron-right"
+                          size={20}
+                          color="#6C47DB"
+                        />
+                      </Pressable>
+                    </View>
                   </View>
                 </View>
-              </View>
-            );
-          })}
-        </ScrollView>
-      )}
-    </SafeAreaView>
+              );
+            })}
+          </ScrollView>
+        )}
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "transparent",
     paddingHorizontal: 16,
     paddingTop: 16,
   },
