@@ -24,7 +24,6 @@ export const movieService = {
     }
   },
 
-  // Helpers that filter locally based on movie.status returned from backend
   getNowPlaying: async () => {
     try {
       const movies = await movieService.getAllMovies();

@@ -7,11 +7,10 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { showtimeService } from "../../services/showtimeService";
+import { seatService, bookingService } from "../../services";
 
 export default function SelectSeatScreen() {
   const router = useRouter();
@@ -29,71 +28,23 @@ export default function SelectSeatScreen() {
 
   const [loading, setLoading] = useState(true);
   const [selectedSeats, setSelectedSeats] = useState([]);
-  const [timeRemaining, setTimeRemaining] = useState(600); // 10 phút = 600 giây
-  const [seatsData, setSeatsData] = useState({
-    rows: [],
-    columns: 0,
-    seats: { regular: [], vip: [], couple: [], booked: [] },
-    prices: { regular: 0, vip: 0, couple: 0 },
-  });
+  const [holdId, setHoldId] = useState(null);
+  const [timeRemaining, setTimeRemaining] = useState(600);
+  const [seatsData, setSeatsData] = useState([]);
 
   useEffect(() => {
     loadSeats();
   }, []);
 
-  // Cleanup hold khi unmount hoặc navigate away
-  useEffect(() => {
-    return () => {
-      if (holdId) {
-        seatService.releaseSeats(holdId).catch(console.error);
-      }
-      if (holdTimerRef.current) {
-        clearInterval(holdTimerRef.current);
-      }
-    };
-  }, [holdId]);
-
-  // Update timer mỗi giây
-  useEffect(() => {
-    if (timeRemaining > 0) {
-      holdTimerRef.current = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            clearInterval(holdTimerRef.current);
-            Alert.alert("Hết thời gian giữ ghế", "Vui lòng chọn lại ghế", [
-              {
-                text: "OK",
-                onPress: () => {
-                  setSelectedSeats([]);
-                  setHoldId(null);
-                  loadSeats(); // Reload seats
-                },
-              },
-            ]);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(holdTimerRef.current);
-    }
-  }, [timeRemaining]);
-
   const loadSeats = async () => {
     try {
       setLoading(true);
-      const data = await showtimeService.getSeatsByShowtime(showtimeId);
-      setSeatsData(data);
+      const seats = await seatService.getSeatsByShowtime(showtimeId);
+      setSeatsData(seats);
       setLoading(false);
     } catch (error) {
       console.error("Error loading seats:", error);
-      setSeatsData({
-        rows: [],
-        columns: 0,
-        seats: { regular: [], vip: [], couple: [], booked: [] },
-        prices: { regular: 0, vip: 0, couple: 0 },
-      });
+      setSeatsData([]);
       setLoading(false);
     }
   };
@@ -231,14 +182,12 @@ export default function SelectSeatScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Screen */}
         <View style={styles.screenContainer}>
           <View style={styles.screen}>
             <Text style={styles.screenText}>MÀN HÌNH</Text>
           </View>
         </View>
 
-        {/* Seat Grid */}
         <View style={styles.seatGrid}>
           <View style={styles.rowLabels}>
             {seatsData.rows.map((row) => (
@@ -318,7 +267,7 @@ export default function SelectSeatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#0F0F0F",
   },
   loadingContainer: {
     flex: 1,
@@ -332,7 +281,7 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 16,
     paddingHorizontal: 16,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#0F0F0F",
   },
   headerCenter: {
     alignItems: "center",
@@ -465,7 +414,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#0F0F0F",
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderTopWidth: 1,

@@ -11,18 +11,19 @@ import {
   StatusBar,
   Image,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { movieService } from "../../../services/movieService";
-import { theaterService } from "../../../services/theaterService";
+import { movieService, searchService } from "../../../services";
 
 export default function SearchScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("movie"); // movie, theater
+  const [activeGenre, setActiveGenre] = useState("all");
   const [movies, setMovies] = useState([]);
-  const [theaters, setTheaters] = useState([]);
+  const [genres, setGenres] = useState([{ id: "all", name: "TẤT CẢ" }]);
   const [filteredData, setFilteredData] = useState([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -30,52 +31,65 @@ export default function SearchScreen() {
 
   useEffect(() => {
     filterData();
-  }, [searchQuery, activeTab, movies, theaters]);
+  }, [searchQuery, activeGenre, movies]);
 
   const loadData = async () => {
     try {
-      const [moviesData, theatersData] = await Promise.all([
-        movieService.getAllMovies(),
-        theaterService.getAllTheaters(),
-      ]);
+      const moviesData = await movieService.getAllMovies();
       setMovies(moviesData);
-      setTheaters(theatersData);
+
+      const uniqueGenres = [
+        ...new Set(moviesData.map((m) => m.genre).filter(Boolean)),
+      ];
+      const genreList = [
+        { id: "all", name: "TẤT CẢ" },
+        ...uniqueGenres.map((g) => ({
+          id: g.toLowerCase(),
+          name: g.toUpperCase(),
+        })),
+      ];
+      setGenres(genreList);
     } catch (error) {
       console.error("Error loading data:", error);
     }
   };
 
-  const filterData = () => {
+  const filterData = async () => {
     const query = searchQuery.toLowerCase().trim();
+    let filtered = movies;
 
-    if (!query) {
-      // Hiển thị tất cả khi không có search
-      if (activeTab === "movie") {
-        setFilteredData(movies);
-      } else {
-        setFilteredData(theaters);
+    if (query) {
+      try {
+        setSearching(true);
+        const searchResults = await searchService.searchMovieByName(query);
+        filtered = searchResults;
+      } catch (error) {
+        console.error("Search error:", error);
+        filtered = movies.filter(
+          (movie) =>
+            movie.title?.toLowerCase().includes(query) ||
+            movie.genre?.toLowerCase().includes(query) ||
+            movie.director?.toLowerCase().includes(query)
+        );
+      } finally {
+        setSearching(false);
       }
-      return;
     }
 
-    // Tìm kiếm theo tab
-    if (activeTab === "movie") {
-      const filtered = movies.filter(
-        (movie) =>
-          movie.title.toLowerCase().includes(query) ||
-          movie.genre.toLowerCase().includes(query) ||
-          movie.director.toLowerCase().includes(query)
+    if (activeGenre !== "all") {
+      filtered = filtered.filter(
+        (movie) => movie.genre?.toLowerCase() === activeGenre.toLowerCase()
       );
-      setFilteredData(filtered);
-    } else {
-      const filtered = theaters.filter(
-        (theater) =>
-          theater.name.toLowerCase().includes(query) ||
-          theater.address.toLowerCase().includes(query) ||
-          theater.city.toLowerCase().includes(query)
-      );
-      setFilteredData(filtered);
     }
+
+    setFilteredData(filtered);
+  };
+
+  const getGenreCount = (genreId) => {
+    if (genreId === "all") return movies.length;
+    return movies.filter(
+      (movie) => movie.genre?.toLowerCase() === genreId.toLowerCase()
+    ).length;
   };
   const renderMovieItem = (movie) => (
     <Pressable
@@ -84,233 +98,180 @@ export default function SearchScreen() {
       onPress={() =>
         router.push({
           pathname: "/movies/detail",
-          params: { movieId: movie.id },
+          params: { id: movie.id },
         })
       }
     >
-      <Image source={{ uri: movie.thumbnail }} style={styles.moviePoster} />
+      <Image source={{ uri: movie.posterUrl }} style={styles.moviePoster} />
       <View style={styles.movieInfo}>
         <Text style={styles.movieTitle} numberOfLines={2}>
           {movie.title}
         </Text>
-        <Text style={styles.movieMeta}>
-          {movie.duration} phút • {movie.genre}
-        </Text>
+        <Text style={styles.movieMeta}>{movie.genre}</Text>
         <View style={styles.ratingRow}>
-          <MaterialCommunityIcons name="star" size={16} color="#F5B301" />
-          <Text style={styles.ratingText}>{movie.rating}</Text>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{movie.status}</Text>
-          </View>
+          <MaterialCommunityIcons name="star" size={14} color="#FFB800" />
+          <MaterialCommunityIcons name="star" size={14} color="#FFB800" />
+          <MaterialCommunityIcons name="star" size={14} color="#FFB800" />
+          <MaterialCommunityIcons name="star" size={14} color="#FFB800" />
+          <MaterialCommunityIcons name="star" size={14} color="#FFB800" />
+          <Text style={styles.ratingText}>({movie.rating || "5/5"})</Text>
         </View>
-      </View>
-    </Pressable>
-  );
-
-  const renderTheaterItem = (theater) => (
-    <Pressable
-      key={theater.id}
-      style={styles.theaterCard}
-      onPress={() =>
-        router.push({
-          pathname: "/(theaters)/theater_detail",
-          params: { theaterId: theater.id },
-        })
-      }
-    >
-      <View style={styles.theaterHeader}>
-        <MaterialCommunityIcons name="theater" size={32} color="#6C47DB" />
-        <View style={styles.theaterInfo}>
-          <Text style={styles.theaterName}>{theater.name}</Text>
-          <Text style={styles.theaterAddress}>{theater.address}</Text>
-          <Text style={styles.theaterCity}>{theater.city}</Text>
-        </View>
-        <MaterialCommunityIcons
-          name="chevron-right"
-          size={24}
-          color="#9CA3AF"
-        />
       </View>
     </Pressable>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <LinearGradient
+      colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
+      locations={[0, 0.7, 1]}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#0F0F0F" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Tìm kiếm</Text>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <MaterialCommunityIcons
-          name="magnify"
-          size={24}
-          color="#9CA3AF"
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Tìm phim, rạp..."
-          placeholderTextColor="#6B7280"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-          <Pressable onPress={() => setSearchQuery("")}>
-            <MaterialCommunityIcons
-              name="close-circle"
-              size={20}
-              color="#9CA3AF"
-            />
-          </Pressable>
-        )}
-      </View>
-
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <Pressable
-          style={[styles.tab, activeTab === "movie" && styles.tabActive]}
-          onPress={() => setActiveTab("movie")}
-        >
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
           <MaterialCommunityIcons
-            name="movie-open"
+            name="magnify"
             size={20}
-            color={activeTab === "movie" ? "#6C47DB" : "#9CA3AF"}
+            color="#999"
+            style={styles.searchIcon}
           />
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "movie" && styles.tabTextActive,
-            ]}
-          >
-            Phim
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={[styles.tab, activeTab === "theater" && styles.tabActive]}
-          onPress={() => setActiveTab("theater")}
-        >
-          <MaterialCommunityIcons
-            name="theater"
-            size={20}
-            color={activeTab === "theater" ? "#6C47DB" : "#9CA3AF"}
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Tìm kiếm"
+            placeholderTextColor="#666"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
           />
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "theater" && styles.tabTextActive,
-            ]}
-          >
-            Rạp
-          </Text>
-        </Pressable>
-      </View>
+        </View>
 
-      {/* Results */}
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {filteredData.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons name="magnify" size={64} color="#4B5563" />
-            <Text style={styles.emptyText}>
-              {searchQuery
-                ? "Không tìm thấy kết quả"
-                : activeTab === "movie"
-                ? "Tìm kiếm phim theo tên, thể loại, đạo diễn..."
-                : "Tìm kiếm rạp theo tên, địa chỉ..."}
-            </Text>
-          </View>
-        ) : (
-          <>
-            {activeTab === "movie" &&
-              filteredData.map((movie) => renderMovieItem(movie))}
-            {activeTab === "theater" &&
-              filteredData.map((theater) => renderTheaterItem(theater))}
-          </>
+        {/* Genre Tabs */}
+        <View style={styles.tabContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabScrollContent}
+          >
+            {genres.map((genre) => {
+              const count = getGenreCount(genre.id);
+              const isActive = activeGenre === genre.id;
+              return (
+                <Pressable
+                  key={genre.id}
+                  style={[styles.genreTab, isActive && styles.genreTabActive]}
+                  onPress={() => setActiveGenre(genre.id)}
+                >
+                  <Text
+                    style={[
+                      styles.genreText,
+                      isActive && styles.genreTextActive,
+                    ]}
+                  >
+                    {genre.name}
+                    {count > 0 && ` (${count})`}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Results Title */}
+        {filteredData.length > 0 && (
+          <Text style={styles.resultsTitle}>Kết quả tìm kiếm</Text>
         )}
-      </ScrollView>
-    </SafeAreaView>
+
+        {/* Results */}
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          {filteredData.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <MaterialCommunityIcons name="magnify" size={64} color="#444" />
+              <Text style={styles.emptyText}>
+                {searchQuery
+                  ? "Không tìm thấy kết quả"
+                  : "Tìm kiếm phim theo tên, thể loại..."}
+              </Text>
+            </View>
+          ) : (
+            filteredData.map((movie) => renderMovieItem(movie))
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "transparent",
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-  },
-  header: {
-    padding: 16,
-    paddingBottom: 12,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#FFFFFF",
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginTop: 16,
+    marginBottom: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#2A2A2A",
+    paddingVertical: 10,
+    borderRadius: 25,
   },
   searchIcon: {
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    color: "#FFFFFF",
-    fontSize: 16,
+    color: "#000000",
+    fontSize: 15,
   },
   tabContainer: {
-    flexDirection: "row",
+    marginBottom: 16,
+  },
+  tabScrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
     gap: 8,
   },
-  tab: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
+  genreTab: {
     paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: "#1A1A1A",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#2A2A2A",
-    gap: 6,
+    borderRadius: 20,
+    marginRight: 8,
   },
-  tabActive: {
-    backgroundColor: "#6C47DB20",
-    borderColor: "#6C47DB",
+  genreTabActive: {
+    backgroundColor: "#FFB800",
   },
-  tabText: {
-    color: "#9CA3AF",
-    fontSize: 14,
+  genreText: {
+    color: "#FFFFFF",
+    fontSize: 13,
     fontWeight: "600",
   },
-  tabTextActive: {
-    color: "#6C47DB",
+  genreTextActive: {
+    color: "#000000",
+  },
+  resultsTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
   content: {
     flex: 1,
   },
   contentContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
   emptyContainer: {
     alignItems: "center",
@@ -318,144 +279,46 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
   },
   emptyText: {
-    color: "#6B7280",
-    fontSize: 16,
+    color: "#666",
+    fontSize: 15,
     marginTop: 16,
     textAlign: "center",
-    paddingHorizontal: 32,
   },
   // Movie Card
   movieCard: {
     flexDirection: "row",
-    backgroundColor: "#1A1A1A",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#2A2A2A",
+    backgroundColor: "transparent",
+    marginBottom: 20,
   },
   moviePoster: {
-    width: 80,
-    height: 120,
+    width: 100,
+    height: 150,
     borderRadius: 8,
   },
   movieInfo: {
     flex: 1,
-    marginLeft: 12,
-    justifyContent: "space-between",
+    marginLeft: 16,
+    justifyContent: "center",
   },
   movieTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: "700",
     color: "#FFFFFF",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   movieMeta: {
-    fontSize: 13,
-    color: "#9CA3AF",
+    fontSize: 14,
+    color: "#AAAAAA",
     marginBottom: 8,
   },
   ratingRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 2,
   },
   ratingText: {
-    color: "#F5B301",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  statusBadge: {
-    backgroundColor: "#6C47DB20",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginLeft: 8,
-  },
-  statusText: {
-    color: "#6C47DB",
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  // Theater Card
-  theaterCard: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#2A2A2A",
-  },
-  theaterHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  theaterInfo: {
-    flex: 1,
-  },
-  theaterName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  theaterAddress: {
+    color: "#AAAAAA",
     fontSize: 13,
-    color: "#9CA3AF",
-    marginBottom: 2,
-  },
-  theaterCity: {
-    fontSize: 12,
-    color: "#6B7280",
-  },
-  // Showtime Section
-  showtimeSection: {
-    marginBottom: 24,
-  },
-  dateHeader: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 12,
-    paddingBottom: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: "#6C47DB",
-  },
-  showtimeCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#1A1A1A",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "#2A2A2A",
-  },
-  showtimeLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    gap: 16,
-  },
-  showtimeTime: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#6C47DB",
-    minWidth: 60,
-  },
-  showtimeDetails: {
-    flex: 1,
-  },
-  showtimeMovie: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  showtimeTheater: {
-    fontSize: 13,
-    color: "#9CA3AF",
+    marginLeft: 6,
   },
 });

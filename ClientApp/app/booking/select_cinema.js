@@ -161,7 +161,7 @@ export default function SelectCinemaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#0F0F0F",
   },
   header: {
     flexDirection: "row",
@@ -170,13 +170,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#1F1F1F",
+    borderBottomColor: "#3D3457",
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#1F1F1F",
+    backgroundColor: "#1A1A1A",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -222,18 +222,18 @@ const styles = StyleSheet.create({
   },
   cinemaItem: {
     flexDirection: "row",
-    backgroundColor: "#141414",
+    backgroundColor: "#1A1A1A",
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#1F1F1F",
+    borderColor: "#2A2A2A",
     alignItems: "center",
   },
   cinemaIcon: {
     width: 52,
     height: 52,
     borderRadius: 16,
-    backgroundColor: "#1F1F1F",
+    backgroundColor: "#2A2A2A",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
@@ -277,13 +277,13 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   showtimeChip: {
-    backgroundColor: "#1F1F1F",
+    backgroundColor: "#2A2A2A",
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: "#2E2E2E",
+    borderColor: "#3A3A3A",
     minWidth: 90,
   },
   showtimeTime: {

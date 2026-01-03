@@ -8,8 +8,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { bookingService } from "../../../services/bookingService";
+import { userService } from "../../../services";
 
 export default function TicketsScreen() {
   const [bookings, setBookings] = useState([]);
@@ -22,7 +23,7 @@ export default function TicketsScreen() {
   const loadBookings = async () => {
     try {
       setLoading(true);
-      const data = await bookingService.getUserBookings();
+      const data = await userService.getMyTickets();
       setBookings(data);
       setLoading(false);
     } catch (error) {
@@ -34,38 +35,50 @@ export default function TicketsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Vé của tôi</Text>
+      <LinearGradient
+        colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
+        locations={[0, 0.7, 1]}
+        style={styles.gradient}
+      >
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Vé của tôi</Text>
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#6C47DB" />
+          </View>
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#6C47DB" />
-        </View>
-      </View>
+      </LinearGradient>
     );
   }
 
   if (bookings.length === 0) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Vé của tôi</Text>
-        </View>
-
-        <View style={styles.emptyContainer}>
-          <View style={styles.trashIconWrapper}>
-            <MaterialCommunityIcons
-              name="delete-empty-outline"
-              size={120}
-              color="#3A3A3A"
-            />
+      <LinearGradient
+        colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
+        locations={[0, 0.7, 1]}
+        style={styles.gradient}
+      >
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Vé của tôi</Text>
           </View>
-          <Text style={styles.emptyTitle}>Chưa có giao dịch</Text>
-          <Text style={styles.emptySubtitle}>
-            Lịch sử đặt vé của bạn sẽ xuất hiện ở đây
-          </Text>
+
+          <View style={styles.emptyContainer}>
+            <View style={styles.trashIconWrapper}>
+              <MaterialCommunityIcons
+                name="delete-empty-outline"
+                size={120}
+                color="#3A3A3A"
+              />
+            </View>
+            <Text style={styles.emptyTitle}>Chưa có giao dịch</Text>
+            <Text style={styles.emptySubtitle}>
+              Lịch sử đặt vé của bạn sẽ xuất hiện ở đây
+            </Text>
+          </View>
         </View>
-      </View>
+      </LinearGradient>
     );
   }
 
@@ -192,29 +205,38 @@ export default function TicketsScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Vé của tôi</Text>
-        <Text style={styles.headerSubtitle}>{bookings.length} vé</Text>
-      </View>
+    <LinearGradient
+      colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
+      locations={[0, 0.7, 1]}
+      style={styles.gradient}
+    >
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Vé của tôi</Text>
+          <Text style={styles.headerSubtitle}>{bookings.length} vé</Text>
+        </View>
 
-      <ScrollView
-        style={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContainer}
-      >
-        {bookings.map((booking) => (
-          <TicketCard key={booking.id} booking={booking} />
-        ))}
-      </ScrollView>
-    </View>
+        <ScrollView
+          style={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContainer}
+        >
+          {bookings.map((booking) => (
+            <TicketCard key={booking.id} booking={booking} />
+          ))}
+        </ScrollView>
+      </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: "#0F0F0F",
+    backgroundColor: "transparent",
   },
   loadingContainer: {
     flex: 1,
