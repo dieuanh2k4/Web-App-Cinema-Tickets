@@ -14,6 +14,9 @@ namespace Server.src.Dtos.Rooms
         public string? Status { get; set; }
         public int TheaterId { get; set; }
         public string? Type { get; set; }
+        public int Rows { get; set; } // số hàng ghế
+        public int Columns { get; set; } // số cột ghế
+        public DateTime CreatedDate { get; set; }
         // public TicketPrice? TicketPrice { get; set; }
         public List<CreateSeatDto>? Seats { get; set; }
     }
