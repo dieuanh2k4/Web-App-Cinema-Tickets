@@ -1,4 +1,4 @@
-export const BASE_URL = "http://192.168.102.5:5001/api";
+export const BASE_URL = "http://172.20.128.1:5051/api";
 
 export const API_CONFIG = {
   BASE_URL,
@@ -76,3 +76,4 @@ export const API_CONFIG = {
     "Content-Type": "application/json",
   },
 };
+console.log("BASE URL:", BASE_URL);

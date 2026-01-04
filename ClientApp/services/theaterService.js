@@ -12,6 +12,17 @@ export const theaterService = {
     }
   },
 
+  getCities: async () => {
+    try {
+      const theaters = await theaterService.getAllTheaters();
+      const cities = [...new Set(theaters.map((t) => t.city).filter(Boolean))];
+      return cities.sort();
+    } catch (error) {
+      console.error("Error getting cities:", error);
+      return [];
+    }
+  },
+
   getTheaterById: async (id) => {
     try {
       const res = await apiClient.get(
