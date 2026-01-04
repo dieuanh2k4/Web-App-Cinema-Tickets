@@ -8,8 +8,10 @@ namespace Server.src.Models
     public class Seats
     {
         public int Id { get; set; }
-        public int Row { get; set; } // hàng ghế
-        public int Col { get; set; } // cột ghế
+        public string? Name { get; set; }
+        public int Price { get; set; }
+        // public int Row { get; set; } // hàng ghế
+        // public int Col { get; set; } // cột ghế
         public string? Type { get; set; }
         public int RoomId { get; set; }
         public string? Status { get; set; }

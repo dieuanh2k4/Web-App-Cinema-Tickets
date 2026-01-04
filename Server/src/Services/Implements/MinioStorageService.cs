@@ -18,7 +18,7 @@ namespace Server.src.Services.Implements
         {
             _minioClient = minioClient;
             _configuration = configuration;
-            _bucketName = _configuration["Minio:BucketName"] ?? "cinebook";
+            _bucketName = _configuration["Minio:BucketName"] ?? "Cinebook";
         }
 
         public async Task<string> UploadImageAsync(IFormFile file, string folder = "images")

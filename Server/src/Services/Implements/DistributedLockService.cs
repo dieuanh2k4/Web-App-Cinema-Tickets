@@ -1,5 +1,6 @@
 using RedLockNet.SERedis;
 using RedLockNet.SERedis.Configuration;
+using Server.src.Services.Interfaces;
 using StackExchange.Redis;
 using IRedLock = RedLockNet.IRedLock;
 
@@ -9,7 +10,7 @@ namespace Server.src.Services.Implements;
 /// Distributed lock service using RedLock algorithm
 /// Đảm bảo atomic operations khi hold/release seats trong môi trường distributed
 /// </summary>
-public class DistributedLockService
+public class DistributedLockService : IDistributedLockService
 {
     private readonly RedLockFactory _redLockFactory;
     private readonly ILogger<DistributedLockService> _logger;

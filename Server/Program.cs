@@ -205,6 +205,7 @@ builder.Services.AddScoped<ITicketService, TicketService>();
 // Phase 2: Booking services
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IDistributedLockService, DistributedLockService>();
 
 // Payment & QR Code & Email services
 builder.Services.AddScoped<VNPayService>();
