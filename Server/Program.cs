@@ -214,6 +214,9 @@ builder.Services.AddScoped<EmailService>();
 // Chat AI service
 builder.Services.AddScoped<IChatService, ChatService>();
 
+// Dashboard service
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+
 // ==========================
 // Thêm Repository
 // ==========================
