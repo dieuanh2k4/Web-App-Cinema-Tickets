@@ -16,12 +16,22 @@ export const seatService = {
         type: s.seatType,
         status: s.status,
         isAvailable: s.isAvailable,
-        row: s.row,
-        column: s.column,
       }));
     } catch (error) {
       console.error("Error fetching seats by showtime:", error);
       return [];
+    }
+  },
+
+  getShowtimeSeatsDetail: async (showtimeId) => {
+    try {
+      const res = await apiClient.get(
+        API_CONFIG.ENDPOINTS.SEATS.GET_BY_SHOWTIME(showtimeId)
+      );
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching showtime seats detail:", error);
+      throw error;
     }
   },
 

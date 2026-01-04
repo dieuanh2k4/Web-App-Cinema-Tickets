@@ -82,13 +82,18 @@ export default function SelectShowtimeScreen() {
     try {
       setLoading(true);
       const formattedDate = formatDateForBackend(selectedDate);
+      const allTheaters = await theaterService.getAllTheaters();
+
       const data = await showtimeService.getShowtimesByMovieAndDate(
         movieId,
-        formattedDate
+        formattedDate,
+        allTheaters
       );
+
       const filteredTheaters = data.filter(
         (theater) => theater.city === selectedCity
       );
+
       setTheaters(filteredTheaters);
       setLoading(false);
     } catch (error) {

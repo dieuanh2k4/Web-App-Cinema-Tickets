@@ -14,6 +14,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { movieService } from "../../services/movieService";
 import { showtimeService } from "../../services/showtimeService";
+import { theaterService } from "../../services/theaterService";
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
 
@@ -44,13 +45,21 @@ export default function MovieDetailScreen() {
 
   const loadShowtimes = async (movieId) => {
     try {
-      const allShowtimes = await showtimeService.getAllShowtimes();
+      const [allShowtimes, allTheaters] = await Promise.all([
+        showtimeService.getAllShowtimes(),
+        theaterService.getAllTheaters(),
+      ]);
+
       const movieShowtimes = allShowtimes.filter(
         (st) => st.movieId === parseInt(movieId)
       );
       setShowtimes(movieShowtimes);
-      const groupedByTheater =
-        showtimeService.groupShowtimesByTheater(movieShowtimes);
+
+      // Group với theater data để có đầy đủ thông tin
+      const groupedByTheater = showtimeService.groupShowtimesByTheater(
+        movieShowtimes,
+        allTheaters
+      );
       setTheaters(groupedByTheater);
     } catch (error) {
       console.error("Error loading showtimes:", error);

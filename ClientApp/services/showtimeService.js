@@ -2,7 +2,6 @@ import apiClient from "./apiService";
 import { API_CONFIG } from "../config/api.config";
 
 export const showtimeService = {
-  // Lấy tất cả lịch chiếu
   getAllShowtimes: async () => {
     try {
       const res = await apiClient.get(API_CONFIG.ENDPOINTS.SHOWTIMES.GET_ALL);
@@ -31,13 +30,11 @@ export const showtimeService = {
   },
 
   // Lấy showtimes theo movieId và date, group theo theater
-  getShowtimesByMovieAndDate: async (movieId, date) => {
+  getShowtimesByMovieAndDate: async (movieId, date, theaters = []) => {
     try {
       const formattedDate = showtimeService.formatDateForBackend(date);
-      // Get all showtimes first
       const allShowtimes = await showtimeService.getAllShowtimes();
 
-      // Filter by movie and date
       const filtered = allShowtimes.filter((st) => {
         const showtimeDate = st.date?.split("T")[0] || st.date;
         return (
@@ -45,9 +42,7 @@ export const showtimeService = {
         );
       });
 
-      // Group by theater
-      const grouped = showtimeService.groupShowtimesByTheater(filtered);
-      return grouped;
+      return showtimeService.groupShowtimesByTheater(filtered, theaters);
     } catch (error) {
       console.error("Error fetching showtimes by movie and date:", error);
       return [];
@@ -64,27 +59,33 @@ export const showtimeService = {
     return date.toISOString().split("T")[0];
   },
 
-  groupShowtimesByTheater: (showtimes) => {
+  groupShowtimesByTheater: (showtimes, theaters = []) => {
     const grouped = {};
 
     showtimes.forEach((showtime) => {
-      const theaterId = showtime.rooms?.theaterId || showtime.theaterId;
-      const theaterName = showtime.rooms?.theater?.name || showtime.theaterName;
+      const theaterName = showtime.theaterName;
+      const theaterInfo = theaters.find((t) => t.name === theaterName);
 
-      if (!grouped[theaterId]) {
-        grouped[theaterId] = {
-          id: theaterId,
+      if (!grouped[theaterName]) {
+        grouped[theaterName] = {
+          id: theaterInfo?.id || 0,
           name: theaterName,
-          address: showtime.rooms?.theater?.address || showtime.theaterAddress,
-          city: showtime.rooms?.theater?.city || showtime.theaterCity,
+          address: theaterInfo?.address || "",
+          city: theaterInfo?.city || "",
           showtimes: [],
         };
       }
-      grouped[theaterId].showtimes.push({
+
+      grouped[theaterName].showtimes.push({
         id: showtime.id,
-        time: showtime.startTime || showtime.time,
-        format: showtime.format || "2D SUB",
-        availableSeats: showtime.availableSeats || 0,
+        time: showtime.start ? showtime.start.substring(0, 5) : "00:00",
+        format: showtime.roomType || "Standard",
+        roomName: showtime.rooomName,
+        movieTitle: showtime.movieTitle,
+        date: showtime.date,
+        end: showtime.end ? showtime.end.substring(0, 5) : "00:00",
+        movieId: showtime.movieId,
+        roomId: showtime.roomId,
       });
     });
 
@@ -127,9 +128,8 @@ export const showtimeService = {
         : null;
 
       const filtered = allShowtimes.filter((st) => {
-        const matchesTheater =
-          st.rooms?.theaterId === parseInt(theaterId) ||
-          st.theaterId === parseInt(theaterId);
+        // Backend trả về theaterId trực tiếp (không có nested rooms)
+        const matchesTheater = st.theaterId === parseInt(theaterId);
 
         if (!formattedDate) return matchesTheater;
 
