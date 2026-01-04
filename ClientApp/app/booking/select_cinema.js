@@ -30,14 +30,18 @@ export default function SelectCinemaScreen() {
       setLoading(true);
       const theatersData = await theaterService.getAllTheaters();
       const allShowtimes = await showtimeService.getAllShowtimes();
+
+      // Backend trả về theaterName, không có theaterId
       const relevantShowtimes = movieId
         ? allShowtimes.filter(
             (st) => st.movieId?.toString() === movieId?.toString()
           )
         : allShowtimes;
+
       const theatersWithShowtimes = theatersData.map((theater) => {
+        // Match bằng theater.name với showtime.theaterName
         const theaterShowtimes = relevantShowtimes.filter(
-          (st) => st.rooms?.theaterId?.toString() === theater.id?.toString()
+          (st) => st.theaterName === theater.name
         );
         return {
           ...theater,
@@ -45,9 +49,11 @@ export default function SelectCinemaScreen() {
           showtimeCount: theaterShowtimes.length,
         };
       });
+
       const filteredTheaters = movieId
         ? theatersWithShowtimes.filter((t) => t.showtimeCount > 0)
         : theatersWithShowtimes;
+
       setTheaters(filteredTheaters);
       setLoading(false);
     } catch (error) {
