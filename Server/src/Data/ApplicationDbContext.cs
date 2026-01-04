@@ -27,6 +27,8 @@ namespace Server.src.Data
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<Admin> Admins { get; set; }
+        public DbSet<Staff> Staff { get; set; }
 
         public ApplicationDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions) {}
 
@@ -38,7 +40,7 @@ namespace Server.src.Data
             {
                 entity.ToTable(c =>
                 {
-                    c.HasCheckConstraint("CK_Customer_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
+                    c.HasCheckConstraint("CK_Customer_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
                 });
                 entity.HasKey(c => c.Id);
                 entity.Property(c => c.Id)
@@ -261,7 +263,7 @@ namespace Server.src.Data
             {
                 entity.ToTable(c =>
                 {
-                    c.HasCheckConstraint("CK_User_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
+                    c.HasCheckConstraint("CK_User_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
                 });
                 entity.HasKey(u => u.Id);
                 entity.Property(t => t.Id)
@@ -455,6 +457,70 @@ namespace Server.src.Data
                     .WithMany()
                     .HasForeignKey(ts => ts.SeatId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Admin>(entity =>
+            {
+                entity.ToTable(c =>
+                {
+                    c.HasCheckConstraint("CK_Admin_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
+                });
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Id)
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(c => c.Name)
+                    .IsUnicode(true)
+                    .HasMaxLength(20)
+                    .IsRequired();
+                entity.Property(c => c.Birth)
+                    .HasColumnType("date")
+                    .IsRequired();
+                entity.Property(c => c.Gender)
+                    .HasMaxLength(5)
+                    .IsUnicode(false);
+                entity.Property(c => c.Address)
+                    .HasMaxLength(255);
+                entity.Property(c => c.Phone)
+                    .HasMaxLength(15)
+                    .IsUnicode(false)
+                    .IsRequired();
+                entity.HasIndex(c => c.Phone)
+                    .IsUnique();
+                entity.Property(c => c.Avatar)
+                    .HasMaxLength(255);
+            });
+
+            modelBuilder.Entity<Staff>(entity =>
+            {
+                entity.ToTable(c =>
+                {
+                    c.HasCheckConstraint("CK_Staff_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
+                });
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Id)
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(c => c.Name)
+                    .IsUnicode(true)
+                    .HasMaxLength(20)
+                    .IsRequired();
+                entity.Property(c => c.Birth)
+                    .HasColumnType("date")
+                    .IsRequired();
+                entity.Property(c => c.Gender)
+                    .HasMaxLength(5)
+                    .IsUnicode(false);
+                entity.Property(c => c.Address)
+                    .HasMaxLength(255);
+                entity.Property(c => c.Phone)
+                    .HasMaxLength(15)
+                    .IsUnicode(false)
+                    .IsRequired();
+                entity.HasIndex(c => c.Phone)
+                    .IsUnique();
+                entity.Property(c => c.Avatar)
+                    .HasMaxLength(255);
             });
         }
     }

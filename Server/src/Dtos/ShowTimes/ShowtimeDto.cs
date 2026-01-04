@@ -12,7 +12,7 @@ namespace Server.src.Dtos.ShowTimes
         public TimeOnly End { get; set; }
         public string? MovieTitle { get; set; }
         public string? RoomType { get; set; }
-        public string? RooomName { get; set; }
+        public string? RoomName { get; set; }
         public string? TheaterName { get; set; }
         public DateOnly Date { get; set; }
 

@@ -37,7 +37,7 @@ namespace Server.src.Services.Implements
                     Date = s.Date,
                     MovieTitle = s.Movies.Title,
                     RoomType = s.Rooms.Type,
-                    RooomName = s.Rooms.Name,
+                    RoomName = s.Rooms.Name,
                     TheaterName = s.Rooms.Theater.Name
                 }).ToListAsync();
         }
@@ -257,7 +257,7 @@ namespace Server.src.Services.Implements
                     MovieId = s.MovieId,
                     MovieTitle = s.Movies.Title,
                     RoomType = s.Rooms.Type,
-                    RooomName = s.Rooms.Name,
+                    RoomName = s.Rooms.Name,
                     TheaterName = s.Rooms.Theater.Name
                 })
                 .ToListAsync();

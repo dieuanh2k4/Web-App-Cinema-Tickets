@@ -3,20 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Server.src.Dtos.Users
+namespace Server.src.Dtos.Staff
 {
-    public class UserDto
+    public class UpdateStaffDto
     {
-        public int Id { get; set; }
         public string? Name { get; set; }
-        public string? username { get; set; }
         public DateOnly Birth { get; set; }
         public string? Gender { get; set; }
-        public string? Email { get; set; }
-        public string? password { get; set; }
-        public string? phoneNumber { get; set; }
-        public DateTime createdDate { get; set; }
         public string? Address { get; set; }
+        public string? Phone { get; set; }
+        public string? Email { get; set; }
         public string? Avatar { get; set; }
     }
 }

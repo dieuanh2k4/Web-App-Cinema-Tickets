@@ -11,8 +11,8 @@ namespace Server.src.Services.Interfaces
     public interface IUserService
     {
         Task<List<User>> GetAllUsers();
-        Task<User> CreateUser([FromForm] CreateUserDto createUserDto);
-        Task<User> UpdateUser([FromForm] UpdateUserDto updateUserDto, int id);
-        Task<User> DeleteUser(int id);
+        // Task<User> CreateUser([FromForm] CreateUserDto createUserDto);
+        // Task<User> UpdateUser([FromForm] UpdateUserDto updateUserDto, int id);
+        // Task<User> DeleteUser(int id);
     }
 }
