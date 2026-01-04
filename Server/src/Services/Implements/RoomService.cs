@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
 using Server.src.Dtos.Rooms;
+using Server.src.Dtos.Seats;
 using Server.src.Exceptions;
 using Server.src.Mapper;
 using Server.src.Models;
@@ -175,6 +176,53 @@ namespace Server.src.Services.Implements
             }
 
             _context.Seats.RemoveRange(room.Seats);
+
+            return room;
+        }
+
+        public async Task<Rooms> GetDetailRoomById(int id)
+        {
+            var room = await _context.Rooms
+                    .Include(r => r.Seats)
+                    .Include(r => r.Theater)
+                    .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (room == null)
+            {
+                throw new Result("Không tìm thấy phòng chiếu");
+            }
+
+            return room;
+        }
+
+        public async Task<Rooms> UpdateSeatLayout(UpdateSeatLayoutDto updateSeatLayoutDto, int id)
+        {
+            var room = await _context.Rooms
+                    .Include(r => r.Seats)
+                    .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (room == null)
+            {
+                throw new Result("Không tìm thấy phòng chiếu");
+            }
+
+            if (updateSeatLayoutDto.Seats == null || !updateSeatLayoutDto.Seats.Any())
+            {
+                throw new Result("Danh sách ghế không được để trống");
+            }
+
+            // Cập nhật thông tin ghế
+            foreach (var seatDto in updateSeatLayoutDto.Seats)
+            {
+                var seat = room.Seats?.FirstOrDefault(s => s.Id == seatDto.Id);
+                if (seat != null)
+                {
+                    seat.Row = seatDto.Row;
+                    seat.Col = seatDto.Col;
+                    seat.Type = seatDto.Type;
+                    seat.Status = seatDto.Status;
+                }
+            }
 
             return room;
         }
