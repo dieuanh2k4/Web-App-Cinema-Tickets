@@ -98,9 +98,6 @@ namespace Server.Controllers
 
                 var createdMovie = await _movieService.AddMovie(movieDto);
 
-                await _context.Movies.AddAsync(createdMovie);
-                await _context.SaveChangesAsync();
-
                 return Ok(createdMovie);
             }
             catch (Exception ex)
@@ -110,7 +107,7 @@ namespace Server.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpPut("update-subject/{id}")]
+        [HttpPut("update-movie/{id}")]
         public async Task<IActionResult> UpdateMovie([FromForm] UpdateMovieDto updateMovieDto, IFormFile? imageFile, int id)
         {
             try
@@ -142,7 +139,7 @@ namespace Server.Controllers
                 _context.Movies.Remove(movie);
                 await _context.SaveChangesAsync();
 
-                return Ok(_movieService);
+                return Ok(movie);
             }
             catch (Exception ex)
             {

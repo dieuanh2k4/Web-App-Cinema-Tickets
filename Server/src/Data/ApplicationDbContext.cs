@@ -105,7 +105,7 @@ namespace Server.src.Data
                     .IsUnicode(true)
                     .IsRequired();
                 entity.Property(m => m.Director)
-                    .HasMaxLength(20)
+                    .HasMaxLength(200)
                     .IsRequired();
                 entity.Property(m => m.Actors)
                     .HasColumnType("Text[]")

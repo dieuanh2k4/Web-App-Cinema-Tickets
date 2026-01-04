@@ -12,13 +12,15 @@ namespace Server.src.Services.Implements
     {
         private readonly IMinioClient _minioClient;
         private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly string _bucketName;
 
-        public MinioStorageService(IMinioClient minioClient, IConfiguration configuration)
+        public MinioStorageService(IMinioClient minioClient, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _minioClient = minioClient;
             _configuration = configuration;
-            _bucketName = _configuration["Minio:BucketName"] ?? "Cinebook";
+            _httpContextAccessor = httpContextAccessor;
+            _bucketName = _configuration["Minio:BucketName"] ?? "cinebook";
         }
 
         public async Task<string> UploadImageAsync(IFormFile file, string folder = "images")
@@ -77,7 +79,8 @@ namespace Server.src.Services.Implements
 
                 await _minioClient.PutObjectAsync(putObjectArgs);
 
-                return fileName;
+                // Trả về bucket/fileName để lưu trong DB
+                return $"{_bucketName}/{fileName}";
             }
             catch (Exception ex)
             {
@@ -89,9 +92,15 @@ namespace Server.src.Services.Implements
         {
             try
             {
+                // fileName có format: bucket/folder/file.jpg
+                // Tách bucket và object path
+                var parts = fileName.Split('/', 2);
+                var bucket = parts.Length > 1 ? parts[0] : _bucketName;
+                var objectName = parts.Length > 1 ? parts[1] : fileName;
+
                 var removeObjectArgs = new RemoveObjectArgs()
-                    .WithBucket(_bucketName)
-                    .WithObject(fileName);
+                    .WithBucket(bucket)
+                    .WithObject(objectName);
 
                 await _minioClient.RemoveObjectAsync(removeObjectArgs);
                 return true;
@@ -104,12 +113,39 @@ namespace Server.src.Services.Implements
 
         public string GetImageUrl(string fileName)
         {
-            // Dùng PublicEndpoint để client bên ngoài có thể truy cập
-            var endpoint = _configuration["Minio:PublicEndpoint"] ?? _configuration["Minio:Endpoint"];
-            var useSsl = _configuration.GetValue<bool>("Minio:UseSsl");
-            var protocol = useSsl ? "https" : "http";
+            // Nếu đã là URL đầy đủ (http/https), trả về luôn
+            if (fileName.StartsWith("http://") || fileName.StartsWith("https://"))
+            {
+                return fileName;
+            }
             
-            return $"{protocol}://{endpoint}/{_bucketName}/{fileName}";
+            // fileName có format: bucket/folder/file.jpg hoặc chỉ folder/file.jpg
+            // Chỉ cần ghép domain vào
+            
+            var httpContext = _httpContextAccessor.HttpContext;
+            string baseUrl;
+            
+            if (httpContext != null)
+            {
+                var request = httpContext.Request;
+                var host = request.Host.Host;
+                var scheme = request.Scheme;
+                
+                // MinIO port (9004 từ docker-compose)
+                var minioPort = _configuration["Minio:PublicPort"] ?? "9004";
+                baseUrl = $"{scheme}://{host}:{minioPort}";
+            }
+            else
+            {
+                // Fallback nếu không có HttpContext (background jobs, etc.)
+                var endpoint = _configuration["Minio:PublicEndpoint"] ?? "localhost:9004";
+                var useSsl = _configuration.GetValue<bool>("Minio:UseSsl");
+                var protocol = useSsl ? "https" : "http";
+                baseUrl = $"{protocol}://{endpoint}";
+            }
+            
+            // fileName đã chứa bucket name, chỉ cần ghép baseUrl
+            return $"{baseUrl}/{fileName}";
         }
     }
 }

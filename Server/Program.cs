@@ -21,7 +21,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ==========================
 // Lấy hostname của máy và thay thế placeholder {HOSTNAME} trong config
 // ==========================
-var hostname = Environment.MachineName;
+var hostname = Environment.GetEnvironmentVariable("HOSTNAME") ?? Environment.MachineName;
 
 // Thay thế {HOSTNAME} trong tất cả config
 var config = builder.Configuration as IConfigurationRoot;
@@ -190,6 +190,9 @@ builder.Services.AddScoped<SeatHoldCleanupJob>();
 
 // Register notification service
 builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// Add HttpContextAccessor (required for MinioStorageService and other services)
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IMinioStorageService, MinioStorageService>();

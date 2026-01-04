@@ -80,7 +80,7 @@ export default function HomeScreen() {
       onPress={() => handleMoviePress(item.id)}
     >
       <Image
-        source={{ uri: item.posterUrl }}
+        source={{ uri: item.thumbnail }}
         style={styles.featuredImage}
         resizeMode="cover"
       />
@@ -183,7 +183,7 @@ export default function HomeScreen() {
                 <MovieCard
                   key={movie.id}
                   title={movie.title}
-                  poster={movie.posterUrl}
+                  poster={movie.thumbnail}
                   onPress={() => handleMoviePress(movie.id)}
                 />
               ))}
@@ -210,7 +210,7 @@ export default function HomeScreen() {
                 <MovieCard
                   key={movie.id}
                   title={movie.title}
-                  poster={movie.posterUrl}
+                  poster={movie.thumbnail}
                   onPress={() => handleMoviePress(movie.id)}
                 />
               ))}
