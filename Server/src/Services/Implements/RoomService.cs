@@ -217,8 +217,10 @@ namespace Server.src.Services.Implements
                 var seat = room.Seats?.FirstOrDefault(s => s.Id == seatDto.Id);
                 if (seat != null)
                 {
-                    seat.Row = seatDto.Row;
-                    seat.Col = seatDto.Col;
+                    // seat.Row = seatDto.Row; // Row/Col đã bị xóa khỏi model
+                    // seat.Col = seatDto.Col;
+                    seat.Name = seatDto.Name;
+                    seat.Price = seatDto.Price;
                     seat.Type = seatDto.Type;
                     seat.Status = seatDto.Status;
                 }

@@ -19,13 +19,13 @@ namespace Server.src.Controllers
         private readonly IBookingService _bookingService;
         private readonly IConnectionMultiplexer _redis;
         private readonly IConfiguration _configuration;
-        private readonly DistributedLockService _lockService;
+        private readonly IDistributedLockService _lockService;
 
         public BookingController(
             IBookingService bookingService, 
             IConnectionMultiplexer redis,
             IConfiguration configuration,
-            DistributedLockService lockService,
+            IDistributedLockService lockService,
             ILogger<BookingController> logger) : base(logger)
         {
             _bookingService = bookingService;

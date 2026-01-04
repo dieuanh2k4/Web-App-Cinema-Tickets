@@ -75,14 +75,11 @@ namespace Server.src.Services.Implements
                 // 5. Tính tổng tiền dựa trên Seats.Price
                 int totalAmount = (int)seats.Sum(s => s.Price);
 
-                // 6. Tạo Ticket (giả định Ticket model cũ - có thể cần điều chỉnh)
-                // Lưu ý: Model Ticket hiện tại có SeatId (1 ghế) nhưng ta đang book nhiều ghế
-                // → Tạm thời tạo 1 ticket cho ghế đầu tiên, sau này cần sửa lại model
+                // 6. Tạo Ticket với TicketSeats
                 var ticket = new Ticket
                 {
                     UserId = customer.Id,
                     ShowtimeId = dto.ShowtimeId,
-                    SeatId = seats.First().Id, // Tạm thời
                     RoomId = showtime.RoomId,
                     MovieId = showtime.MovieId,
                     TotalPrice = totalAmount,
@@ -91,6 +88,16 @@ namespace Server.src.Services.Implements
                 };
 
                 _context.Tickets.Add(ticket);
+                await _context.SaveChangesAsync();
+
+                // 6.1. Tạo TicketSeats cho từng ghế
+                var ticketSeats = seats.Select(seat => new TicketSeat
+                {
+                    TicketId = ticket.Id,
+                    SeatId = seat.Id
+                }).ToList();
+
+                _context.TicketSeats.AddRange(ticketSeats);
                 await _context.SaveChangesAsync();
 
                 // 7. Tạo Payment
@@ -203,12 +210,11 @@ namespace Server.src.Services.Implements
                 if (dto.PaidAmount.HasValue && dto.PaidAmount < totalAmount)
                     throw new ArgumentException($"Số tiền khách đưa ({dto.PaidAmount:N0}đ) không đủ. Tổng tiền: {totalAmount:N0}đ");
 
-                // 7. Tạo Ticket
+                // 7. Tạo Ticket với TicketSeats
                 var ticket = new Ticket
                 {
                     UserId = customer.Id,
                     ShowtimeId = dto.ShowtimeId,
-                    SeatId = seats.First().Id, // Tạm thời
                     RoomId = showtime.RoomId,
                     MovieId = showtime.MovieId,
                     TotalPrice = totalAmount,
@@ -217,6 +223,16 @@ namespace Server.src.Services.Implements
                 };
 
                 _context.Tickets.Add(ticket);
+                await _context.SaveChangesAsync();
+
+                // 7.1. Tạo TicketSeats cho từng ghế
+                var ticketSeats = seats.Select(seat => new TicketSeat
+                {
+                    TicketId = ticket.Id,
+                    SeatId = seat.Id
+                }).ToList();
+
+                _context.TicketSeats.AddRange(ticketSeats);
                 await _context.SaveChangesAsync();
 
                 // 8. Tạo Payment
