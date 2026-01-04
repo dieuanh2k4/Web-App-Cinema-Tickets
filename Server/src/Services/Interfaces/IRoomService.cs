@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Server.src.Dtos.Rooms;
+using Server.src.Dtos.Seats;
 using Server.src.Models;
 
 namespace Server.src.Services.Interfaces
@@ -14,5 +15,7 @@ namespace Server.src.Services.Interfaces
         Task<Rooms> AddRooms(CreateRoomDto createRoomDto, int rows, int seatsInRow, int normalSeats, int coupleRowsSeats);
         Task<Rooms> UpdateRoom([FromBody] UpdateRoomDto updateRoomDto, int row, int seatsInRow, int normalSeats, int coupleRowsSeats, int id);
         Task<Rooms> DeleteRoom(int id);
+        Task<Rooms> GetDetailRoomById(int id);
+        Task<Rooms> UpdateSeatLayout(UpdateSeatLayoutDto updateSeatLayoutDto, int id);
     }
 }
