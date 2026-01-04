@@ -225,6 +225,8 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 // Thêm Repository
 // ==========================
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IStaffService, StaffService>();
 
 // Phase 2: Customer repository
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
