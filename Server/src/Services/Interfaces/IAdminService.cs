@@ -20,5 +20,6 @@ namespace Server.src.Services.Interfaces
         Task<Staff> UpdateStaff(UpdateStaffDto updateStaffDto, int id);
         Task<Admin> DeleteAdmin(int id);
         Task<Staff> DeleteStaff(int id);
+        Task<Customer> DeleteCustomer(int id);
     }
 }
