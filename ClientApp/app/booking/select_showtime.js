@@ -27,7 +27,7 @@ const formatDateForBackend = (date) => {
 export default function SelectShowtimeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { movieId, movieTitle, posterUrl } = params;
+  const { movieId, movieTitle, thumbnail } = params;
 
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -223,8 +223,8 @@ export default function SelectShowtimeScreen() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          {posterUrl && (
-            <Image source={{ uri: posterUrl }} style={styles.moviePoster} />
+          {thumbnail && (
+            <Image source={{ uri: thumbnail }} style={styles.moviePoster} />
           )}
           <View style={styles.movieInfo}>
             <Text style={styles.movieTitle}>{movieTitle}</Text>

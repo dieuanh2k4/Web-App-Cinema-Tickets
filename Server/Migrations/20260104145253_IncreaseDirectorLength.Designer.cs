@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Server.src.Data;
@@ -12,9 +13,11 @@ using Server.src.Data;
 namespace Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260104145253_IncreaseDirectorLength")]
+    partial class IncreaseDirectorLength
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,7 +75,7 @@ namespace Server.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Customers", null, t =>
+                    b.ToTable("Customers", t =>
                         {
                             t.HasCheckConstraint("CK_Customer_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
                         });
@@ -150,7 +153,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Movies", null, t =>
+                    b.ToTable("Movies", t =>
                         {
                             t.HasCheckConstraint("CK_Movie_Duration", "\"Duration\" > 0");
 
@@ -185,7 +188,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("OTPCodes", (string)null);
+                    b.ToTable("OTPCodes");
                 });
 
             modelBuilder.Entity("Server.src.Models.Payment", b =>
@@ -218,7 +221,7 @@ namespace Server.Migrations
                     b.HasIndex("TicketId")
                         .IsUnique();
 
-                    b.ToTable("Payment", null, t =>
+                    b.ToTable("Payment", t =>
                         {
                             t.HasCheckConstraint("CK_Payment_Status", "\"Status\" IN('Đã Thanh toán', 'Chưa Thanh toán', 'Thanh toán thất bại')");
 
@@ -262,7 +265,7 @@ namespace Server.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("Permissions", (string)null);
+                    b.ToTable("Permissions");
                 });
 
             modelBuilder.Entity("Server.src.Models.RolePermission", b =>
@@ -289,7 +292,7 @@ namespace Server.Migrations
                     b.HasIndex("RoleId", "PermissionId")
                         .IsUnique();
 
-                    b.ToTable("RolePermissions", (string)null);
+                    b.ToTable("RolePermissions");
                 });
 
             modelBuilder.Entity("Server.src.Models.Roles", b =>
@@ -320,7 +323,7 @@ namespace Server.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Roles", (string)null);
+                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("Server.src.Models.Rooms", b =>
@@ -364,7 +367,7 @@ namespace Server.Migrations
 
                     b.HasIndex("TheaterId");
 
-                    b.ToTable("Rooms", (string)null);
+                    b.ToTable("Rooms");
                 });
 
             modelBuilder.Entity("Server.src.Models.Seats", b =>
@@ -400,7 +403,7 @@ namespace Server.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Seats", (string)null);
+                    b.ToTable("Seats");
                 });
 
             modelBuilder.Entity("Server.src.Models.Showtimes", b =>
@@ -432,7 +435,7 @@ namespace Server.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Showtimes", (string)null);
+                    b.ToTable("Showtimes");
                 });
 
             modelBuilder.Entity("Server.src.Models.StatusSeat", b =>
@@ -468,7 +471,7 @@ namespace Server.Migrations
                         .IsUnique()
                         .HasFilter("\"Status\" IN ('Booked', 'Pending')");
 
-                    b.ToTable("StatusSeat", (string)null);
+                    b.ToTable("StatusSeat");
                 });
 
             modelBuilder.Entity("Server.src.Models.Theater", b =>
@@ -496,7 +499,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Theater", (string)null);
+                    b.ToTable("Theater");
                 });
 
             modelBuilder.Entity("Server.src.Models.Ticket", b =>
@@ -538,7 +541,7 @@ namespace Server.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Tickets", (string)null);
+                    b.ToTable("Tickets");
                 });
 
             modelBuilder.Entity("Server.src.Models.TicketPrice", b =>
@@ -564,7 +567,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TicketPrices", null, t =>
+                    b.ToTable("TicketPrices", t =>
                         {
                             t.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
                         });
@@ -590,7 +593,7 @@ namespace Server.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("TicketSeats", (string)null);
+                    b.ToTable("TicketSeats");
                 });
 
             modelBuilder.Entity("Server.src.Models.User", b =>
@@ -647,7 +650,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("User", null, t =>
+                    b.ToTable("User", t =>
                         {
                             t.HasCheckConstraint("CK_User_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
                         });
@@ -680,7 +683,7 @@ namespace Server.Migrations
                     b.HasIndex("UserId", "RoleId")
                         .IsUnique();
 
-                    b.ToTable("UserRoles", (string)null);
+                    b.ToTable("UserRoles");
                 });
 
             modelBuilder.Entity("Server.src.Models.Customer", b =>
