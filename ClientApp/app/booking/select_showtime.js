@@ -81,42 +81,23 @@ export default function SelectShowtimeScreen() {
   const loadTheaters = async () => {
     try {
       setLoading(true);
-      console.log("[SelectShowtime] Loading theaters for:", {
-        movieId,
-        selectedDate,
-        selectedCity,
-      });
-
       const formattedDate = formatDateForBackend(selectedDate);
-      console.log("[SelectShowtime] Formatted date:", formattedDate);
-
-      // Lấy danh sách theaters để enrich showtime data
       const allTheaters = await theaterService.getAllTheaters();
 
       const data = await showtimeService.getShowtimesByMovieAndDate(
         movieId,
         formattedDate,
-        allTheaters // Truyền theaters để group có đầy đủ thông tin
+        allTheaters
       );
-      console.log("[SelectShowtime] Received theaters:", data.length);
-      console.log("[SelectShowtime] Data:", JSON.stringify(data, null, 2));
 
       const filteredTheaters = data.filter(
         (theater) => theater.city === selectedCity
-      );
-      console.log(
-        "[SelectShowtime] Filtered by city:",
-        filteredTheaters.length
-      );
-      console.log(
-        "[SelectShowtime] Cities in data:",
-        data.map((t) => t.city)
       );
 
       setTheaters(filteredTheaters);
       setLoading(false);
     } catch (error) {
-      console.error("[SelectShowtime] Error loading theaters:", error);
+      console.error("Error loading theaters:", error);
       setTheaters([]);
       setLoading(false);
     }

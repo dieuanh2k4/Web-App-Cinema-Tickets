@@ -2,21 +2,12 @@ import apiClient from "./apiService";
 import { API_CONFIG } from "../config/api.config";
 
 export const showtimeService = {
-  // Lấy tất cả lịch chiếu
   getAllShowtimes: async () => {
     try {
-      console.log(
-        "[Showtime] Calling API:",
-        API_CONFIG.ENDPOINTS.SHOWTIMES.GET_ALL
-      );
       const res = await apiClient.get(API_CONFIG.ENDPOINTS.SHOWTIMES.GET_ALL);
-      console.log("[Showtime] Response data:", res.data);
-      console.log("[Showtime] Total showtimes:", res.data?.length || 0);
       return res.data || [];
     } catch (error) {
-      console.error("[Showtime] Error fetching all showtimes:", error);
-      console.error("[Showtime] Error response:", error.response?.data);
-      console.error("[Showtime] Error status:", error.response?.status);
+      console.error("Error fetching all showtimes:", error);
       return [];
     }
   },
@@ -42,53 +33,18 @@ export const showtimeService = {
   getShowtimesByMovieAndDate: async (movieId, date, theaters = []) => {
     try {
       const formattedDate = showtimeService.formatDateForBackend(date);
-      console.log("[Showtime] Getting by movie and date:", {
-        movieId,
-        formattedDate,
-      });
-
-      // Get all showtimes first
       const allShowtimes = await showtimeService.getAllShowtimes();
-      console.log("[Showtime] All showtimes count:", allShowtimes.length);
 
-      // Filter by movie and date
       const filtered = allShowtimes.filter((st) => {
         const showtimeDate = st.date?.split("T")[0] || st.date;
-        const movieMatch = st.movieId === parseInt(movieId);
-        const dateMatch = showtimeDate === formattedDate;
-
-        if (movieMatch) {
-          console.log("[Showtime] Found movie match:", {
-            showtimeId: st.id,
-            movieId: st.movieId,
-            date: showtimeDate,
-            dateMatch,
-          });
-        }
-
-        return movieMatch && dateMatch;
+        return (
+          st.movieId === parseInt(movieId) && showtimeDate === formattedDate
+        );
       });
 
-      console.log("[Showtime] Filtered showtimes:", filtered.length);
-      console.log(
-        "[Showtime] Filtered data:",
-        JSON.stringify(filtered, null, 2)
-      );
-
-      // Group by theater - truyền theaters để enrich data
-      const grouped = showtimeService.groupShowtimesByTheater(
-        filtered,
-        theaters
-      );
-      console.log("[Showtime] Grouped theaters:", grouped.length);
-      console.log("[Showtime] Grouped data:", JSON.stringify(grouped, null, 2));
-
-      return grouped;
+      return showtimeService.groupShowtimesByTheater(filtered, theaters);
     } catch (error) {
-      console.error(
-        "[Showtime] Error fetching showtimes by movie and date:",
-        error
-      );
+      console.error("Error fetching showtimes by movie and date:", error);
       return [];
     }
   },
@@ -107,27 +63,23 @@ export const showtimeService = {
     const grouped = {};
 
     showtimes.forEach((showtime) => {
-      // Backend chỉ trả về theaterName, không có theaterId/address/city
       const theaterName = showtime.theaterName;
-
-      // Tìm theater info từ danh sách theaters (nếu có)
       const theaterInfo = theaters.find((t) => t.name === theaterName);
 
       if (!grouped[theaterName]) {
         grouped[theaterName] = {
-          id: theaterInfo?.id || theaterName, // Dùng theaterName làm fallback
+          id: theaterInfo?.id || 0,
           name: theaterName,
           address: theaterInfo?.address || "",
           city: theaterInfo?.city || "",
           showtimes: [],
         };
       }
+
       grouped[theaterName].showtimes.push({
         id: showtime.id,
-        // Backend trả về "start" format TimeOnly "HH:mm:ss", chuyển "HH:mm"
         time: showtime.start ? showtime.start.substring(0, 5) : "00:00",
         format: showtime.roomType || "Standard",
-        availableSeats: 0, // Backend không trả về
         roomName: showtime.rooomName,
         movieTitle: showtime.movieTitle,
         date: showtime.date,
