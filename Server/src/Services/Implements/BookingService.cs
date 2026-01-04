@@ -209,14 +209,14 @@ namespace Server.src.Services.Implements
                 var customer = await _customerService.FindOrCreateByPhoneAsync(
                     dto.CustomerPhone,
                     dto.CustomerName,
-                    null // Staff không cần email
+                    dto.Email // Email có thể null
                 );
 
                 // 5. Tính tổng tiền
                 int totalAmount = (int)seats.Sum(s => s.Price);
 
-                // 6. Validate paid amount
-                if (dto.PaidAmount.HasValue && dto.PaidAmount < totalAmount)
+                // 6. Validate paid amount (chỉ cho Cash)
+                if (dto.PaymentMethod == "Cash" && dto.PaidAmount.HasValue && dto.PaidAmount < totalAmount)
                     throw new ArgumentException($"Số tiền khách đưa ({dto.PaidAmount:N0}đ) không đủ. Tổng tiền: {totalAmount:N0}đ");
 
                 // 7. Tạo Ticket với TicketSeats
@@ -249,9 +249,9 @@ namespace Server.src.Services.Implements
                 {
                     TicketId = ticket.Id,
                     TotalPrice = totalAmount,
-                    paymentMethod = "Cash",
+                    paymentMethod = dto.PaymentMethod,
                     Date = showtime.Date,
-                    Status = "Đã Thanh toán" // Đã thanh toán
+                    Status = "Đã Thanh toán" // Staff tạo = đã thanh toán
                 };
 
                 _context.Payment.Add(payment);
@@ -267,8 +267,9 @@ namespace Server.src.Services.Implements
                 _context.StatusSeat.AddRange(statusSeats);
                 await _context.SaveChangesAsync();
 
-                // 10. Tính tiền thối
-                decimal change = dto.PaidAmount.HasValue ? dto.PaidAmount.Value - totalAmount : 0;
+                // 10. Tính tiền thối (chỉ cho Cash)
+                decimal change = (dto.PaymentMethod == "Cash" && dto.PaidAmount.HasValue) 
+                    ? dto.PaidAmount.Value - totalAmount : 0;
 
                 // 11. Return response
                 return new BookingResponseDto
@@ -288,7 +289,7 @@ namespace Server.src.Services.Implements
                     ),
                     SeatNumbers = seats.Select(s => s.Name!).ToList(),
                     TotalAmount = totalAmount,
-                    PaymentMethod = "Cash",
+                    PaymentMethod = dto.PaymentMethod,
                     PaymentStatus = "Paid",
                     PaidAmount = dto.PaidAmount,
                     ChangeAmount = change
