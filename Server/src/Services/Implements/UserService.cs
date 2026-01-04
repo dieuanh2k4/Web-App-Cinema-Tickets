@@ -59,12 +59,6 @@ namespace Server.src.Services.Implements
             {
                 user.password = PasswordHelper.HashPassword(updateUserDto.password);
             }
-            
-            // Convert string userType to int: "Admin" -> 0, others -> 1
-            if (!string.IsNullOrEmpty(updateUserDto.userType))
-            {
-                user.userType = updateUserDto.userType.ToLower() == "admin" ? 0 : 1;
-            }
 
             return user;
         }

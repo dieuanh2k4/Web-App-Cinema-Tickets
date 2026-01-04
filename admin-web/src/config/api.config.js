@@ -1,5 +1,5 @@
 // API Base URL - CHANGE THIS TO YOUR BACKEND URL
-export const BASE_URL = "http://localhost:8080/api";
+export const BASE_URL = "http://desktop-qedcej1/api";
 
 export const API_ENDPOINTS = {
   // Authentication
@@ -7,7 +7,7 @@ export const API_ENDPOINTS = {
     LOGIN: "/Auth/login",
     ME: "/Auth/me",
   },
-  
+
   // Movies
   MOVIES: {
     GET_ALL: "/Movies/get-all-movies",
@@ -16,7 +16,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id) => `/Movies/update-subject/${id}`,
     DELETE: (id) => `/Movies/delete-movie/${id}`,
   },
-  
+
   // Users (Accounts)
   USERS: {
     GET_ALL: "/User/get-all-user",
@@ -25,7 +25,7 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `/User/delete-user/${id}`,
     PROFILE: "/User/profile",
   },
-  
+
   // Showtimes
   SHOWTIMES: {
     GET_ALL: "/Showtimes/get_all_showtime",
@@ -34,7 +34,7 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `/Showtimes/delete-showtime/${id}`,
     GET_BY_MOVIE: "/Showtimes/get-showtime-by-movieId",
   },
-  
+
   // Rooms
   ROOMS: {
     GET_ALL: "/Room/get-all-room",
@@ -42,7 +42,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id) => `/Room/update-room/${id}`,
     DELETE: (id) => `/Room/delete-room/${id}`,
   },
-  
+
   // Ticket Prices
   TICKET_PRICES: {
     GET_ALL: "/TicketPrices/get-all-ticket-price",
@@ -50,7 +50,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id) => `/TicketPrices/update-ticket-price/${id}`,
     DELETE: (id) => `/TicketPrices/delete-ticket-price/${id}`,
   },
-  
+
   // Theaters
   THEATERS: {
     GET_ALL: "/Theater/get-all-theater",

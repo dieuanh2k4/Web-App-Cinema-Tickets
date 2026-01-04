@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CloudinaryDotNet.Actions;
 using Microsoft.EntityFrameworkCore;
 using Server.src.Models;
 
@@ -18,9 +19,14 @@ namespace Server.src.Data
         public DbSet<StatusSeat> StatusSeat { get; set; }
         public DbSet<Theater> Theater { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<TicketSeat> TicketSeats { get; set; }
         public DbSet<TicketPrice> TicketPrices { get; set; }
         public DbSet<User> User { get; set; }
         public DbSet<OTPCode> OTPCodes { get; set; }
+        public DbSet<Roles> Roles { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
+        public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<RolePermission> RolePermissions { get; set; }
 
         public ApplicationDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions) {}
 
@@ -140,10 +146,6 @@ namespace Server.src.Data
 
             modelBuilder.Entity<Rooms>(entity =>
             {
-                // entity.ToTable(r =>
-                // {
-                //     r.HasCheckConstraint("");
-                // });
                 entity.HasKey(r => r.Id);
                 entity.Property(r => r.Id)
                     .ValueGeneratedOnAdd()
@@ -158,26 +160,15 @@ namespace Server.src.Data
                     .HasDefaultValue("Trống");
                 entity.Property(r => r.TheaterId)
                     .IsRequired();
-                // entity.Property(r => r.TicketpriceId)
-                //     .IsRequired();
 
                 entity.HasOne(r => r.Theater)
                     .WithMany(t => t.Rooms)
                     .HasForeignKey(r => r.TheaterId)
                     .OnDelete(DeleteBehavior.Cascade);
-                
-                // entity.HasOne(r => r.TicketPrice)
-                //     .WithOne(t => t.Rooms)
-                //     .HasForeignKey<Rooms>(r => r.TicketpriceId)
-                //     .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Seats>(entity =>
             {
-                // entity.ToTable(r =>
-                // {
-                //     r.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
-                // });
                 entity.HasKey(s => s.Id);
                 entity.Property(s => s.Id)
                     .ValueGeneratedOnAdd()
@@ -185,8 +176,6 @@ namespace Server.src.Data
                 entity.Property(s => s.Name)
                     .IsRequired()
                     .HasMaxLength(5);
-                // entity.Property(s => s.Price)
-                //     .IsRequired();
                 entity.Property(s => s.Type)
                     .IsRequired()
                     .HasMaxLength(20);
@@ -205,10 +194,6 @@ namespace Server.src.Data
 
             modelBuilder.Entity<Showtimes>(entity =>
             {
-                // entity.ToTable(r =>
-                // {
-                //     r.HasCheckConstraint("CK_Showtimes_Date", "\"Date\" >= CURRENT_DATE");
-                // });
                 entity.HasKey(s => s.Id);
                 entity.Property(s => s.Id)
                     .ValueGeneratedOnAdd()
@@ -235,35 +220,8 @@ namespace Server.src.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // modelBuilder.Entity<StatusSeat>(entity =>
-            // {
-            //     entity.HasKey(s => s.Id);
-            //     entity.Property(s => s.SeatId)
-            //         .IsRequired();
-            //     entity.Property(s => s.ShowtimeId)
-            //         .IsRequired();
-            //     entity.Property(s => s.Status)
-            //         .IsRequired()
-            //         .HasMaxLength(20)
-            //         .HasDefaultValue("Trống");
-
-            //     entity.HasOne(s => s.Seats)
-            //         .WithOne(ss => ss.StatusSeat)
-            //         .HasForeignKey<StatusSeat>(s => s.SeatId)
-            //         .OnDelete(DeleteBehavior.Restrict);
-
-            //     entity.HasOne(s => s.Showtimes)
-            //         .WithMany(sh => sh.StatusSeat)
-            //         .HasForeignKey(s => s.ShowtimeId)
-            //         .OnDelete(DeleteBehavior.Restrict);
-            // });
-
             modelBuilder.Entity<Theater>(entity =>
             {
-                // entity.ToTable(r =>
-                // {
-                //     r.HasCheckConstraint("CK_Seats_Price", "Price > 0");
-                // });
                 entity.HasKey(t => t.Id);
                 entity.Property(t => t.Id)
                     .ValueGeneratedOnAdd()
@@ -291,41 +249,169 @@ namespace Server.src.Data
                     .IsRequired();
                 entity.Property(t => t.Price)
                     .IsRequired();
-                // entity.Property(t => t.RoomId)
-                //     .IsRequired();
-                // entity.Property(t => t.SeatId)
-                //     .IsRequired();
                 entity.Property(t => t.RoomType)
                     .HasMaxLength(100)
                     .IsRequired();
                 entity.Property(t => t.SeatType)
                     .HasMaxLength(100)
                     .IsRequired();
-
-                // entity.HasOne(t => t.Rooms)
-                //     .WithOne(r => r.TicketPrice)
-                //     .HasForeignKey<TicketPrice>(t => t.RoomId)
-                //     .OnDelete(DeleteBehavior.Cascade);
-
-                // entity.HasOne(t => t.Seats)
-                //     .WithOne(s => s.TicketPrice)
-                //     .HasForeignKey<TicketPrice>(t => t.SeatId)
-                //     .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<User>(entity =>
             {
+                entity.ToTable(c =>
+                {
+                    c.HasCheckConstraint("CK_User_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
+                });
                 entity.HasKey(u => u.Id);
                 entity.Property(t => t.Id)
                     .ValueGeneratedOnAdd()
                     .IsRequired();
-                entity.Property(u => u.username)
+                entity.Property(u => u.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                entity.Property(u => u.Birth)
+                    .IsRequired();
+                entity.Property(u => u.Gender)
                     .IsRequired()
                     .HasMaxLength(10);
+                entity.Property(u => u.Email)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                entity.Property(u => u.username)
+                    .IsRequired()
+                    .HasMaxLength(100);
                 entity.Property(u => u.password)
                     .IsRequired();
-                entity.Property(u => u.userType)
+                entity.Property(u => u.phoneNumber)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                entity.Property(u => u.createdDate);
+                entity.Property(u => u.Address)
+                    .IsRequired()
+                    .HasMaxLength(200);
+                entity.Property(u => u.Avatar)
+                    // .IsRequired()
+                    .HasMaxLength(1000);
+            });
+
+            modelBuilder.Entity<Roles>(entity => {
+                entity.HasKey(r => r.Id);
+                entity.Property(r => r.Id)
+                    .ValueGeneratedOnAdd()
                     .IsRequired();
+                entity.Property(r => r.Name)
+                    .IsRequired()
+                    .HasMaxLength(50);
+                entity.Property(r => r.Description)
+                    .HasMaxLength(255);
+                entity.Property(r => r.CreatedDate);
+                entity.Property(r => r.UpdatedDate);
+                // Unique index cho Role Name
+                entity.HasIndex(r => r.Name)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<Permission>(entity => {
+                entity.HasKey(p => p.Id);
+                entity.Property(p => p.Id)
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(p => p.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                entity.Property(p => p.Code)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                entity.Property(p => p.Description)
+                    .HasMaxLength(255);
+                entity.Property(p => p.Module)
+                    .HasMaxLength(255);
+                entity.Property(p => p.CreatedDate);
+                // Unique index cho Permission Code
+                entity.HasIndex(p => p.Code)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<UserRole>(entity => {
+                entity.HasKey(ur => ur.Id);
+                entity.Property(ur => ur.Id)
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(ur => ur.UserId)
+                    .IsRequired();
+                entity.Property(ur => ur.RoleId)
+                    .IsRequired();
+                entity.Property(ur => ur.AssignedByUserId);
+                entity.Property(ur => ur.AssignedDate)
+                    .IsRequired();
+                
+                // Khóa ngoại: User relationship
+                entity.HasOne(ur => ur.User)
+                    .WithMany(u => u.UserRoles)
+                    .HasForeignKey(ur => ur.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                
+                // Khóa ngoại: Role relationship
+                entity.HasOne(ur => ur.Role)
+                    .WithMany(r => r.UserRoles)
+                    .HasForeignKey(ur => ur.RoleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            
+                // Unique index để tránh duplicate (1 user không được gán 1 role 2 lần)
+                entity.HasIndex(ur => new { ur.UserId, ur.RoleId })
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<RolePermission>(entity => {
+                entity.HasKey(rp => rp.Id);
+                entity.Property(rp => rp.Id)
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(rp => rp.RoleId)
+                    .IsRequired();
+                entity.Property(rp => rp.PermissionId)
+                    .IsRequired();
+                entity.Property(rp => rp.AssignedDate)
+                    .IsRequired();
+                
+                // Khóa ngoại: Role relationship
+                entity.HasOne(rp => rp.Role)
+                    .WithMany(r => r.RolePermissions)
+                    .HasForeignKey(rp => rp.RoleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                
+                // Khóa ngoại: Permission relationship
+                entity.HasOne(rp => rp.Permission)
+                    .WithMany(p => p.RolePermissions)
+                    .HasForeignKey(rp => rp.PermissionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                
+                // Unique index để tránh duplicate (1 role không được gán 1 permission 2 lần)
+                entity.HasIndex(rp => new { rp.RoleId, rp.PermissionId })
+                    .IsUnique();
+            });
+
+            // // StatusSeat unique constraint
+            // modelBuilder.Entity<StatusSeat>(entity => {
+            //     entity.HasIndex(ss => new { ss.ShowtimeId, ss.SeatId })
+            //         .IsUnique()
+            //         .HasFilter("\"Status\" IN ('Booked', 'Pending')");
+            // });
+
+            // TicketSeat configuration
+            modelBuilder.Entity<TicketSeat>(entity => {
+                entity.HasKey(ts => ts.Id);
+                
+                entity.HasOne(ts => ts.Ticket)
+                    .WithMany(t => t.TicketSeats)
+                    .HasForeignKey(ts => ts.TicketId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasOne(ts => ts.Seat)
+                    .WithMany()
+                    .HasForeignKey(ts => ts.SeatId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

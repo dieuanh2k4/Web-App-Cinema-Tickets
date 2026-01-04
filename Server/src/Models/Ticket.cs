@@ -9,8 +9,7 @@ namespace Server.src.Models
     {
         public int Id { get; set; }
         public int ShowtimeId { get; set; }
-        public int CustomerId { get; set; }
-        public int SeatId { get; set; }
+        public int UserId { get; set; }
         public int RoomId { get; set; }
         public int MovieId { get; set; }
         public int SumOfSeat { get; set; }
@@ -19,8 +18,8 @@ namespace Server.src.Models
 
         public Payment? Payment { get; set; }
         public Showtimes? Showtimes { get; set; }
-        public Customer? Customer { get; set; }
-        public Seats? Seats { get; set; }
+        public User? User { get; set; }
+        public List<TicketSeat>? TicketSeats { get; set; }
         public Rooms? Rooms { get; set; }
         public Movies? Movies { get; set; }
     }

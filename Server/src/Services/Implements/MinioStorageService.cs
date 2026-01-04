@@ -28,34 +28,61 @@ namespace Server.src.Services.Implements
                 throw new ArgumentException("File không tồn tại");
             }
 
-            // Đảm bảo bucket tồn tại
-            var bucketExists = await _minioClient.BucketExistsAsync(
-                new BucketExistsArgs().WithBucket(_bucketName)
-            );
-
-            if (!bucketExists)
+            try
             {
-                await _minioClient.MakeBucketAsync(
-                    new MakeBucketArgs().WithBucket(_bucketName)
+                // Đảm bảo bucket tồn tại
+                var bucketExists = await _minioClient.BucketExistsAsync(
+                    new BucketExistsArgs().WithBucket(_bucketName)
                 );
+
+                if (!bucketExists)
+                {
+                    // Tạo bucket mới
+                    await _minioClient.MakeBucketAsync(
+                        new MakeBucketArgs().WithBucket(_bucketName)
+                    );
+
+                    // Set policy public cho bucket để cho phép đọc file
+                    var policyJson = @"{
+                        ""Version"": ""2012-10-17"",
+                        ""Statement"": [
+                            {
+                                ""Effect"": ""Allow"",
+                                ""Principal"": {""AWS"": ""*""},
+                                ""Action"": [""s3:GetObject""],
+                                ""Resource"": [""arn:aws:s3:::" + _bucketName + @"/*""]
+                            }
+                        ]
+                    }";
+
+                    await _minioClient.SetPolicyAsync(
+                        new SetPolicyArgs()
+                            .WithBucket(_bucketName)
+                            .WithPolicy(policyJson)
+                    );
+                }
+
+                // Tạo tên file unique
+                var fileExtension = Path.GetExtension(file.FileName);
+                var fileName = $"{folder}/{Guid.NewGuid()}{fileExtension}";
+
+                // Upload file
+                using var stream = file.OpenReadStream();
+                var putObjectArgs = new PutObjectArgs()
+                    .WithBucket(_bucketName)
+                    .WithObject(fileName)
+                    .WithStreamData(stream)
+                    .WithObjectSize(file.Length)
+                    .WithContentType(file.ContentType);
+
+                await _minioClient.PutObjectAsync(putObjectArgs);
+
+                return fileName;
             }
-
-            // Tạo tên file unique
-            var fileExtension = Path.GetExtension(file.FileName);
-            var fileName = $"{folder}/{Guid.NewGuid()}{fileExtension}";
-
-            // Upload file
-            using var stream = file.OpenReadStream();
-            var putObjectArgs = new PutObjectArgs()
-                .WithBucket(_bucketName)
-                .WithObject(fileName)
-                .WithStreamData(stream)
-                .WithObjectSize(file.Length)
-                .WithContentType(file.ContentType);
-
-            await _minioClient.PutObjectAsync(putObjectArgs);
-
-            return fileName;
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi upload file: {ex.Message}", ex);
+            }
         }
 
         public async Task<bool> DeleteImageAsync(string fileName)

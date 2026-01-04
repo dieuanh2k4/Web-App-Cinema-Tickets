@@ -1,6 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\Server",
+    "\\Server\\src"
   ],
+  "SelectedNode": "\\Server\\Jenkinsfile",
   "PreviewInSolutionExplorer": false
 }

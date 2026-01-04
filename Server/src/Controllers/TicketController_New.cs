@@ -36,7 +36,7 @@ namespace Server.src.Controllers
                         .ThenInclude(s => s.Movies)
                     .Include(t => t.Showtimes)
                         .ThenInclude(s => s.Rooms)
-                    .Include(t => t.Customer)
+                    .Include(t => t.User)
                     .FirstOrDefaultAsync(t => t.Id == ticketId);
 
                 if (ticket == null)
@@ -58,7 +58,7 @@ namespace Server.src.Controllers
                 // Generate QR if not exists (fallback)
                 var qrBase64 = _qrCodeService.GenerateQRCodeBase64(
                     ticket.Id,
-                    ticket.Customer?.Name ?? "Customer"
+                    ticket.User?.Name ?? "Customer"
                 );
 
                 return Ok(new
@@ -77,8 +77,8 @@ namespace Server.src.Controllers
                     ),
                     seats = seats,
                     totalPrice = ticket.TotalPrice,
-                    customerName = ticket.Customer?.Name,
-                    customerEmail = ticket.Customer?.Email,
+                    customerName = ticket.User?.Name,
+                    customerEmail = ticket.User?.Email,
                     qrCodeBase64 = qrBase64
                 });
             }

@@ -15,10 +15,10 @@ namespace Server.src.Mapper
             {
                 Id = ticket.Id,
                 ShowtimeId = ticket.ShowtimeId,
-                CustomerId = ticket.CustomerId,
-                CustomerName = ticket.Customer?.Name,
-                CustomerEmail = ticket.Customer?.Email,
-                CustomerPhone = ticket.Customer?.Phone,
+                CustomerId = ticket.UserId,
+                CustomerName = ticket.User?.Name,
+                CustomerEmail = ticket.User?.Email,
+                CustomerPhone = ticket.User?.phoneNumber,
                 MovieId = ticket.MovieId,
                 MovieTitle = ticket.Movies?.Title,
                 RoomId = ticket.RoomId,
@@ -39,15 +39,15 @@ namespace Server.src.Mapper
             };
         }
 
-        public static Customer ToCustomer(this CustomerInfoDto customerDto)
+        public static User ToCustomer(this CustomerInfoDto customerDto)
         {
-            return new Customer
+            return new User
             {
                 Name = customerDto.Name,
                 Email = customerDto.Email,
-                Phone = customerDto.Phone,
+                phoneNumber = customerDto.Phone,
                 Birth = customerDto.Birth ?? DateOnly.FromDateTime(DateTime.Now),
-                gender = customerDto.Gender,
+                Gender = customerDto.Gender,
                 Address = customerDto.Address
             };
         }

@@ -1,5 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Server.src.Data;
 using Server.src.Dtos.Customers;
 using Server.src.Models;
 using Server.src.Repositories.Interfaces;
@@ -10,10 +12,12 @@ namespace Server.src.Services.Implements
     public class CustomerService : ICustomerService
     {
         private readonly ICustomerRepository _customerRepository;
+        private readonly ApplicationDbContext _context;
 
-        public CustomerService(ICustomerRepository customerRepository)
+        public CustomerService(ICustomerRepository customerRepository, ApplicationDbContext context)
         {
             _customerRepository = customerRepository;
+            _context = context;
         }
 
         public async Task<Customer> FindOrCreateByPhoneAsync(string phone, string name, string? email = null)
@@ -58,6 +62,23 @@ namespace Server.src.Services.Implements
         public async Task<Customer?> GetByIdAsync(int id)
         {
             return await _customerRepository.GetByIdAsync(id);
+        }
+
+        public async Task<Customer> UpdateInfoCustomer(UpdateCustomerDto updateCustomerDto, int id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+
+            customer.Address = updateCustomerDto.Address;
+            customer.Avatar = updateCustomerDto.Avatar;
+            customer.Birth = updateCustomerDto.Birth;
+            customer.Email = updateCustomerDto.Email;
+            customer.gender = updateCustomerDto.Gender;
+            customer.Name = updateCustomerDto.Name;
+            customer.Phone = updateCustomerDto.Phone;
+
+            await _context.SaveChangesAsync();
+
+            return customer;
         }
     }
 }
