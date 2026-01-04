@@ -30,6 +30,62 @@ namespace Server.src.Services.Implements
             return _context.Movies.ToListAsync();
         }
 
+        public async Task<(List<Movies> movies, int totalCount)> GetAllMoviesForAdmin(
+            string? search = null, 
+            int? year = null, 
+            string? genre = null, 
+            string? status = null, 
+            int page = 1, 
+            int limit = 10)
+        {
+            var query = _context.Movies.AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(m => m.Title.Contains(search) || 
+                                        m.Description.Contains(search) ||
+                                        m.Director.Contains(search));
+            }
+
+            // Apply year filter
+            if (year.HasValue)
+            {
+                query = query.Where(m => m.ReleaseYear == year.Value);
+            }
+
+            // Apply genre filter
+            if (!string.IsNullOrWhiteSpace(genre))
+            {
+                query = query.Where(m => m.Genre.Contains(genre));
+            }
+
+            // Apply status filter
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                var today = DateTime.Today;
+                query = status.ToLower() switch
+                {
+                    "sắp chiếu" => query.Where(m => today < m.StartDate),
+                    "ngừng chiếu" => query.Where(m => today > m.EndDate),
+                    "đang chiếu" => query.Where(m => today >= m.StartDate && today <= m.EndDate),
+                    _ => query
+                };
+            }
+
+            // Get total count before pagination
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var movies = await query
+                .OrderByDescending(m => m.StartDate)
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .ToListAsync();
+
+            return (movies, totalCount);
+        }
+
         public async Task<Movies> GetMovieById(int id)
         {
             var movie = await _context.Movies.FirstOrDefaultAsync(m => m.Id == id);
@@ -119,6 +175,7 @@ namespace Server.src.Services.Implements
             movie.Genre = updateMovieDto.Genre;
             movie.Language = updateMovieDto.Language;
             movie.AgeLimit = updateMovieDto.AgeLimit;
+            movie.ReleaseYear = updateMovieDto.ReleaseYear;
             movie.StartDate = updateMovieDto.StartDate;
             movie.EndDate = updateMovieDto.EndDate;
             movie.Description = updateMovieDto.Description;
