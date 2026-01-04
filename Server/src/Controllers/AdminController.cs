@@ -294,5 +294,24 @@ namespace Server.src.Controllers
                 return ReturnException(ex);
             } 
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("delete-customer/{id}")]
+        public async Task<IActionResult> DeleteCustomer(int id)
+        {
+            try
+            {
+                var deletedCustomer = await _admin.DeleteCustomer(id);
+                
+                return Ok(new { 
+                    message = "Xóa Customer thành công",
+                    staff = deletedCustomer 
+                });  
+            } 
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            } 
+        }
     }
 }

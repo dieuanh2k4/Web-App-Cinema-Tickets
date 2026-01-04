@@ -308,5 +308,37 @@ namespace Server.src.Services.Implements
 
             return staff;
         }
+
+        public async Task<Customer> DeleteCustomer(int id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null)
+                throw new Result("Không tìm thấy Customer cần xóa");
+
+            // Tìm User liên kết
+            if (customer.UserId.HasValue)
+            {
+                var user = await _context.User.FindAsync(customer.UserId.Value);
+                if (user != null)
+                {
+                    // Xóa UserRole
+                    var userRole = await _context.UserRoles
+                        .FirstOrDefaultAsync(ur => ur.UserId == user.Id);
+                    if (userRole != null)
+                    {
+                        _context.UserRoles.Remove(userRole);
+                    }
+
+                    // Xóa User
+                    _context.User.Remove(user);
+                }
+            }
+
+            // Xóa Customer
+            _context.Customers.Remove(customer);
+            await _context.SaveChangesAsync();
+
+            return customer;
+        }
     }
 }

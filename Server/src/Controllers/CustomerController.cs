@@ -41,7 +41,7 @@ namespace Server.src.Controllers
             } 
         }
 
-        [Authorize(Roles = "Customer")]
+        [Authorize(Roles = "Customer, Admin")]
         [HttpPut("update-info-customer/{id}")]
         public async Task<IActionResult> UpdateInfoCustomer([FromForm] UpdateCustomerDto updateCustomerDto, IFormFile? imageFile, int id)
         {
