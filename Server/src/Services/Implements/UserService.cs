@@ -18,15 +18,28 @@ namespace Server.src.Services.Implements
     {
         private static readonly List<User> _user = new List<User>();
         private readonly ApplicationDbContext _context;
+        private readonly IMinioStorageService _minioStorage;
         
-        public UserService(ApplicationDbContext context)
+        public UserService(ApplicationDbContext context, IMinioStorageService minioStorage)
         {
             _context = context;
+            _minioStorage = minioStorage;
         }
 
         public async Task<List<User>> GetAllUsers()
         {
-            return await _context.User.ToListAsync();
+            var users = await _context.User.ToListAsync();
+            
+            // Chuyển path thành URL cho từng user
+            foreach (var user in users)
+            {
+                if (!string.IsNullOrEmpty(user.Avatar))
+                {
+                    user.Avatar = _minioStorage.GetImageUrl(user.Avatar);
+                }
+            }
+            
+            return users;
         }
 
         public async Task<User> CreateUser([FromForm] CreateUserDto createUserDto)

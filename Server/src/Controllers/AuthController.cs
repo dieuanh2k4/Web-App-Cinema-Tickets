@@ -44,9 +44,9 @@ namespace Server.src.Controllers
                 {
                     try
                     {
-                        var imageName = await _minio.UploadImageAsync(imageFile);
-                        var imageUrl = _minio.GetImageUrl(imageName);
-                        register.Avatar = imageUrl;
+                        // Chỉ lưu path vào DB: cinebook/images/abc.jpg
+                        var imagePath = await _minio.UploadImageAsync(imageFile);
+                        register.Avatar = imagePath;
                     }
                     catch (Exception ex)
                     {

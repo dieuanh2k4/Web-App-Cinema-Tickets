@@ -50,7 +50,7 @@ export default function NowPlayingScreen() {
       onPress={() => handleMoviePress(item.id)}
     >
       <Image
-        source={{ uri: item.posterUrl }}
+        source={{ uri: item.thumbnail }}
         style={styles.poster}
         resizeMode="cover"
       />

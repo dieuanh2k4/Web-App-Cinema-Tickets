@@ -13,11 +13,13 @@ namespace Server.src.Services.Implements
     {
         private readonly ICustomerRepository _customerRepository;
         private readonly ApplicationDbContext _context;
+        private readonly IMinioStorageService _minioStorage;
 
-        public CustomerService(ICustomerRepository customerRepository, ApplicationDbContext context)
+        public CustomerService(ICustomerRepository customerRepository, ApplicationDbContext context, IMinioStorageService minioStorage)
         {
             _customerRepository = customerRepository;
             _context = context;
+            _minioStorage = minioStorage;
         }
 
         public async Task<Customer> FindOrCreateByPhoneAsync(string phone, string name, string? email = null)
@@ -61,7 +63,15 @@ namespace Server.src.Services.Implements
 
         public async Task<Customer?> GetByIdAsync(int id)
         {
-            return await _customerRepository.GetByIdAsync(id);
+            var customer = await _customerRepository.GetByIdAsync(id);
+            
+            // Chuyển path thành URL
+            if (customer != null && !string.IsNullOrEmpty(customer.Avatar))
+            {
+                customer.Avatar = _minioStorage.GetImageUrl(customer.Avatar);
+            }
+            
+            return customer;
         }
 
         public async Task<Customer> UpdateInfoCustomer(UpdateCustomerDto updateCustomerDto, int id)
@@ -77,6 +87,12 @@ namespace Server.src.Services.Implements
             customer.Phone = updateCustomerDto.Phone;
 
             await _context.SaveChangesAsync();
+
+            // Chuyển path thành URL khi trả về
+            if (!string.IsNullOrEmpty(customer.Avatar))
+            {
+                customer.Avatar = _minioStorage.GetImageUrl(customer.Avatar);
+            }
 
             return customer;
         }

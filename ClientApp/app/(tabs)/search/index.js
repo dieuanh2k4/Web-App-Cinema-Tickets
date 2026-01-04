@@ -102,7 +102,7 @@ export default function SearchScreen() {
         })
       }
     >
-      <Image source={{ uri: movie.posterUrl }} style={styles.moviePoster} />
+      <Image source={{ uri: movie.thumbnail }} style={styles.moviePoster} />
       <View style={styles.movieInfo}>
         <Text style={styles.movieTitle} numberOfLines={2}>
           {movie.title}

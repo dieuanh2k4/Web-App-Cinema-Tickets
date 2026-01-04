@@ -75,6 +75,7 @@ export default function MovieDetailScreen() {
       params: {
         movieId: movie.id,
         movieTitle: movie.title,
+        thumbnail: movie.thumbnail,
       },
     });
   };
@@ -95,7 +96,7 @@ export default function MovieDetailScreen() {
       >
         <View style={styles.headerContainer}>
           <Image
-            source={{ uri: movie.backdropUrl || movie.posterUrl }}
+            source={{ uri: movie.thumbnail }}
             style={styles.backdropImage}
             resizeMode="cover"
           />
@@ -116,7 +117,7 @@ export default function MovieDetailScreen() {
           <View style={styles.movieInfoOverlay}>
             <View style={styles.posterContainer}>
               <Image
-                source={{ uri: movie.posterUrl }}
+                source={{ uri: movie.thumbnail }}
                 style={styles.posterImage}
                 resizeMode="cover"
               />
