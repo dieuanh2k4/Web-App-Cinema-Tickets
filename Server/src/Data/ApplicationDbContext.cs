@@ -392,12 +392,55 @@ namespace Server.src.Data
                     .IsUnique();
             });
 
-            // // StatusSeat unique constraint
-            // modelBuilder.Entity<StatusSeat>(entity => {
-            //     entity.HasIndex(ss => new { ss.ShowtimeId, ss.SeatId })
-            //         .IsUnique()
-            //         .HasFilter("\"Status\" IN ('Booked', 'Pending')");
-            // });
+            // StatusSeat unique constraint
+            modelBuilder.Entity<StatusSeat>(entity => {
+                entity.HasIndex(ss => new { ss.ShowtimeId, ss.SeatId })
+                    .IsUnique()
+                    .HasFilter("\"Status\" IN ('Booked', 'Pending')");
+            });
+
+            // Ticket configuration
+            modelBuilder.Entity<Ticket>(entity => {
+                entity.HasKey(t => t.Id);
+                entity.Property(t => t.Id)
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(t => t.ShowtimeId)
+                    .IsRequired();
+                entity.Property(t => t.UserId)
+                    .IsRequired();
+                entity.Property(t => t.RoomId)
+                    .IsRequired();
+                entity.Property(t => t.MovieId)
+                    .IsRequired();
+                entity.Property(t => t.SumOfSeat)
+                    .IsRequired();
+                entity.Property(t => t.Date)
+                    .IsRequired();
+                entity.Property(t => t.TotalPrice)
+                    .IsRequired();
+
+                // Relationships
+                entity.HasOne(t => t.Showtimes)
+                    .WithMany()
+                    .HasForeignKey(t => t.ShowtimeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(t => t.User)
+                    .WithMany()
+                    .HasForeignKey(t => t.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.Rooms)
+                    .WithMany()
+                    .HasForeignKey(t => t.RoomId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.Movies)
+                    .WithMany()
+                    .HasForeignKey(t => t.MovieId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
             // TicketSeat configuration
             modelBuilder.Entity<TicketSeat>(entity => {
