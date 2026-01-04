@@ -7,6 +7,7 @@ using Server.src.Data;
 using Server.src.Dtos.Booking;
 using Server.src.Models;
 using Server.src.Services.Interfaces;
+using StackExchange.Redis;
 
 namespace Server.src.Services.Implements
 {
@@ -14,17 +15,25 @@ namespace Server.src.Services.Implements
     {
         private readonly ApplicationDbContext _context;
         private readonly ICustomerService _customerService;
+        private readonly IConnectionMultiplexer _redis;
 
-        public BookingService(ApplicationDbContext context, ICustomerService customerService)
+        public BookingService(
+            ApplicationDbContext context, 
+            ICustomerService customerService,
+            IConnectionMultiplexer redis)
         {
             _context = context;
             _customerService = customerService;
+            _redis = redis;
         }
 
         public async Task<BookingResponseDto> CreateGuestBookingAsync(CreateBookingDto dto)
         {
             try
             {
+                // DEBUG: Log ShowtimeId
+                Console.WriteLine($"[BookingService] CreateGuestBookingAsync - ShowtimeId: {dto.ShowtimeId} (Type: {dto.ShowtimeId.GetType().Name})");
+                
                 // 1. Validate showtime
                 var showtime = await _context.Showtimes
                     .Include(s => s.Movies)
@@ -301,18 +310,36 @@ namespace Server.src.Services.Implements
             if (showtime == null)
                 throw new ArgumentException("Suất chiếu không tồn tại");
 
+            // 1. Lấy tất cả ghế của phòng
             var allSeatIds = await _context.Seats
                 .Where(s => s.RoomId == showtime.RoomId)
                 .Select(s => s.Id)
                 .ToListAsync();
 
+            // 2. Lấy ghế đã book trong DB
             var bookedSeatIds = await _context.StatusSeat
                 .Where(ss => ss.ShowtimeId == showtimeId
                           && (ss.Status == "Booked" || ss.Status == "Pending"))
                 .Select(ss => ss.SeatId)
                 .ToListAsync();
 
-            return allSeatIds.Where(id => !bookedSeatIds.Contains(id)).ToList();
+            // 3. Lấy ghế đang hold trong Redis
+            var db = _redis.GetDatabase();
+            var heldSeatIds = new List<int>();
+            
+            foreach (var seatId in allSeatIds)
+            {
+                var seatKey = $"CineBook:seat:{showtimeId}:{seatId}";
+                var isHeld = await db.KeyExistsAsync(seatKey);
+                if (isHeld)
+                {
+                    heldSeatIds.Add(seatId);
+                }
+            }
+
+            // 4. Loại bỏ ghế đã book VÀ ghế đang hold
+            var unavailableSeatIds = bookedSeatIds.Concat(heldSeatIds).Distinct().ToList();
+            return allSeatIds.Where(id => !unavailableSeatIds.Contains(id)).ToList();
         }
 
         public async Task<decimal> CalculateTotalAmountAsync(List<int> seatIds, int showtimeId)
