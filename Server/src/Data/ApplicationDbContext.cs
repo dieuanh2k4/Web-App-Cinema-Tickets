@@ -19,6 +19,7 @@ namespace Server.src.Data
         public DbSet<StatusSeat> StatusSeat { get; set; }
         public DbSet<Theater> Theater { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<TicketSeat> TicketSeats { get; set; }
         public DbSet<TicketPrice> TicketPrices { get; set; }
         public DbSet<User> User { get; set; }
         public DbSet<OTPCode> OTPCodes { get; set; }
@@ -33,37 +34,37 @@ namespace Server.src.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // modelBuilder.Entity<Customer>(entity =>
-            // {
-            //     entity.ToTable(c =>
-            //     {
-            //         c.HasCheckConstraint("CK_Customer_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
-            //     });
-            //     entity.HasKey(c => c.Id);
-            //     entity.Property(c => c.Id)
-            //         .ValueGeneratedOnAdd()
-            //         .IsRequired();
-            //     entity.Property(c => c.Name)
-            //         .IsUnicode(true)
-            //         .HasMaxLength(20)
-            //         .IsRequired();
-            //     entity.Property(c => c.Birth)
-            //         .HasColumnType("date")
-            //         .IsRequired();
-            //     entity.Property(c => c.gender)
-            //         .HasMaxLength(5)
-            //         .IsUnicode(false);
-            //     entity.Property(c => c.Address)
-            //         .HasMaxLength(255);
-            //     entity.Property(c => c.Phone)
-            //         .HasMaxLength(15)
-            //         .IsUnicode(false)
-            //         .IsRequired();
-            //     entity.HasIndex(c => c.Phone)
-            //         .IsUnique();
-            //     entity.Property(c => c.Avatar)
-            //         .HasMaxLength(255);
-            // });
+            modelBuilder.Entity<Customer>(entity =>
+            {
+                entity.ToTable(c =>
+                {
+                    c.HasCheckConstraint("CK_Customer_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
+                });
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Id)
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(c => c.Name)
+                    .IsUnicode(true)
+                    .HasMaxLength(20)
+                    .IsRequired();
+                entity.Property(c => c.Birth)
+                    .HasColumnType("date")
+                    .IsRequired();
+                entity.Property(c => c.gender)
+                    .HasMaxLength(5)
+                    .IsUnicode(false);
+                entity.Property(c => c.Address)
+                    .HasMaxLength(255);
+                entity.Property(c => c.Phone)
+                    .HasMaxLength(15)
+                    .IsUnicode(false)
+                    .IsRequired();
+                entity.HasIndex(c => c.Phone)
+                    .IsUnique();
+                entity.Property(c => c.Avatar)
+                    .HasMaxLength(255);
+            });
 
             modelBuilder.Entity<Movies>(entity =>
             {
@@ -389,6 +390,28 @@ namespace Server.src.Data
                 // Unique index để tránh duplicate (1 role không được gán 1 permission 2 lần)
                 entity.HasIndex(rp => new { rp.RoleId, rp.PermissionId })
                     .IsUnique();
+            });
+
+            // // StatusSeat unique constraint
+            // modelBuilder.Entity<StatusSeat>(entity => {
+            //     entity.HasIndex(ss => new { ss.ShowtimeId, ss.SeatId })
+            //         .IsUnique()
+            //         .HasFilter("\"Status\" IN ('Booked', 'Pending')");
+            // });
+
+            // TicketSeat configuration
+            modelBuilder.Entity<TicketSeat>(entity => {
+                entity.HasKey(ts => ts.Id);
+                
+                entity.HasOne(ts => ts.Ticket)
+                    .WithMany(t => t.TicketSeats)
+                    .HasForeignKey(ts => ts.TicketId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasOne(ts => ts.Seat)
+                    .WithMany()
+                    .HasForeignKey(ts => ts.SeatId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }
