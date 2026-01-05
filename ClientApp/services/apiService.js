@@ -28,18 +28,16 @@ apiClient.interceptors.request.use(
 );
 
 // Response interceptor để xử lý errors
+// KHÔNG tự động xóa token - để các màn hình tự xử lý
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
   async (error) => {
+    // Chỉ log lỗi, không xóa token tự động
+    // Việc xóa token sẽ được xử lý bởi AuthContext khi cần
     if (error.response?.status === 401) {
-      // Token expired or invalid - clear auth data
-      try {
-        await AsyncStorage.multiRemove(["auth_token", "user_info"]);
-      } catch (storageError) {
-        console.error("Error clearing auth data:", storageError);
-      }
+      console.log("API returned 401 - Unauthorized");
     }
     return Promise.reject(error);
   }

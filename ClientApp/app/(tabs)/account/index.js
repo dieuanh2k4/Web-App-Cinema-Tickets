@@ -22,8 +22,9 @@ export default function AccountScreen() {
 
   const userName =
     customerInfo?.name ||
-    user?.user?.name ||
-    user?.user?.email ||
+    profile?.username ||
+    profile?.email ||
+    user?.username ||
     profile?.fullName ||
     "Người dùng";
 
@@ -43,10 +44,8 @@ export default function AccountScreen() {
 
   const loadCustomerInfo = async () => {
     try {
-      if (user?.user?.id) {
-        const data = await customerService.getCustomerInfo(user.user.id);
-        setCustomerInfo(data);
-      }
+      const data = await customerService.getProfile();
+      setCustomerInfo(data);
     } catch (error) {
       console.error("Error loading customer info:", error);
     }

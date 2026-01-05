@@ -36,11 +36,19 @@ export default function TheaterDetailScreen() {
       const theaterData = await theaterService.getTheaterById(theaterId);
       setTheater(theaterData);
 
+      console.log("🏢 Theater data:", theaterData);
+
       // Load all showtimes for this theater
       const allShowtimes = await showtimeService.getAllShowtimes();
+      console.log("🎞️ All showtimes:", allShowtimes);
+
+      // Match by theater name instead of theaterId
       const theaterShowtimes = allShowtimes.filter((st) => {
-        return st.theaterId === parseInt(theaterId);
+        return st.theaterName === theaterData.name;
       });
+
+      console.log("✅ Filtered showtimes for this theater:", theaterShowtimes);
+
       setShowtimes(theaterShowtimes);
 
       // Load movies for poster and details
@@ -59,13 +67,13 @@ export default function TheaterDetailScreen() {
     for (let i = 0; i < 7; i++) {
       const date = new Date();
       date.setDate(date.getDate() + i);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
       const year = date.getFullYear();
       list.push({
         date,
         label: `${day}-${month}-${year}`,
-        fullDate: `${year}-${month}-${day}` // For filtering
+        fullDate: `${year}-${month}-${day}`, // For filtering
       });
     }
     return list;
@@ -115,7 +123,8 @@ export default function TheaterDetailScreen() {
     .reduce((acc, showtime) => {
       const movieId = showtime.movieId;
       const movie = movies.find((m) => m.id === movieId);
-      const movieTitle = movie?.title || showtime.movieTitle || `Phim ${movieId}`;
+      const movieTitle =
+        movie?.title || showtime.movieTitle || `Phim ${movieId}`;
       const moviePoster = movie?.posterUrl || null;
       const ageRating = movie?.ageRating || "P";
 

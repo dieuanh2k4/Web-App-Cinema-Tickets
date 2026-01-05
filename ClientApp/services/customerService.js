@@ -2,61 +2,39 @@ import apiClient from "./apiService";
 import { API_CONFIG } from "../config/api.config";
 
 export const customerService = {
-  getCustomerInfo: async (id) => {
-    try {
-      const res = await apiClient.get(
-        API_CONFIG.ENDPOINTS.CUSTOMER.GET_INFO(id)
-      );
-      return res.data;
-    } catch (error) {
-      console.error("Error fetching customer info:", error);
-      throw error;
-    }
-  },
-
+  /**
+   * Lấy thông tin customer của user hiện tại
+   * Sử dụng /Customer/me - tự động lấy từ JWT token
+   */
   getProfile: async () => {
     try {
-      const res = await apiClient.get(
-        API_CONFIG.ENDPOINTS.CUSTOMER.GET_PROFILE
-      );
-      return res.data;
+      const res = await apiClient.get(API_CONFIG.ENDPOINTS.CUSTOMER.ME);
+      const data = res.data;
+      return {
+        id: data?.id,
+        name: data?.name ?? "",
+        email: data?.email ?? "",
+        phone: data?.phone ?? "",
+        address: data?.address ?? "",
+        birth: data?.birth ?? "",
+        gender: data?.gender ?? "",
+        avatar: data?.avatar ?? "",
+      };
     } catch (error) {
+      // Nếu 401/404, trả về null
+      if (error?.response?.status === 401 || error?.response?.status === 404) {
+        console.log("Customer info not available:", error?.response?.status);
+        return null;
+      }
       console.error("Error fetching profile:", error);
       throw error;
     }
   },
 
-  updateCustomerInfo: async (id, customerData, imageFile = null) => {
-    try {
-      const formData = new FormData();
-
-      if (customerData.name) formData.append("Name", customerData.name);
-      if (customerData.birth) formData.append("Birth", customerData.birth);
-      if (customerData.gender) formData.append("Gender", customerData.gender);
-      if (customerData.address)
-        formData.append("Address", customerData.address);
-      if (customerData.phone) formData.append("Phone", customerData.phone);
-
-      if (imageFile) {
-        formData.append("imageFile", imageFile);
-      }
-
-      const res = await apiClient.put(
-        API_CONFIG.ENDPOINTS.CUSTOMER.UPDATE_INFO(id),
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      return res.data;
-    } catch (error) {
-      console.error("Error updating customer info:", error);
-      throw error;
-    }
-  },
-
+  /**
+   * Cập nhật thông tin customer của user hiện tại
+   * Sử dụng PUT /Customer/me - tự động từ JWT token
+   */
   updateProfile: async (profileData, imageFile = null) => {
     try {
       const formData = new FormData();
@@ -73,7 +51,7 @@ export const customerService = {
       }
 
       const res = await apiClient.put(
-        API_CONFIG.ENDPOINTS.CUSTOMER.UPDATE_PROFILE,
+        API_CONFIG.ENDPOINTS.CUSTOMER.ME,
         formData,
         {
           headers: {
@@ -84,6 +62,21 @@ export const customerService = {
       return res.data;
     } catch (error) {
       console.error("Error updating profile:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Lấy thông tin customer theo ID (admin use)
+   */
+  getCustomerInfo: async (id) => {
+    try {
+      const res = await apiClient.get(
+        API_CONFIG.ENDPOINTS.CUSTOMER.GET_INFO(id)
+      );
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching customer info:", error);
       throw error;
     }
   },

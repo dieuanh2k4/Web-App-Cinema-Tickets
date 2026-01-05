@@ -27,6 +27,7 @@ export { chatService } from "./chatService";
 
 // User & Search
 export { userService } from "./userService";
+export { customerService } from "./customerService";
 export { searchService } from "./searchService";
 
 // Export từ bookingService (có thể có nhiều exports)

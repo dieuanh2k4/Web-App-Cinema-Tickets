@@ -7,6 +7,7 @@ export const API_CONFIG = {
       LOGIN: "/Auth/login",
       REGISTER: "/Auth/customer-register",
       ME: "/Auth/me",
+      MY_TICKETS: "/Auth/my-tickets",
     },
 
     MOVIES: {
@@ -62,7 +63,7 @@ export const API_CONFIG = {
       GET_BY_EMAIL: (email) => `/Ticket/customer/${email}`,
       GET_BY_CUSTOMER: (customerId) => `/Ticket/customer/${customerId}`,
       CANCEL: (id) => `/Ticket/cancel/${id}`,
-      GET_ALL: "/Ticket/get-all-tickets",
+      GET_ALL: "/Ticket/all",
     },
 
     TICKET_PRICES: {
@@ -73,10 +74,9 @@ export const API_CONFIG = {
     },
 
     CUSTOMER: {
+      ME: "/Customer/me",
       GET_INFO: (id) => `/Customer/get-info-customer?id=${id}`,
       UPDATE_INFO: (id) => `/Customer/update-info-customer/${id}`,
-      GET_PROFILE: "/Customer/profile",
-      UPDATE_PROFILE: "/Customer/update-profile",
     },
 
     ROOMS: {

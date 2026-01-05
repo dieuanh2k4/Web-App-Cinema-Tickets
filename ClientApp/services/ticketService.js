@@ -18,7 +18,7 @@ export const ticketService = {
   getAllTickets: async () => {
     try {
       const res = await apiClient.get(API_CONFIG.ENDPOINTS.TICKETS.GET_ALL);
-      return res.data || [];
+      return res.data?.data ?? res.data ?? [];
     } catch (error) {
       console.error("Error fetching all tickets:", error);
       throw error;
@@ -30,7 +30,7 @@ export const ticketService = {
       const res = await apiClient.get(
         API_CONFIG.ENDPOINTS.TICKETS.GET_BY_ID(id)
       );
-      return res.data;
+      return res.data?.data ?? res.data;
     } catch (error) {
       console.error("Error fetching ticket by ID:", error);
       throw error;
@@ -42,7 +42,7 @@ export const ticketService = {
       const res = await apiClient.get(
         API_CONFIG.ENDPOINTS.TICKETS.GET_BY_EMAIL(email)
       );
-      return res.data || [];
+      return res.data?.data ?? res.data ?? [];
     } catch (error) {
       console.error("Error fetching tickets by email:", error);
       throw error;

@@ -12,7 +12,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAuth } from "../../../contexts/AuthContext";
-import { bookingService } from "../../../services";
+import { userService } from "../../../services";
 
 export default function TicketsScreen() {
   const { user } = useAuth();
@@ -27,10 +27,32 @@ export default function TicketsScreen() {
   const loadBookings = async () => {
     try {
       setLoading(true);
-      if (user?.user?.id) {
-        const data = await bookingService.getBookingHistory(user.user.id);
-        setBookings(data || []);
+      if (!user) {
+        setBookings([]);
+        return;
       }
+
+      const data = await userService.getMyTickets();
+      const normalized = (data || []).map((t) => {
+        const showtimeValue = t.showtime || t.bookingDate || null;
+        return {
+          ticketId: t.ticketId,
+          bookingCode: t.bookingCode,
+          movieTitle: t.movieTitle,
+          movieImage: t.movieThumbnail,
+          poster: t.movieThumbnail,
+          theaterName: t.theaterName,
+          room: t.roomName,
+          showtimeDate: showtimeValue,
+          showtimeTime: showtimeValue,
+          date: showtimeValue,
+          time: showtimeValue,
+          totalAmount: t.totalPrice ?? 0,
+          status: "confirmed",
+        };
+      });
+
+      setBookings(normalized);
     } catch (error) {
       console.error("Error loading bookings:", error);
       setBookings([]);

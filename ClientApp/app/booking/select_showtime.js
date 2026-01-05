@@ -84,20 +84,38 @@ export default function SelectShowtimeScreen() {
       const formattedDate = formatDateForBackend(selectedDate);
       const allTheaters = await theaterService.getAllTheaters();
 
+      console.log("📅 Loading showtimes for:", {
+        movieId,
+        formattedDate,
+        selectedCity,
+      });
+
       const data = await showtimeService.getShowtimesByMovieAndDate(
         movieId,
         formattedDate,
         allTheaters
       );
 
-      const filteredTheaters = data.filter(
-        (theater) => theater.city === selectedCity
-      );
+      console.log("🎬 All theaters with showtimes:", data);
 
-      setTheaters(filteredTheaters);
+      // Tạm thời bỏ filter để xem tất cả rạp
+      const filteredTheaters = selectedCity
+        ? data.filter((theater) => theater.city === selectedCity)
+        : data;
+
+      console.log("🏙️ Filtered theaters by city:", {
+        selectedCity,
+        filteredTheaters,
+        totalTheaters: data.length,
+      });
+
+      // Hiển thị tất cả rạp nếu không có rạp nào khớp với city
+      const theatersToShow =
+        filteredTheaters.length > 0 ? filteredTheaters : data;
+      setTheaters(theatersToShow);
       setLoading(false);
     } catch (error) {
-      console.error("Error loading theaters:", error);
+      console.error("❌ Error loading theaters:", error);
       setTheaters([]);
       setLoading(false);
     }
