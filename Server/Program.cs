@@ -217,6 +217,7 @@ builder.Services.AddScoped<EmailService>();
 
 // Chat AI service
 builder.Services.AddScoped<IChatService, ChatService>();
+// builder.Services.AddScoped<IGeminiService, GeminiService>(); // Commented out - service not implemented
 
 // Dashboard service
 builder.Services.AddScoped<IDashboardService, DashboardService>();
