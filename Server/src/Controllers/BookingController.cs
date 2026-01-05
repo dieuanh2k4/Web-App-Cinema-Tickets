@@ -10,6 +10,7 @@ using Server.src.Services.Interfaces;
 using Server.src.Services.Implements;
 using Server.src.Data;
 using StackExchange.Redis;
+using Microsoft.EntityFrameworkCore;
 
 namespace Server.src.Controllers
 {
@@ -230,6 +231,18 @@ namespace Server.src.Controllers
 
                 var booking = await _bookingService.CreateGuestBookingAsync(createBookingDto);
 
+                // ✅ Thêm: Update StatusSeat từ Pending → Booked
+                var statusSeats = await _context.StatusSeat
+                    .Where(ss => ss.ShowtimeId == holdData.ShowtimeId 
+                            && holdData.SeatIds.Contains(ss.SeatId)
+                            && ss.Status == "Pending")
+                    .ToListAsync();
+
+                foreach (var ss in statusSeats)
+                {
+                    ss.Status = "Booked";
+                }
+                await _context.SaveChangesAsync();
                 // Xóa hold khỏi Redis (đã confirm thành công)
                 await db.KeyDeleteAsync(holdKey);
                 
