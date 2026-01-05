@@ -2,6 +2,33 @@ import apiClient from "./apiService";
 import { API_CONFIG } from "../config/api.config";
 
 export const bookingService = {
+  // Lấy lịch sử đặt vé của customer
+  getBookingHistory: async (customerId) => {
+    try {
+      const res = await apiClient.get(
+        API_CONFIG.ENDPOINTS.BOOKING.GET_HISTORY(customerId)
+      );
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching booking history:", error);
+      throw error;
+    }
+  },
+
+  // Lấy bookings của customer
+  getCustomerBookings: async (customerId) => {
+    try {
+      const res = await apiClient.get(
+        API_CONFIG.ENDPOINTS.BOOKING.GET_BY_CUSTOMER(customerId)
+      );
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching customer bookings:", error);
+      throw error;
+    }
+  },
+
+  // Tạo booking mới
   createBooking: async (bookingData) => {
     try {
       const payload = {
@@ -24,13 +51,14 @@ export const bookingService = {
     }
   },
 
+  // Xác nhận booking
   confirmBooking: async (holdId, customerInfo) => {
     try {
       const payload = {
-        holdId,
-        customerName: customerInfo.name,
-        customerPhone: customerInfo.phone,
-        customerEmail: customerInfo.email || null,
+        HoldId: holdId,
+        CustomerName: customerInfo.name,
+        CustomerPhone: customerInfo.phone,
+        CustomerEmail: customerInfo.email || null,
       };
 
       const res = await apiClient.post(
@@ -52,14 +80,15 @@ export const bookingService = {
     }
   },
 
+  // Giữ ghế tạm thời
   holdSeats: async (seatIds, showtimeId, userId = null) => {
     try {
       const res = await apiClient.post(
         API_CONFIG.ENDPOINTS.BOOKING.HOLD_SEATS,
         {
-          showtimeId,
-          seatIds,
-          userId,
+          ShowtimeId: showtimeId,
+          SeatIds: seatIds,
+          UserId: userId,
         }
       );
 
@@ -79,6 +108,7 @@ export const bookingService = {
     }
   },
 
+  // Hủy giữ ghế
   releaseSeats: async (holdId) => {
     try {
       if (!holdId) {
@@ -87,9 +117,7 @@ export const bookingService = {
 
       const res = await apiClient.post(
         API_CONFIG.ENDPOINTS.BOOKING.RELEASE_SEATS,
-        {
-          holdId,
-        }
+        { HoldId: holdId }
       );
 
       return {
@@ -102,6 +130,7 @@ export const bookingService = {
     }
   },
 
+  // Lấy ghế còn trống
   getAvailableSeatsForShowtime: async (showtimeId) => {
     try {
       const res = await apiClient.get(
@@ -114,6 +143,7 @@ export const bookingService = {
     }
   },
 
+  // Lấy thông tin vé theo ID
   getTicketById: async (ticketId) => {
     try {
       const res = await apiClient.get(
@@ -126,6 +156,7 @@ export const bookingService = {
     }
   },
 
+  // Lấy danh sách vé theo email
   getTicketsByEmail: async (email) => {
     try {
       const res = await apiClient.get(
@@ -138,6 +169,7 @@ export const bookingService = {
     }
   },
 
+  // Lấy tất cả vé
   getAllTickets: async () => {
     try {
       const res = await apiClient.get(API_CONFIG.ENDPOINTS.TICKETS.GET_ALL);
@@ -148,6 +180,7 @@ export const bookingService = {
     }
   },
 
+  // Hủy vé
   cancelTicket: async (ticketId) => {
     try {
       const res = await apiClient.delete(
@@ -160,29 +193,11 @@ export const bookingService = {
     }
   },
 
+  // Lấy danh sách booking của user
   getUserBookings: async () => {
     try {
       const res = await apiClient.get(API_CONFIG.ENDPOINTS.TICKETS.GET_ALL);
-      const tickets = res.data?.data || [];
-
-      return tickets.map((ticket) => ({
-        id: ticket.id,
-        movieTitle: ticket.showtime?.movie?.title || "Unknown Movie",
-        theater: ticket.showtime?.rooms?.theater?.name || "Unknown Theater",
-        room: ticket.showtime?.rooms?.name || "Unknown Room",
-        date: ticket.showtime?.date || new Date().toISOString().split("T")[0],
-        time: ticket.showtime?.startTime || "00:00",
-        seats: ticket.seatNumbers?.split(",") || [],
-        totalAmount: ticket.totalPrice || 0,
-        status:
-          ticket.status === "Confirmed"
-            ? "upcoming"
-            : ticket.status === "Used"
-            ? "used"
-            : "cancelled",
-        bookingCode: ticket.bookingCode || `CINE${ticket.id}`,
-        poster: ticket.showtime?.movie?.thumbnail || "",
-      }));
+      return res.data || [];
     } catch (error) {
       console.error("Error fetching user bookings:", error);
       return [];
