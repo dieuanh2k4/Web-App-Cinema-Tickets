@@ -38,9 +38,11 @@ export const API_ENDPOINTS = {
   // Rooms
   ROOMS: {
     GET_ALL: "/Room/get-all-room",
+    GET_DETAIL: (id) => `/Room/get-detail-room/${id}`,
     CREATE: "/Room/create-rooms",
     UPDATE: (id) => `/Room/update-room/${id}`,
     DELETE: (id) => `/Room/delete-room/${id}`,
+    UPDATE_SEAT_LAYOUT: (id) => `/Room/${id}/seat-layout`,
   },
 
   // Ticket Prices

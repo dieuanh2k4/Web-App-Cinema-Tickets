@@ -52,6 +52,29 @@ const roomService = {
     const response = await api.delete(API_ENDPOINTS.ROOMS.DELETE(id));
     return response.data;
   },
+
+  /**
+   * Get room detail with seats
+   * @param {number} id 
+   * @returns {Promise<Object>} Room with seats array
+   */
+  async getRoomDetail(id) {
+    const response = await api.get(API_ENDPOINTS.ROOMS.GET_DETAIL(id));
+    return response.data;
+  },
+
+  /**
+   * Update seat layout for a room
+   * @param {number} roomId 
+   * @param {Array} seats - Array of seat objects with id, name, type, price, status
+   * @returns {Promise<Object>}
+   */
+  async updateSeatLayout(roomId, seats) {
+    const response = await api.put(API_ENDPOINTS.ROOMS.UPDATE_SEAT_LAYOUT(roomId), {
+      seats: seats
+    });
+    return response.data;
+  },
 };
 
 export default roomService;

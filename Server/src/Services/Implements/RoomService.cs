@@ -57,6 +57,8 @@ namespace Server.src.Services.Implements
 
             var room = await createRoomDto.ToNewRooms();
             room.Capacity = rows * seatsInRow;
+            room.Rows = rows;
+            room.Columns = seatsInRow;
             room.Seats = new List<Seats>();
             var numberOfCoupleSeat = rows - coupleRowsSeats;
 
@@ -66,11 +68,11 @@ namespace Server.src.Services.Implements
                 for (int seatNum = 1; seatNum <= seatsInRow; seatNum++)
                 {
                     var seatType = row <= normalSeats
-                        ? "Thường"
+                        ? "Standard"
                         : (row > normalSeats && row <= numberOfCoupleSeat)
-                            ? "Vip"
+                            ? "VIP"
                             : (row > numberOfCoupleSeat)
-                                ? "Đôi"
+                                ? "Couple"
                                 : "";
 
                     var ticketPrice = await _context.TicketPrices
@@ -87,7 +89,7 @@ namespace Server.src.Services.Implements
                         Name = $"{(char)(64 + row)}{seatNum}",
                         Type = seatType,
                         Price = ticketPrice.Price,
-                        Status = "Trống"
+                        Status = "Available"
                     };
 
                     var seat = await seatDto.ToSeatsOfRoom(room);
