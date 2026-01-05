@@ -1,5 +1,5 @@
 // API Base URL - CHANGE THIS TO YOUR BACKEND URL
-export const BASE_URL = "http://desktop-qedcej1/api";
+export const BASE_URL = "http://localhost:5001/api";
 
 export const API_ENDPOINTS = {
   // Authentication
@@ -13,7 +13,7 @@ export const API_ENDPOINTS = {
     GET_ALL: "/Movies/get-all-movies",
     GET_BY_ID: (id) => `/Movies/get-movie-by-id/${id}`,
     CREATE: "/Movies/create-movie",
-    UPDATE: (id) => `/Movies/update-subject/${id}`,
+    UPDATE: (id) => `/Movies/update-movie/${id}`,
     DELETE: (id) => `/Movies/delete-movie/${id}`,
   },
 
@@ -38,9 +38,11 @@ export const API_ENDPOINTS = {
   // Rooms
   ROOMS: {
     GET_ALL: "/Room/get-all-room",
+    GET_DETAIL: (id) => `/Room/get-detail-room/${id}`,
     CREATE: "/Room/create-rooms",
     UPDATE: (id) => `/Room/update-room/${id}`,
     DELETE: (id) => `/Room/delete-room/${id}`,
+    UPDATE_SEAT_LAYOUT: (id) => `/Room/${id}/seat-layout`,
   },
 
   // Ticket Prices
@@ -58,5 +60,12 @@ export const API_ENDPOINTS = {
     CREATE: "/Theater/create-theater",
     UPDATE: (id) => `/Theater/update-theater/${id}`,
     DELETE: (id) => `/Theater/delete-theater/${id}`,
+  },
+
+  // Dashboard
+  DASHBOARD: {
+    STATISTICS: "/Dashboard/statistics",
+    REVENUE_BY_MONTH: "/Dashboard/revenue-by-month",
+    TOP_MOVIES: "/Dashboard/top-movies",
   },
 };

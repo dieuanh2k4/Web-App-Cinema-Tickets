@@ -1,148 +1,233 @@
-import { useState } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaSyncAlt, FaClock, FaTimes, FaFilm } from 'react-icons/fa';
-import { showtimesSchedules as initialSchedules, movies } from '../data/mockData';
+import { useState, useEffect } from 'react';
+import { FaPlus, FaEdit, FaTrash, FaSyncAlt, FaTimes, FaFilm } from 'react-icons/fa';
 import { formatDate } from '../utils/helpers';
+import showtimeService from '../services/showtimeService';
+import movieService from '../services/movieService';
+import roomService from '../services/roomService';
 
 const Showtimes = () => {
-  const [schedules, setSchedules] = useState(initialSchedules);
+  const [showtimes, setShowtimes] = useState([]);
+  const [movies, setMovies] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
-  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [selectedShowtime, setSelectedShowtime] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedMovie, setSelectedMovie] = useState(null); // Lưu phim được chọn để validate date
   const itemsPerPage = 10;
 
   // Form state
   const [formData, setFormData] = useState({
     movieId: '',
-    startDate: '',
-    endDate: ''
+    roomId: '',
+    date: '',
+    start: ''
   });
 
-  const handleRefresh = () => {
+  // Load initial data
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [showtimesData, moviesData, roomsData] = await Promise.all([
+        showtimeService.getAllShowtimes(),
+        movieService.getAllMovies(),
+        roomService.getAllRooms()
+      ]);
+      setShowtimes(showtimesData);
+      setMovies(moviesData);
+      setRooms(roomsData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      alert('Không thể tải dữ liệu. Vui lòng thử lại!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    // TODO: Load data from DB
-    setTimeout(() => {
-      setIsRefreshing(false);
-      console.log('Showtimes schedules data refreshed');
-    }, 1000);
+    await loadData();
+    setIsRefreshing(false);
   };
 
   const handleAdd = () => {
     setModalMode('add');
+    setSelectedMovie(null);
     setFormData({
       movieId: '',
-      startDate: '',
-      endDate: ''
+      roomId: '',
+      date: '',
+      start: ''
     });
     setShowModal(true);
   };
 
-  const handleEdit = (schedule) => {
+  const handleEdit = (showtime) => {
     setModalMode('edit');
-    setSelectedSchedule(schedule);
-    setFormData({
-      movieId: schedule.movieId,
-      startDate: schedule.startDate,
-      endDate: schedule.endDate
-    });
+    setSelectedShowtime(showtime);
+    
+    // Tìm và set phim được chọn để validate date
+    const movie = movies.find(m => m.id === showtime.movieId);
+    setSelectedMovie(movie);
+    
+    // Format time từ HH:mm:ss thành HH:mm cho input type="time"
+    const formatTimeForInput = (time) => {
+      if (!time) return '';
+      // Nếu có seconds (HH:mm:ss), loại bỏ để chỉ giữ HH:mm
+      return time.length > 5 ? time.substring(0, 5) : time;
+    };
+    
+    const editFormData = {
+      movieId: String(showtime.movieId), // Ensure string type
+      roomId: String(showtime.roomId),   // Ensure string type
+      date: showtime.date,
+      start: formatTimeForInput(showtime.start)
+    };
+    
+    console.log('Edit showtime:', showtime);
+    console.log('Edit formData:', editFormData);
+    console.log('Available movies:', movies.map(m => ({ id: m.id, title: m.title })));
+    console.log('Available rooms:', rooms.map(r => ({ id: r.id, name: r.name })));
+    
+    setFormData(editFormData);
     setShowModal(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.movieId || !formData.startDate || !formData.endDate) {
+    if (!formData.movieId || !formData.roomId || !formData.date || !formData.start) {
       alert('Vui lòng điền đầy đủ thông tin!');
       return;
     }
 
-    // Validate dates
-    if (new Date(formData.startDate) > new Date(formData.endDate)) {
-      alert('Ngày bắt đầu phải trước ngày kết thúc!');
-      return;
-    }
-
+    // Validate ngày chiếu phải nằm trong khoảng StartDate và EndDate của phim
     const movie = movies.find(m => m.id === parseInt(formData.movieId));
-    const today = new Date().toISOString().split('T')[0];
-    let status = 'upcoming';
-    
-    if (formData.startDate <= today && formData.endDate >= today) {
-      status = 'active';
-    } else if (formData.endDate < today) {
-      status = 'ended';
+    if (movie) {
+      const selectedDate = new Date(formData.date);
+      selectedDate.setHours(0, 0, 0, 0); // Reset time để so sánh chỉ date
+      
+      // Backend sử dụng startDate và endDate
+      const startDate = movie.startDate ? new Date(movie.startDate.split('T')[0]) : null;
+      const endDate = movie.endDate ? new Date(movie.endDate.split('T')[0]) : null;
+      
+      if (startDate) startDate.setHours(0, 0, 0, 0);
+      if (endDate) endDate.setHours(0, 0, 0, 0);
+      
+      if (startDate && selectedDate < startDate) {
+        alert(`Ngày chiếu không được trước ngày khởi chiếu của phim (${movie.startDate.split('T')[0]})!`);
+        return;
+      }
+      
+      if (endDate && selectedDate > endDate) {
+        alert(`Ngày chiếu không được sau ngày kết thúc chiếu của phim (${movie.endDate.split('T')[0]})!`);
+        return;
+      }
     }
 
-    const scheduleData = {
-      movieId: parseInt(formData.movieId),
-      movieTitle: movie.title,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      status,
-      createdDate: modalMode === 'add' ? new Date().toISOString().split('T')[0] : selectedSchedule.createdDate
-    };
-
-    if (modalMode === 'add') {
-      const newSchedule = {
-        id: schedules.length > 0 ? Math.max(...schedules.map(s => s.id)) + 1 : 1,
-        ...scheduleData
+    try {
+      // Thêm seconds vào time format (HH:mm -> HH:mm:ss) vì Backend TimeOnly yêu cầu
+      const formatTime = (time) => time.includes(':') && time.split(':').length === 2 ? `${time}:00` : time;
+      
+      const showtimeData = {
+        movieId: parseInt(formData.movieId),
+        roomId: parseInt(formData.roomId),
+        date: formData.date,
+        start: formatTime(formData.start),
+        end: formatTime(formData.start) // Backend sẽ tự động tính lại End dựa vào Duration của phim
       };
-      setSchedules([...schedules, newSchedule]);
-    } else {
-      setSchedules(schedules.map(s => 
-        s.id === selectedSchedule.id 
-          ? { ...s, ...scheduleData }
-          : s
-      ));
-    }
 
-    setShowModal(false);
+      // Debug log để kiểm tra data
+      console.log('Sending showtime data:', showtimeData);
+
+      if (modalMode === 'add') {
+        await showtimeService.createShowtime(showtimeData, parseInt(formData.roomId));
+        alert('Thêm suất chiếu thành công!');
+      } else {
+        await showtimeService.updateShowtime(selectedShowtime.id, showtimeData, parseInt(formData.roomId));
+        alert('Cập nhật suất chiếu thành công!');
+      }
+
+      setShowModal(false);
+      await loadData();
+    } catch (error) {
+      console.error('Error saving showtime:', error);
+      alert(error.message || 'Có lỗi xảy ra. Vui lòng thử lại!');
+    }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // Khi chọn phim, lưu thông tin phim để validate date
+    if (name === 'movieId' && value) {
+      const movie = movies.find(m => m.id === parseInt(value));
+      setSelectedMovie(movie);
+      
+      // Reset date nếu đã chọn date không hợp lệ
+      if (formData.date && movie) {
+        const selectedDate = new Date(formData.date);
+        selectedDate.setHours(0, 0, 0, 0); // Reset time để so sánh chỉ date
+        
+        // Backend sử dụng startDate và endDate, không phải releaseDate
+        const startDate = movie.startDate ? new Date(movie.startDate.split('T')[0]) : null;
+        const endDate = movie.endDate ? new Date(movie.endDate.split('T')[0]) : null;
+        
+        if (startDate) startDate.setHours(0, 0, 0, 0);
+        if (endDate) endDate.setHours(0, 0, 0, 0);
+        
+        if ((startDate && selectedDate < startDate) || (endDate && selectedDate > endDate)) {
+          setFormData(prev => ({ ...prev, [name]: value, date: '' }));
+          return;
+        }
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa lịch chiếu này?')) {
-      setSchedules(schedules.filter(s => s.id !== id));
+  const handleDelete = async (id) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa suất chiếu này?')) {
+      try {
+        await showtimeService.deleteShowtime(id);
+        alert('Xóa suất chiếu thành công!');
+        await loadData();
+      } catch (error) {
+        console.error('Error deleting showtime:', error);
+        alert('Không thể xóa suất chiếu. Vui lòng thử lại!');
+      }
     }
   };
 
-  const getStatusBadge = (status) => {
-    const badges = {
-      'active': 'bg-green-500/20 text-green-400 border-green-500/30',
-      'upcoming': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      'ended': 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-    };
-    return badges[status] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-  };
-
-  const getStatusText = (status) => {
-    const text = {
-      'active': 'Đang chiếu',
-      'upcoming': 'Sắp chiếu',
-      'ended': 'Đã kết thúc'
-    };
-    return text[status] || 'Không xác định';
-  };
-
   // Pagination
-  const totalPages = Math.ceil(schedules.length / itemsPerPage);
+  const totalPages = Math.ceil(showtimes.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentSchedules = schedules.slice(startIndex, startIndex + itemsPerPage);
+  const currentShowtimes = showtimes.slice(startIndex, startIndex + itemsPerPage);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-white text-xl">Đang tải dữ liệu...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Quản lý lịch chiếu</h1>
-          <p className="text-gray-400">Quản lý thời gian chiếu phim</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Quản lý suất chiếu</h1>
+          <p className="text-gray-400">Quản lý các suất chiếu cụ thể</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -158,7 +243,7 @@ const Showtimes = () => {
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-accent to-purple-600 hover:from-accent/90 hover:to-purple-700 text-white rounded-lg transition-all shadow-lg shadow-accent/25 font-medium"
           >
             <FaPlus />
-            <span>Thêm lịch chiếu</span>
+            <span>Thêm suất chiếu</span>
           </button>
         </div>
       </div>
@@ -170,13 +255,22 @@ const Showtimes = () => {
             <thead className="bg-primary border-b border-gray-700">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  ID
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Tên phim
                 </th>
                 <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Thời gian chiếu
+                  Rạp chiếu
                 </th>
                 <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Tình trạng
+                  Phòng chiếu
+                </th>
+                <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Ngày chiếu
+                </th>
+                <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Giờ chiếu
                 </th>
                 <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Thao tác
@@ -184,39 +278,54 @@ const Showtimes = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
-              {currentSchedules.map((schedule) => (
-                <tr key={schedule.id} className="hover:bg-primary/50 transition-colors">
+              {currentShowtimes.map((showtime) => (
+                <tr key={showtime.id} className="hover:bg-primary/50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-white">#{showtime.id}</span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-accent to-purple-600 rounded-lg flex items-center justify-center">
                         <FaFilm className="text-white" size={20} />
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-white">{schedule.movieTitle}</div>
+                        <div className="text-sm font-medium text-white">{showtime.movieTitle || 'N/A'}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className="text-sm text-gray-400">{showtime.theaterName || 'N/A'}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div className="text-sm text-white">
-                      {formatDate(schedule.startDate)} - {formatDate(schedule.endDate)}
+                      <div>{showtime.roomName || 'N/A'}</div>
+                      {showtime.roomType && (
+                        <div className="text-xs text-gray-400 mt-1">({showtime.roomType})</div>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(schedule.status)}`}>
-                      {getStatusText(schedule.status)}
-                    </span>
+                    <div className="text-sm text-white">{formatDate(showtime.date)}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <div className="text-sm text-white">
+                      <div>{showtime.start}</div>
+                      {showtime.end && (
+                        <div className="text-xs text-gray-400 mt-1">→ {showtime.end}</div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
                       <button
-                        onClick={() => handleEdit(schedule)}
+                        onClick={() => handleEdit(showtime)}
                         className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all"
                         title="Cập nhật"
                       >
                         <FaEdit size={18} />
                       </button>
                       <button
-                        onClick={() => handleDelete(schedule.id)}
+                        onClick={() => handleDelete(showtime.id)}
                         className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
                         title="Xóa"
                       >
@@ -234,7 +343,7 @@ const Showtimes = () => {
         {totalPages > 1 && (
           <div className="px-6 py-4 border-t border-gray-700 flex items-center justify-between">
             <div className="text-sm text-gray-400">
-              Hiển thị {startIndex + 1} - {Math.min(startIndex + itemsPerPage, schedules.length)} trong tổng số {schedules.length} lịch chiếu
+              Hiển thị {startIndex + 1} - {Math.min(startIndex + itemsPerPage, showtimes.length)} trong tổng số {showtimes.length} suất chiếu
             </div>
             <div className="flex gap-2">
               <button
@@ -276,7 +385,7 @@ const Showtimes = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
               <h2 className="text-xl font-bold text-white">
-                {modalMode === 'add' ? 'Thêm lịch chiếu' : 'Cập nhật lịch chiếu'}
+                {modalMode === 'add' ? 'Thêm suất chiếu' : 'Cập nhật suất chiếu'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -299,36 +408,67 @@ const Showtimes = () => {
                   required
                 >
                   <option value="">Chọn phim</option>
-                  {movies.filter(m => m.status === 'showing').map(movie => (
+                  {movies.map(movie => (
                     <option key={movie.id} value={movie.id}>{movie.title}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Ngày bắt đầu */}
+              {/* Chọn phòng chiếu */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Ngày bắt đầu</label>
-                <input
-                  type="date"
-                  name="startDate"
-                  value={formData.startDate}
+                <label className="block text-sm font-medium text-gray-300 mb-2">Chọn phòng chiếu</label>
+                <select
+                  name="roomId"
+                  value={formData.roomId}
                   onChange={handleChange}
                   className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
                   required
-                />
+                >
+                  <option value="">Chọn phòng</option>
+                  {rooms.map(room => (
+                    <option key={room.id} value={room.id}>
+                      {room.name} - {room.type} ({room.capacity} ghế)
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Ngày kết thúc */}
+              {/* Ngày chiếu */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Ngày kết thúc</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Ngày chiếu</label>
                 <input
                   type="date"
-                  name="endDate"
-                  value={formData.endDate}
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  min={selectedMovie?.startDate ? selectedMovie.startDate.split('T')[0] : undefined}
+                  max={selectedMovie?.endDate ? selectedMovie.endDate.split('T')[0] : undefined}
+                  className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
+                  required
+                />
+                {selectedMovie && (selectedMovie.startDate || selectedMovie.endDate) && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    {selectedMovie.startDate && `Từ: ${selectedMovie.startDate.split('T')[0]}`}
+                    {selectedMovie.startDate && selectedMovie.endDate && ' | '}
+                    {selectedMovie.endDate && `Đến: ${selectedMovie.endDate.split('T')[0]}`}
+                  </p>
+                )}
+              </div>
+
+              {/* Giờ bắt đầu */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Giờ bắt đầu</label>
+                <input
+                  type="time"
+                  name="start"
+                  value={formData.start}
                   onChange={handleChange}
                   className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
                   required
                 />
+                <p className="text-xs text-gray-400 mt-2">
+                  * Giờ kết thúc sẽ được tính tự động dựa vào thời lượng phim
+                </p>
               </div>
 
               {/* Action Buttons */}

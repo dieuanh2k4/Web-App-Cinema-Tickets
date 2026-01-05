@@ -75,7 +75,7 @@ namespace Server.src.Controllers
             {
                 var updateTheater = await _theaterService.UpdateTheater(updateTheaterDto, id);
 
-                await _context.Theater.AddAsync(updateTheater);
+                _context.Theater.Update(updateTheater);
                 await _context.SaveChangesAsync();
 
                 return Ok(updateTheater);

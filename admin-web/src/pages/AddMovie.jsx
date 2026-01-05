@@ -7,22 +7,24 @@ const AddMovie = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
-    thumbnail: '',
-    duration: '',
+    director: '',
     genre: [],
+    duration: '',
     language: '',
     ageLimit: '',
+    releaseYear: new Date().getFullYear(),
     startDate: '',
     endDate: '',
     description: '',
-    director: '',
     actors: [],
-    rating: 0
+    rating: '',
+    thumbnail: '',
+    trailer: ''
   });
   const [genreInput, setGenreInput] = useState('');
   const [actorInput, setActorInput] = useState('');
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   const availableGenres = ['Animation', 'Adventure', 'Drama', 'Fantasy', 'Romance', 'Family', 'Action', 'Comedy', 'Thriller', 'Horror', 'Sci-Fi', 'War'];
 
@@ -56,10 +58,10 @@ const AddMovie = () => {
   };
 
   const handleAddActor = (actor) => {
-    if (actor && actor.trim() && !formData.actors.includes(actor.trim())) {
+    if (actor && !formData.actors.includes(actor)) {
       setFormData(prev => ({
         ...prev,
-        actors: [...prev.actors, actor.trim()]
+        actors: [...prev.actors, actor]
       }));
       setActorInput('');
     }
@@ -79,6 +81,9 @@ const AddMovie = () => {
     if (!formData.director.trim()) newErrors.director = 'Vui lòng nhập đạo diễn';
     if (formData.genre.length === 0) newErrors.genre = 'Vui lòng chọn ít nhất 1 thể loại';
     if (!formData.duration || formData.duration <= 0) newErrors.duration = 'Vui lòng nhập thời lượng hợp lệ';
+    if (!formData.language.trim()) newErrors.language = 'Vui lòng nhập ngôn ngữ';
+    if (!formData.ageLimit) newErrors.ageLimit = 'Vui lòng chọn độ tuổi';
+    if (!formData.releaseYear || formData.releaseYear < 1900) newErrors.releaseYear = 'Năm phát hành không hợp lệ';
     if (!formData.startDate) newErrors.startDate = 'Vui lòng chọn ngày khởi chiếu';
     if (!formData.endDate) newErrors.endDate = 'Vui lòng chọn ngày kết thúc';
     if (!formData.description.trim()) newErrors.description = 'Vui lòng nhập mô tả';
@@ -95,33 +100,36 @@ const AddMovie = () => {
     }
 
     try {
-      setLoading(true);
+      setSubmitting(true);
       
-      // Prepare data for BE (match MovieDto structure)
-      const movieData = {
+      // Prepare movie data
+      const newMovie = {
         title: formData.title,
-        thumbnail: formData.thumbnail || null,
+        thumbnail: formData.thumbnail,
         duration: parseInt(formData.duration),
-        genre: Array.isArray(formData.genre) ? formData.genre.join(', ') : formData.genre,
-        language: formData.language || null,
-        ageLimit: formData.ageLimit || null,
+        genre: formData.genre.join(', '),
+        language: formData.language,
+        ageLimit: formData.ageLimit,
+        releaseYear: parseInt(formData.releaseYear),
         startDate: formData.startDate,
         endDate: formData.endDate,
         description: formData.description,
         director: formData.director,
-        actors: formData.actors || [],
-        rating: parseFloat(formData.rating) || 0
+        actors: formData.actors,
+        rating: parseFloat(formData.rating) || 0,
+        trailer: formData.trailer || ''
       };
 
-      const newMovie = await movieService.createMovie(movieData);
-      console.log('New movie:', newMovie);
+      // Call API to create movie
+      await movieService.createMovie(newMovie);
+      
       alert('Phim đã được tạo thành công!');
       navigate('/movies');
     } catch (error) {
       console.error('Error creating movie:', error);
-      alert('Không thể tạo phim. Vui lòng thử lại sau.');
+      alert(error.response?.data?.message || 'Có lỗi xảy ra khi tạo phim!');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -164,18 +172,7 @@ const AddMovie = () => {
               {errors.title && <p className="text-red-500 text-sm mt-2">{errors.title}</p>}
             </div>
 
-            {/* Thumbnail URL */}
-            <div>
-              <label className="block text-white font-medium mb-2.5">Link ảnh poster</label>
-              <input
-                type="url"
-                name="thumbnail"
-                value={formData.thumbnail}
-                onChange={handleChange}
-                placeholder="https://example.com/poster.jpg"
-                className="w-full px-4 py-2.5 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors"
-              />
-            </div>
+
 
             {/* Director */}
             <div>
@@ -234,25 +231,30 @@ const AddMovie = () => {
 
               {/* Language */}
               <div>
-                <label className="block text-white font-medium mb-2.5">Ngôn ngữ</label>
+                <label className="block text-white font-medium mb-2.5">
+                  Ngôn ngữ <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="language"
                   value={formData.language}
                   onChange={handleChange}
-                  placeholder="Tiếng Việt"
-                  className="w-full px-4 py-2.5 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors"
+                  placeholder="Tiếng Việt, English..."
+                  className={`w-full px-4 py-2.5 bg-primary border ${errors.language ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors`}
                 />
+                {errors.language && <p className="text-red-500 text-sm mt-2">{errors.language}</p>}
               </div>
 
               {/* Age Limit */}
               <div>
-                <label className="block text-white font-medium mb-2.5">Giới hạn tuổi</label>
+                <label className="block text-white font-medium mb-2.5">
+                  Độ tuổi xem phim <span className="text-red-500">*</span>
+                </label>
                 <select
                   name="ageLimit"
                   value={formData.ageLimit}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 bg-primary border border-gray-600 rounded-lg text-white focus:outline-none focus:border-accent transition-colors"
+                  className={`w-full px-4 py-2.5 bg-primary border ${errors.ageLimit ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:outline-none focus:border-accent transition-colors`}
                 >
                   <option value="">Chọn độ tuổi</option>
                   <option value="P">P - Phổ biến</option>
@@ -260,11 +262,29 @@ const AddMovie = () => {
                   <option value="T16">T16 - Trên 16 tuổi</option>
                   <option value="T18">T18 - Trên 18 tuổi</option>
                 </select>
+                {errors.ageLimit && <p className="text-red-500 text-sm mt-2">{errors.ageLimit}</p>}
+              </div>
+
+              {/* Release Year */}
+              <div>
+                <label className="block text-white font-medium mb-2.5">
+                  Năm phát hành <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="releaseYear"
+                  value={formData.releaseYear}
+                  onChange={handleChange}
+                  min="1900"
+                  max={new Date().getFullYear() + 5}
+                  className={`w-full px-4 py-2.5 bg-primary border ${errors.releaseYear ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:outline-none focus:border-accent transition-colors`}
+                />
+                {errors.releaseYear && <p className="text-red-500 text-sm mt-2">{errors.releaseYear}</p>}
               </div>
 
               {/* Rating */}
               <div>
-                <label className="block text-white font-medium mb-2.5">Đánh giá</label>
+                <label className="block text-white font-medium mb-2.5">Đánh giá (0-10)</label>
                 <input
                   type="number"
                   name="rating"
@@ -351,6 +371,19 @@ const AddMovie = () => {
               {errors.genre && <p className="text-red-500 text-sm mt-2">{errors.genre}</p>}
             </div>
 
+            {/* Trailer URL */}
+            <div>
+              <label className="block text-white font-medium mb-2.5">Trailer URL</label>
+              <input
+                type="url"
+                name="trailer"
+                value={formData.trailer}
+                onChange={handleChange}
+                placeholder="https://youtube.com/..."
+                className="w-full px-4 py-2.5 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors"
+              />
+            </div>
+
             {/* Actors */}
             <div>
               <label className="block text-white font-medium mb-2.5">Diễn viên</label>
@@ -373,13 +406,19 @@ const AddMovie = () => {
                   type="text"
                   value={actorInput}
                   onChange={(e) => setActorInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddActor(actorInput);
+                    }
+                  }}
                   placeholder="Nhập tên diễn viên"
                   className="flex-1 px-4 py-2.5 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => handleAddActor(actorInput)}
-                  disabled={!actorInput.trim()}
+                  disabled={!actorInput}
                   className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   Thêm
@@ -389,48 +428,54 @@ const AddMovie = () => {
           </div>
         </div>
 
-        {/* Right Column - Thumbnail Preview & Actions */}
+        {/* Right Column - Poster Upload & Actions */}
         <div className="space-y-6">
-          {/* Thumbnail Preview */}
-          {formData.thumbnail && (
-            <div className="bg-secondary rounded-lg p-8 border border-gray-700">
-              <h2 className="text-xl font-bold text-white mb-5">Xem trước poster</h2>
-              <div className="aspect-[2/3] bg-primary rounded-lg overflow-hidden border border-gray-600">
-                <img 
-                  src={formData.thumbnail} 
-                  alt="Poster preview" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
+          {/* Thumbnail */}
+          <div className="bg-secondary rounded-lg p-8 border border-gray-700">
+            <h2 className="text-xl font-bold text-white mb-5">Thumbnail</h2>
+            <div className="space-y-4">
+              <div className="aspect-[2/3] bg-primary rounded-lg border-2 border-dashed border-gray-600 flex items-center justify-center overflow-hidden">
+                {formData.thumbnail ? (
+                  <img src={formData.thumbnail} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-center text-gray-400">
+                    <FaUpload size={48} className="mx-auto mb-2" />
+                    <p>Chưa có thumbnail</p>
+                  </div>
+                )}
               </div>
+              <input
+                type="url"
+                name="thumbnail"
+                value={formData.thumbnail}
+                onChange={handleChange}
+                placeholder="URL thumbnail (https://...)"
+                className="w-full px-4 py-2 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:border-accent"
+              />
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-gray-700 border border-gray-600 text-white rounded-lg transition-colors"
+              >
+                <FaUpload />
+                <span>Tải ảnh lên</span>
+              </button>
             </div>
-          )}
+          </div>
 
           {/* Actions */}
           <div className="bg-secondary rounded-lg p-8 border border-gray-700 space-y-4">
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Đang lưu...</span>
-                </>
-              ) : (
-                <>
-                  <FaSave />
-                  <span>Lưu phim</span>
-                </>
-              )}
+              <FaSave />
+              <span>{submitting ? 'Đang lưu...' : 'Lưu phim'}</span>
             </button>
             <button
               type="button"
               onClick={() => navigate('/movies')}
-              disabled={loading}
+              disabled={submitting}
               className="w-full px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               Hủy

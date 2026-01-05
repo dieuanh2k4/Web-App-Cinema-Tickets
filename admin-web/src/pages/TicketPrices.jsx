@@ -2,48 +2,31 @@ import { useState, useEffect } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaTimes, FaSyncAlt } from 'react-icons/fa';
 import { formatCurrency } from '../utils/helpers';
 import ticketPriceService from '../services/ticketPriceService';
-import roomService from '../services/roomService';
 
 const TicketPrices = () => {
   const [prices, setPrices] = useState([]);
-  const [rooms, setRooms] = useState([]);
-  const [roomTypes, setRoomTypes] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
   const [selectedPrice, setSelectedPrice] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 10;
 
-  // Load prices and room types from API
+  // Load prices from API
   useEffect(() => {
-    loadData();
+    loadPrices();
   }, []);
 
-  const loadData = async () => {
+  const loadPrices = async () => {
     try {
       setLoading(true);
-      const [pricesData, roomsData] = await Promise.all([
-        ticketPriceService.getAllTicketPrices(),
-        roomService.getAllRooms()
-      ]);
-      console.log('Prices data from API:', pricesData);
-      console.log('Sample price:', pricesData?.[0]);
-      console.log('Rooms data:', roomsData);
-      setPrices(pricesData || []);
-      setRooms(roomsData || []);
-      
-      // Extract unique room types from rooms
-      const types = [...new Set(roomsData?.map(room => room.type).filter(Boolean))];
-      console.log('Room types from API:', types);
-      setRoomTypes(types.length > 0 ? types : ['2D', '3D', 'IMAX']); // Fallback to defaults if empty
+      const data = await ticketPriceService.getAllTicketPrices();
+      setPrices(data || []);
     } catch (error) {
-      console.error('Error loading data:', error);
-      alert('Không thể tải dữ liệu. Vui lòng thử lại sau.');
+      console.error('Error loading ticket prices:', error);
+      alert('Không thể tải danh sách giá vé. Vui lòng thử lại!');
       setPrices([]);
-      setRooms([]);
-      setRoomTypes(['2D', '3D', 'IMAX']); // Fallback
     } finally {
       setLoading(false);
     }
@@ -51,18 +34,19 @@ const TicketPrices = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await loadData();
+    await loadPrices();
     setIsRefreshing(false);
   };
 
-  // Form state - BE only has: roomType, seatType, price
+  // Form state - BE only has: price, roomType, seatType
   const [formData, setFormData] = useState({
     roomType: '',
     seatType: '',
     price: ''
   });
 
-  const seatTypes = ['Thường', 'Vip', 'Đôi']; // Match BE Vietnamese names
+  const roomTypes = ['Standard', 'IMAX'];
+  const seatTypes = ['Standard', 'VIP', 'Couple'];
 
   // Pagination
   const totalPages = Math.ceil(prices.length / itemsPerPage);
@@ -72,8 +56,8 @@ const TicketPrices = () => {
   const handleAdd = () => {
     setModalMode('add');
     setFormData({
-      roomType: roomTypes.length > 0 ? roomTypes[0] : '',
-      seatType: 'Thường', // Default to first Vietnamese option
+      roomType: '',
+      seatType: '',
       price: ''
     });
     setShowModal(true);
@@ -94,11 +78,11 @@ const TicketPrices = () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa giá vé này?')) {
       try {
         await ticketPriceService.deleteTicketPrice(id);
-        await loadData();
         alert('Xóa giá vé thành công!');
+        await loadPrices();
       } catch (error) {
         console.error('Error deleting ticket price:', error);
-        alert('Không thể xóa giá vé. Vui lòng thử lại sau.');
+        alert('Không thể xóa giá vé. Vui lòng thử lại!');
       }
     }
   };
@@ -114,24 +98,23 @@ const TicketPrices = () => {
     try {
       const priceData = {
         roomType: formData.roomType,
-        seatType: formData.seatType, // Already in Vietnamese
+        seatType: formData.seatType,
         price: parseInt(formData.price)
       };
 
-      console.log('Sending price data:', priceData);
-
       if (modalMode === 'add') {
         await ticketPriceService.createTicketPrice(priceData);
+        alert('Thêm giá vé thành công!');
       } else {
         await ticketPriceService.updateTicketPrice(selectedPrice.id, priceData);
+        alert('Cập nhật giá vé thành công!');
       }
 
-      await loadData();
       setShowModal(false);
-      alert(modalMode === 'add' ? 'Thêm giá vé thành công!' : 'Cập nhật giá vé thành công!');
+      await loadPrices();
     } catch (error) {
       console.error('Error saving ticket price:', error);
-      alert('Không thể lưu giá vé. Vui lòng thử lại sau.');
+      alert(error.message || 'Có lỗi xảy ra. Vui lòng thử lại!');
     }
   };
 
@@ -145,28 +128,37 @@ const TicketPrices = () => {
 
   const getRoomTypeBadgeColor = (roomType) => {
     switch(roomType) {
-      case '2D': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case '3D': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'Standard': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
       case 'IMAX': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
       default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
   };
 
   const getSeatTypeBadgeColor = (seatType) => {
-    const type = seatType?.toLowerCase();
-    if (type === 'thường' || type === 'standard') return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-    if (type === 'đôi' || type === 'couple') return 'bg-pink-500/20 text-pink-400 border-pink-500/30';
-    if (type === 'vip') return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-    return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    switch(seatType) {
+      case 'Standard': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'VIP': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+      case 'Couple': return 'bg-pink-500/20 text-pink-400 border-pink-500/30';
+      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    }
+  };
+
+  const getShowtimeBadgeColor = (showtimeType) => {
+    return showtimeType === 'Suất chiếu sớm' 
+      ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
+      : 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+  };
+
+  const getDayTypeBadgeColor = (dayType) => {
+    return dayType === 'Ngày thường'
+      ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
+      : 'bg-red-500/20 text-red-400 border-red-500/30';
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-gray-400">Đang tải dữ liệu...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-white text-xl">Đang tải dữ liệu...</div>
       </div>
     );
   }
@@ -206,8 +198,9 @@ const TicketPrices = () => {
           <table className="w-full">
             <thead className="bg-primary/50">
               <tr>
+                <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">ID</th>
                 <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Loại ghế</th>
-                <th className="px-8 py-5 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Hình thức chiếu</th>
+                <th className="px-8 py-5 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Loại phòng chiếu</th>
                 <th className="px-8 py-5 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Giá vé</th>
                 <th className="px-8 py-5 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Thao tác</th>
               </tr>
@@ -215,6 +208,9 @@ const TicketPrices = () => {
             <tbody className="divide-y divide-gray-700/50">
               {currentPrices.map((price) => (
                 <tr key={price.id} className="hover:bg-primary/30 transition-colors group">
+                  <td className="px-8 py-5">
+                    <span className="text-white font-medium">#{price.id}</span>
+                  </td>
                   <td className="px-8 py-5">
                     <span className={`px-3 py-1.5 text-sm rounded-lg border ${getSeatTypeBadgeColor(price.seatType)}`}>
                       {price.seatType}
@@ -320,16 +316,16 @@ const TicketPrices = () => {
                   className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
                   required
                 >
-                  <option value="">Select a seat type</option>
+                  <option value="">Chọn loại ghế</option>
                   {seatTypes.map(type => (
                     <option key={type} value={type}>{type}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Hình thức chiếu */}
+              {/* Loại phòng chiếu */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Hình thức chiếu</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Loại phòng chiếu</label>
                 <select
                   name="roomType"
                   value={formData.roomType}
@@ -337,7 +333,7 @@ const TicketPrices = () => {
                   className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
                   required
                 >
-                  <option value="">Select a graphics type</option>
+                  <option value="">Chọn loại phòng</option>
                   {roomTypes.map(type => (
                     <option key={type} value={type}>{type}</option>
                   ))}
@@ -346,13 +342,13 @@ const TicketPrices = () => {
 
               {/* Giá tiền */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Giá tiền</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Giá tiền (VNĐ)</label>
                 <input
                   type="number"
                   name="price"
                   value={formData.price}
                   onChange={handleChange}
-                  placeholder="Nhập giá vé (VNĐ)"
+                  placeholder="Nhập giá vé"
                   className="w-full px-4 py-3 bg-primary/80 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
                   required
                   min="0"

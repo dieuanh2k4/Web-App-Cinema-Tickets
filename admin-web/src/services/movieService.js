@@ -56,15 +56,27 @@ const movieService = {
    * Update movie
    * @param {number} id 
    * @param {Object} movieData 
+   * @param {File} thumbnailFile - Optional new thumbnail image
    * @returns {Promise<Object>}
    */
-  async updateMovie(id, movieData) {
+  async updateMovie(id, movieData, thumbnailFile = null) {
     // Convert to FormData because BE expects [FromForm]
     const formData = new FormData();
+    
+    // Add thumbnail file if provided (new upload)
+    if (thumbnailFile) {
+      formData.append('imageFile', thumbnailFile);
+    }
     
     // Append all fields to FormData
     Object.keys(movieData).forEach(key => {
       if (movieData[key] !== null && movieData[key] !== undefined) {
+        // If uploading new image, skip thumbnail URL
+        // If NOT uploading new image, send existing thumbnail URL so BE keeps it
+        if (key === 'thumbnail' && thumbnailFile) {
+          return;
+        }
+        
         if (Array.isArray(movieData[key])) {
           // For arrays (like actors), append each item
           movieData[key].forEach(item => {
