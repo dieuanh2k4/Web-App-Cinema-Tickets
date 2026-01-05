@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
 using Server.src.Dtos.Auth;
 using Server.src.Exceptions;
+using Server.src.Mapper;
 using Server.src.Models;
 using Server.src.Services.Interfaces;
 using Server.src.Utils;
@@ -27,8 +28,10 @@ namespace Server.src.Services.Implements
 
         public async Task<AuthResult> LoginAsync(LoginRequestDto request)
         {
-            // Tìm user theo username
+            // Tìm user theo username và include roles
             var user = await _context.User
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.username == request.Username);
 
             if (user == null)
@@ -38,8 +41,8 @@ namespace Server.src.Services.Implements
             if (!PasswordHelper.VerifyPassword(request.Password, user.password))
                 return AuthResult.Fail("Sai tài khoản hoặc mật khẩu");
 
-            string role = user.userType == 0 ? "Admin" : 
-                          user.userType == 1 ? "Staff" : "Customer"; // 0=Admin, 1=Staff, 2=Customer
+            // Lấy role đầu tiên của user (hoặc "User" nếu không có role)
+            string role = user.UserRoles?.FirstOrDefault()?.Role?.Name ?? "User";
 
             var token = _jwtHelper.GenerateToken(user.username, role, user.Id);
 
@@ -53,51 +56,64 @@ namespace Server.src.Services.Implements
             return AuthResult.Success(response, "Đăng nhập thành công");
         }
 
-        // public async Task<Result> RegisterAsync(RegisterRequestDto request)
-        // {
-        //     // Kiểm tra username đã tồn tại
-        //     var existingUser = await _context.User
-        //         .FirstOrDefaultAsync(u => u.username == request.Username);
+        public async Task<User> RegisterAsync(RegisterDto register)
+        {
+            // Kiểm tra username đã tồn tại
+            var existingUser = await _context.User
+                .FirstOrDefaultAsync(u => u.username == register.username);
+            if (existingUser != null)
+                throw new Result("Tên đăng nhập đã tồn tại");
 
-        //     if (existingUser != null)
-        //         return Result.Fail("Tên đăng nhập đã tồn tại");
+            // Kiểm tra email đã tồn tại trong Customer
+            var existingCustomer = await _context.Customers
+                .FirstOrDefaultAsync(c => c.Email == register.Email);
+            if (existingCustomer != null)
+                throw new Result("Email đã được sử dụng");
 
-        //     // Kiểm tra email đã tồn tại trong Customer
-        //     var existingCustomer = await _context.Customers
-        //         .FirstOrDefaultAsync(c => c.Email == request.Email);
+            // Hash password
+            var hashedPassword = PasswordHelper.HashPassword(register.password);
 
-        //     if (existingCustomer != null)
-        //         return Result.Fail("Email đã được sử dụng");
+            // Tạo User mới
+            var newUser = await register.ToUserFromRegisterDto();
+            newUser.Avatar = register.Avatar;
+            newUser.password = hashedPassword;
 
-        //     // Hash password
-        //     var hashedPassword = PasswordHelper.HashPassword(request.Password);
+            // Thêm User vào database
+            await _context.User.AddAsync(newUser);
+            await _context.SaveChangesAsync();
 
-        //     // Tạo User mới
-        //     var newUser = new User
-        //     {
-        //         username = request.Username,
-        //         password = hashedPassword,
-        //         userType = 1 // Mặc định là Staff/Customer
-        //     };
+            // Tìm role "Customer" trong database
+            var customerRole = await _context.Roles
+                .FirstOrDefaultAsync(r => r.Name == "Customer");
 
-        //     await _context.User.AddAsync(newUser);
-        //     await _context.SaveChangesAsync();
+            if (customerRole != null)
+            {
+                // Tạo UserRole để gán role Customer cho user mới
+                var userRole = new UserRole
+                {
+                    UserId = newUser.Id,
+                    RoleId = customerRole.Id,
+                    AssignedDate = DateTime.UtcNow
+                };
 
-        //     // Tạo Customer mới liên kết với User
-        //     var newCustomer = new Customer
-        //     {
-        //         Name = request.Username,
-        //         Email = request.Email,
-        //         Phone = "0000000000", // Placeholder - có thể cập nhật sau
-        //         Birth = DateTime.Now.AddYears(-18), // Placeholder
-        //         UserId = newUser.Id
-        //     };
+                await _context.UserRoles.AddAsync(userRole);
+            }
 
-        //     await _context.Customers.AddAsync(newCustomer);
-        //     await _context.SaveChangesAsync();
+            // Tạo Customer mới liên kết với User
+            var newCustomer = new Customer
+            {
+                Name = register.Name,
+                Email = register.Email,
+                Phone = register.phoneNumber,
+                Birth = register.Birth,
+                UserId = newUser.Id
+            };
 
-        //     return Result.Ok("Đăng ký thành công");
-        // }
+            await _context.Customers.AddAsync(newCustomer);
+            await _context.SaveChangesAsync();
+
+            return newUser;
+        }
 
         // public async Task<Result> SendOTPAsync(string email)
         // {

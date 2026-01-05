@@ -121,9 +121,8 @@ namespace Server.src.Controllers
                 {
                     id = user.Id,
                     username = user.username,
-                    email = user.email,
+                    email = user.Email,
                     phoneNumber = user.phoneNumber,
-                    userType = user.userType,
                     createdAt = user.createdDate
                 });
             }
@@ -164,8 +163,8 @@ namespace Server.src.Controllers
                     .Include(t => t.Showtimes)
                         .ThenInclude(s => s.Rooms)
                             .ThenInclude(r => r.Theater)
-                    .Include(t => t.Customer)
-                    .Where(t => t.Customer.Email == user.email)
+                    .Include(t => t.User)
+                    .Where(t => t.User.Email == user.Email)
                     .OrderByDescending(t => t.Date)
                     .ToListAsync();
 

@@ -14,7 +14,10 @@ namespace Server.src.Data
             // Migration đã được chạy rồi, không cần gọi lại
             // context.Database.Migrate();
 
-            // 1. Seed Users - Always ensure Admin exists and has correct role
+            // 0. Seed RBAC Data (Roles, Permissions, RolePermissions)
+            RbacSeeder.SeedRbacData(context);
+
+            // 1. Seed Users - Always ensure Admin exists
             var adminUser = context.User.FirstOrDefault(u => u.username == "admin");
             if (adminUser == null)
             {
@@ -23,46 +26,95 @@ namespace Server.src.Data
                 {
                     username = "admin",
                     password = PasswordHelper.HashPassword("admin123"),
-                    userType = 0 // 0 = Admin
+                    Email = "admin@cinema.com",
+                    phoneNumber = "0123456789",
+                    createdDate = DateTime.UtcNow,
+                    Name = "Nguyễn Văn A",
+                    Birth = new DateOnly(1995, 12, 22),
+                    Gender = "Nam",
+                    Address = "Hà Nội"
                 };
                 context.User.Add(adminUser);
                 context.SaveChanges();
-                Console.WriteLine("✅ Đã tạo Admin user");
-            }
-            else if (adminUser.userType != 0)
-            {
-                // Admin tồn tại nhưng role sai → Sửa lại
-                adminUser.userType = 0;
-                context.User.Update(adminUser);
-                context.SaveChanges();
-                Console.WriteLine("✅ Đã sửa role của admin về Admin (userType = 0)");
+                Console.WriteLine("Đã tạo Admin user");
+                
+                // Gán role Admin cho user admin
+                var adminRole = context.Roles.FirstOrDefault(r => r.Name == "Admin");
+                if (adminRole != null)
+                {
+                    context.UserRoles.Add(new UserRole
+                    {
+                        UserId = adminUser.Id,
+                        RoleId = adminRole.Id,
+                        AssignedDate = DateTime.UtcNow
+                    });
+                    context.SaveChanges();
+                    Console.WriteLine("Đã gán role Admin cho user admin");
+                }
             }
             else
             {
-                Console.WriteLine("ℹ️ Admin user đã tồn tại với role đúng");
+                Console.WriteLine("Admin user đã tồn tại");
             }
 
             if (!context.User.Any(u => u.username != "admin"))
             {
-                var users = new List<User>
+                var staffRole = context.Roles.FirstOrDefault(r => r.Name == "Staff");
+                var customerServiceRole = context.Roles.FirstOrDefault(r => r.Name == "Customer");
+                
+                var staffUser = new User
                 {
-                    new User
-                    {
-                        username = "staff",
-                        password = PasswordHelper.HashPassword("staff123"),
-                        userType = 1 // 1 = Staff
-                    },
-                    new User
-                    {
-                        username = "customer",
-                        password = PasswordHelper.HashPassword("customer123"),
-                        userType = 2 // 2 = Customer
-                    }
+                    username = "staff",
+                    password = PasswordHelper.HashPassword("staff123"),
+                    Email = "staff@cinema.com",
+                    phoneNumber = "0987654321",
+                    createdDate = DateTime.UtcNow,
+                    Name = "Nguyễn Văn B",
+                    Birth = new DateOnly(2000, 5, 15),
+                    Gender = "Nam",
+                    Address = "Hà Nội"
+                };
+                
+                var customerUser = new User
+                {
+                    username = "customer",
+                    password = PasswordHelper.HashPassword("customer123"),
+                    Email = "customer@cinema.com",
+                    phoneNumber = "0912345678",
+                    createdDate = DateTime.UtcNow,
+                    Name = "Nguyễn Thị C",
+                    Birth = new DateOnly(2001, 8, 20),
+                    Gender = "Nữ",
+                    Address = "Hà Nội"
                 };
 
-                context.User.AddRange(users);
+                context.User.AddRange(staffUser, customerUser);
                 context.SaveChanges();
-                Console.WriteLine("✅ Đã tạo Staff và Customer users");
+                Console.WriteLine("Đã tạo Staff và Customer users");
+                
+                // Gán roles cho users
+                if (staffRole != null)
+                {
+                    context.UserRoles.Add(new UserRole
+                    {
+                        UserId = staffUser.Id,
+                        RoleId = staffRole.Id,
+                        AssignedDate = DateTime.UtcNow
+                    });
+                }
+                
+                if (customerServiceRole != null)
+                {
+                    context.UserRoles.Add(new UserRole
+                    {
+                        UserId = customerUser.Id,
+                        RoleId = customerServiceRole.Id,
+                        AssignedDate = DateTime.UtcNow
+                    });
+                }
+                
+                context.SaveChanges();
+                Console.WriteLine("Đã gán roles cho Staff và Customer users");
             }
 
             // 2. Seed Theaters - 6 rạp tại Hà Nội
@@ -110,7 +162,7 @@ namespace Server.src.Data
 
                 context.Theater.AddRange(theaters);
                 context.SaveChanges();
-                Console.WriteLine("✅ Đã tạo 6 rạp chiếu tại Hà Nội");
+                Console.WriteLine("Đã tạo 6 rạp chiếu tại Hà Nội");
             }
 
             // 3. Seed Rooms
@@ -153,7 +205,7 @@ namespace Server.src.Data
 
                 context.Rooms.AddRange(rooms);
                 context.SaveChanges();
-                Console.WriteLine("✅ Đã tạo 4 rooms");
+                Console.WriteLine("Đã tạo 4 rooms");
             }
 
             // 4. Seed Seats
@@ -186,7 +238,7 @@ namespace Server.src.Data
 
                 context.Seats.AddRange(seats);
                 context.SaveChanges();
-                Console.WriteLine($"✅ Đã tạo {seats.Count} seats");
+                Console.WriteLine($"Đã tạo {seats.Count} seats");
             }
 
             // 5. Seed Movies
@@ -243,7 +295,7 @@ namespace Server.src.Data
 
                 context.Movies.AddRange(movies);
                 context.SaveChanges();
-                Console.WriteLine("✅ Đã tạo 3 movies");
+                Console.WriteLine("Đã tạo 3 movies");
             }
 
             // 6. Seed Showtimes
@@ -335,7 +387,7 @@ namespace Server.src.Data
 
                 context.Showtimes.AddRange(showtimes);
                 context.SaveChanges();
-                Console.WriteLine("✅ Đã tạo 8 showtimes");
+                Console.WriteLine("Đã tạo 8 showtimes");
             }
 
             // 7. Seed TicketPrices
@@ -371,7 +423,7 @@ namespace Server.src.Data
 
                 context.TicketPrices.AddRange(ticketPrices);
                 context.SaveChanges();
-                Console.WriteLine("✅ Đã tạo 4 ticket prices");
+                Console.WriteLine("Đã tạo 4 ticket prices");
             }
 
             Console.WriteLine("\nData User hoàn thành!");
