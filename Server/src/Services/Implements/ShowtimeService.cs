@@ -35,6 +35,8 @@ namespace Server.src.Services.Implements
                     Start = s.Start,
                     End = s.End,
                     Date = s.Date,
+                    MovieId = s.MovieId,      // Thêm MovieId để Frontend có thể edit
+                    RoomId = s.RoomId,        // Thêm RoomId để Frontend có thể edit
                     MovieTitle = s.Movies.Title,
                     RoomType = s.Rooms.Type,
                     RoomName = s.Rooms.Name,
@@ -157,7 +159,7 @@ namespace Server.src.Services.Implements
                 else
                 {
                     bool checkShowtime = await _context.Showtimes
-                        .Where(s => s.RoomId == roomId)
+                        .Where(s => s.RoomId == roomId && s.Id != id) // Loại trừ chính showtime đang edit
                         .AnyAsync(s =>
                             (updateShowtimeDto.Start >= s.Start && updateShowtimeDto.Start < s.End) ||
                             (updateShowtimeDto.End > s.Start && updateShowtimeDto.End <= s.End) ||
