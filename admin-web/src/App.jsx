@@ -10,7 +10,6 @@ import EditMovie from './pages/EditMovie';
 import Theaters from './pages/Theaters';
 import Rooms from './pages/Rooms';
 import Showtimes from './pages/Showtimes';
-import ShowtimeSlots from './pages/ShowtimeSlots';
 import TicketPrices from './pages/TicketPrices';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
@@ -78,7 +77,6 @@ function App() {
             <Route path="theaters" element={<Theaters />} />
             <Route path="rooms" element={<Rooms />} />
             <Route path="showtimes" element={<Showtimes />} />
-            <Route path="showtime-slots" element={<ShowtimeSlots />} />
             <Route path="ticket-prices" element={<TicketPrices />} />
             <Route path="orders">
               <Route index element={<Orders />} />

@@ -6,13 +6,13 @@ import movieService from '../services/movieService';
 
 const Movies = () => {
   const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterYear, setFilterYear] = useState('');
   const [filterGenre, setFilterGenre] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 10;
   const navigate = useNavigate();
 
@@ -25,10 +25,21 @@ const Movies = () => {
     try {
       setLoading(true);
       const data = await movieService.getAllMovies();
-      setMovies(data || []);
+      
+      // Fix: If releaseYear is 0, extract year from startDate
+      const processedData = (data || []).map(movie => ({
+        ...movie,
+        releaseYear: movie.releaseYear && movie.releaseYear > 0 
+          ? movie.releaseYear 
+          : movie.startDate 
+            ? new Date(movie.startDate).getFullYear() 
+            : null
+      }));
+      
+      setMovies(processedData);
     } catch (error) {
       console.error('Error loading movies:', error);
-      alert('Không thể tải danh sách phim. Vui lòng thử lại sau.');
+      alert('Không thể tải danh sách phim. Vui lòng thử lại!');
       setMovies([]);
     } finally {
       setLoading(false);
@@ -41,45 +52,40 @@ const Movies = () => {
     setIsRefreshing(false);
   };
 
-  // Helper function to get movie status based on dates
-  const getMovieStatus = (movie) => {
-    if (!movie.startDate || !movie.endDate) return 'unknown';
-    const today = new Date();
-    const start = new Date(movie.startDate);
-    const end = new Date(movie.endDate);
-    
-    if (today >= start && today <= end) return 'showing';
-    if (today < start) return 'coming-soon';
-    return 'ended';
-  };
-
-  // Helper function to parse genre string to array
-  const parseGenre = (genreString) => {
-    if (!genreString) return [];
-    if (Array.isArray(genreString)) return genreString;
-    return genreString.split(',').map(g => g.trim());
-  };
-
   // Get unique years and genres for filters
-  const years = [...new Set(movies.map(m => {
-    if (m.startDate) {
-      return new Date(m.startDate).getFullYear();
-    }
-    return null;
-  }).filter(Boolean))].sort((a, b) => b - a);
-
-  const allGenres = [...new Set(movies.flatMap(m => parseGenre(m.genre)))].sort();
+  const years = [...new Set(movies.map(m => m.releaseYear).filter(Boolean))].sort((a, b) => b - a);
+  // Split genre strings (e.g., "Action, Adventure") into individual genres
+  const allGenres = [...new Set(
+    movies.flatMap(m => {
+      if (Array.isArray(m.genre)) {
+        return m.genre;
+      } else if (typeof m.genre === 'string') {
+        // Split by comma and trim whitespace
+        return m.genre.split(',').map(g => g.trim());
+      }
+      return [];
+    }).filter(Boolean)
+  )].sort();
 
   // Filter movies
   const filteredMovies = movies.filter(movie => {
-    const genres = parseGenre(movie.genre);
-    const status = getMovieStatus(movie);
+    const matchSearch = movie.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       movie.director?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchYear = !filterYear || movie.releaseYear?.toString() === filterYear;
     
-    const matchSearch = (movie.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                       (movie.director?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-    const matchYear = !filterYear || (movie.startDate && new Date(movie.startDate).getFullYear().toString() === filterYear);
-    const matchGenre = !filterGenre || genres.includes(filterGenre);
-    const matchStatus = !filterStatus || status === filterStatus;
+    // Check if filterGenre exists in movie's genre string or array
+    let matchGenre = !filterGenre;
+    if (filterGenre) {
+      if (Array.isArray(movie.genre)) {
+        matchGenre = movie.genre.includes(filterGenre);
+      } else if (typeof movie.genre === 'string') {
+        // Check if genre string contains the filter genre
+        const genreList = movie.genre.split(',').map(g => g.trim());
+        matchGenre = genreList.includes(filterGenre);
+      }
+    }
+    
+    const matchStatus = !filterStatus || movie.status === filterStatus;
     
     return matchSearch && matchYear && matchGenre && matchStatus;
   });
@@ -93,11 +99,11 @@ const Movies = () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa phim này?')) {
       try {
         await movieService.deleteMovie(id);
-        await loadMovies();
         alert('Xóa phim thành công!');
+        await loadMovies();
       } catch (error) {
         console.error('Error deleting movie:', error);
-        alert('Không thể xóa phim. Vui lòng thử lại sau.');
+        alert('Không thể xóa phim. Vui lòng thử lại!');
       }
     }
   };
@@ -112,11 +118,8 @@ const Movies = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-gray-400">Đang tải dữ liệu...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-white text-xl">Đang tải dữ liệu...</div>
       </div>
     );
   }
@@ -157,7 +160,7 @@ const Movies = () => {
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Tìm kiếm theo tên phim, đạo diễn..."
+                placeholder="Tìm kiếm theo tên phim hoặc đạo diễn"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent"
@@ -202,8 +205,9 @@ const Movies = () => {
             className="px-4 py-2 bg-primary border border-gray-600 rounded-lg text-white focus:outline-none focus:border-accent"
           >
             <option value="">Trạng thái</option>
-            <option value="showing">Đang chiếu</option>
-            <option value="coming-soon">Sắp chiếu</option>
+            <option value="Đang chiếu">Đang chiếu</option>
+            <option value="Sắp chiếu">Sắp chiếu</option>
+            <option value="Ngừng chiếu">Ngừng chiếu</option>
           </select>
 
           <button
@@ -232,101 +236,82 @@ const Movies = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
-              {currentMovies.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="px-8 py-12 text-center text-gray-400">
-                    Không có phim nào
+              {currentMovies.map((movie) => (
+                <tr key={movie.id} className="hover:bg-primary/50 transition-colors">
+                  <td className="px-8 py-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-16 bg-gray-700 rounded overflow-hidden flex-shrink-0">
+                        {movie.thumbnail ? (
+                          <img src={movie.thumbnail} alt={movie.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-500">
+                            <FaEye />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-white font-medium">{movie.title}</p>
+                        <p className="text-xs text-gray-500">{movie.director}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-5 text-center text-white">
+                    {movie.releaseYear || '-'}
+                  </td>
+                  <td className="px-8 py-5">
+                    <div className="flex flex-wrap gap-1 justify-center">
+                      {(Array.isArray(movie.genre) ? movie.genre : [movie.genre]).filter(Boolean).slice(0, 2).map((g, i) => (
+                        <span key={i} className="px-2 py-1 bg-blue-600/20 text-blue-400 text-xs rounded">
+                          {g}
+                        </span>
+                      ))}
+                      {(Array.isArray(movie.genre) ? movie.genre : [movie.genre]).filter(Boolean).length > 2 && (
+                        <span className="px-2 py-1 bg-gray-600 text-gray-300 text-xs rounded">
+                          +{(Array.isArray(movie.genre) ? movie.genre : [movie.genre]).filter(Boolean).length - 2}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-8 py-5 text-center text-white">{movie.duration} phút</td>
+                  <td className="px-8 py-5 text-center">
+                    <span className="px-3 py-1 bg-orange-600/20 text-orange-400 text-sm rounded-full">
+                      Xem lịch
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`px-3 py-1 text-sm rounded-full ${
+                      movie.status === 'Đang chiếu' 
+                        ? 'bg-green-600/20 text-green-400'
+                        : movie.status === 'Sắp chiếu'
+                        ? 'bg-yellow-600/20 text-yellow-400' 
+                        : 'bg-gray-600/20 text-gray-400'
+                    }`}>
+                      {movie.status || 'Không xác định'}
+                    </span>
+                  </td>
+                  <td className="px-8 py-5 text-center text-gray-400 text-sm">
+                    {formatDate(new Date())}
+                  </td>
+                  <td className="px-8 py-5">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => navigate(`/movies/edit/${movie.id}`)}
+                        className="p-2 text-blue-400 hover:bg-blue-600/20 rounded transition-colors"
+                        title="Sửa"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(movie.id)}
+                        className="p-2 text-red-400 hover:bg-red-600/20 rounded transition-colors"
+                        title="Xóa"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              ) : (
-                currentMovies.map((movie) => {
-                  const genres = parseGenre(movie.genre);
-                  const status = getMovieStatus(movie);
-                  const year = movie.startDate ? new Date(movie.startDate).getFullYear() : '-';
-                  
-                  return (
-                    <tr key={movie.id} className="hover:bg-primary/50 transition-colors">
-                      <td className="px-8 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-16 bg-gray-700 rounded overflow-hidden flex-shrink-0">
-                            {movie.thumbnail ? (
-                              <img src={movie.thumbnail} alt={movie.title} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-500">
-                                <FaEye />
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-white font-medium">{movie.title || 'N/A'}</p>
-                            <p className="text-xs text-gray-500">{movie.director || 'N/A'}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-5 text-center text-white">{year}</td>
-                      <td className="px-8 py-5">
-                        <div className="flex flex-wrap gap-1 justify-center">
-                          {genres.slice(0, 2).map((g, i) => (
-                            <span key={i} className="px-2 py-1 bg-blue-600/20 text-blue-400 text-xs rounded">
-                              {g}
-                            </span>
-                          ))}
-                          {genres.length > 2 && (
-                            <span className="px-2 py-1 bg-gray-600 text-gray-300 text-xs rounded">
-                              +{genres.length - 2}
-                            </span>
-                          )}
-                          {genres.length === 0 && (
-                            <span className="text-gray-500 text-xs">N/A</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-8 py-5 text-center text-white">{movie.duration || 0} phút</td>
-                      <td className="px-8 py-5 text-center">
-                        <div className="text-xs text-gray-400">
-                          {movie.startDate && movie.endDate ? (
-                            <>
-                              {formatDate(new Date(movie.startDate))} - {formatDate(new Date(movie.endDate))}
-                            </>
-                          ) : 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`px-3 py-1 text-sm rounded-full ${
-                          status === 'showing' 
-                            ? 'bg-green-600/20 text-green-400' 
-                            : status === 'coming-soon'
-                            ? 'bg-yellow-600/20 text-yellow-400'
-                            : 'bg-gray-600/20 text-gray-400'
-                        }`}>
-                          {status === 'showing' ? 'Đang chiếu' : status === 'coming-soon' ? 'Sắp chiếu' : 'Đã kết thúc'}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5 text-center text-gray-400 text-sm">
-                        {movie.startDate ? formatDate(new Date(movie.startDate)) : 'N/A'}
-                      </td>
-                      <td className="px-8 py-5">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => navigate(`/movies/edit/${movie.id}`)}
-                            className="p-2 text-blue-400 hover:bg-blue-600/20 rounded transition-colors"
-                            title="Sửa"
-                          >
-                            <FaEdit />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(movie.id)}
-                            className="p-2 text-red-400 hover:bg-red-600/20 rounded transition-colors"
-                            title="Xóa"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
+              ))}
             </tbody>
           </table>
         </div>

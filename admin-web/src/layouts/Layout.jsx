@@ -6,11 +6,9 @@ import {
   FaTimes,
   FaHome,
   FaFilm,
-  FaTheaterMasks,
   FaDoorOpen,
   FaCouch,
   FaClock,
-  FaCalendarAlt,
   FaMoneyBillWave,
   FaShoppingCart,
   FaUsers,
@@ -24,14 +22,13 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
   const location = useLocation();
 
   const menuItems = [
-    // { path: '/', icon: FaHome, label: 'Tổng quan' },
+    { path: '/', icon: FaHome, label: 'Tổng quan' },
     { path: '/movies', icon: FaFilm, label: 'Quản lý phim' },
-    { path: '/theaters', icon: FaTheaterMasks, label: 'Quản lý rạp chiếu' },
+    { path: '/theaters', icon: FaCouch, label: 'Quản lý rạp chiếu' },
     { path: '/rooms', icon: FaDoorOpen, label: 'Quản lý phòng chiếu' },
-    // { path: '/showtimes', icon: FaClock, label: 'Quản lý lịch chiếu' },
-    { path: '/showtime-slots', icon: FaCalendarAlt, label: 'Quản lý suất chiếu' },
+    { path: '/showtimes', icon: FaClock, label: 'Quản lý suất chiếu' },
     { path: '/ticket-prices', icon: FaMoneyBillWave, label: 'Quản lý giá vé' },
-    // { path: '/orders', icon: FaShoppingCart, label: 'Quản lý đơn hàng' },
+    { path: '/orders', icon: FaShoppingCart, label: 'Quản lý đơn hàng' },
     { path: '/accounts', icon: FaUsers, label: 'Quản lý tài khoản' }
   ];
 
@@ -104,10 +101,10 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0 animate-fade-in">
-              <p className="text-sm font-semibold text-white truncate">{user?.fullName}</p>
+              <p className="text-sm font-semibold text-white truncate">{user?.username || 'User'}</p>
               <p className="text-xs text-gray-400 capitalize flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                {user?.role}
+                {user?.role || 'Guest'}
               </p>
             </div>
           )}
