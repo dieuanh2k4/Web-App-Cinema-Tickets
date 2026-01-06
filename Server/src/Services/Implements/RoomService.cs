@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
 using Server.src.Dtos.Rooms;
+using Server.src.Dtos.Seats;
 using Server.src.Exceptions;
 using Server.src.Mapper;
 using Server.src.Models;
@@ -56,6 +57,8 @@ namespace Server.src.Services.Implements
 
             var room = await createRoomDto.ToNewRooms();
             room.Capacity = rows * seatsInRow;
+            room.Rows = rows;
+            room.Columns = seatsInRow;
             room.Seats = new List<Seats>();
             var numberOfCoupleSeat = rows - coupleRowsSeats;
 
@@ -65,11 +68,11 @@ namespace Server.src.Services.Implements
                 for (int seatNum = 1; seatNum <= seatsInRow; seatNum++)
                 {
                     var seatType = row <= normalSeats
-                        ? "Thường"
+                        ? "Standard"
                         : (row > normalSeats && row <= numberOfCoupleSeat)
-                            ? "Vip"
+                            ? "VIP"
                             : (row > numberOfCoupleSeat)
-                                ? "Đôi"
+                                ? "Couple"
                                 : "";
 
                     var ticketPrice = await _context.TicketPrices
@@ -86,7 +89,7 @@ namespace Server.src.Services.Implements
                         Name = $"{(char)(64 + row)}{seatNum}",
                         Type = seatType,
                         Price = ticketPrice.Price,
-                        Status = "Trống"
+                        Status = "Available"
                     };
 
                     var seat = await seatDto.ToSeatsOfRoom(room);
@@ -175,6 +178,55 @@ namespace Server.src.Services.Implements
             }
 
             _context.Seats.RemoveRange(room.Seats);
+
+            return room;
+        }
+
+        public async Task<Rooms> GetDetailRoomById(int id)
+        {
+            var room = await _context.Rooms
+                    .Include(r => r.Seats)
+                    .Include(r => r.Theater)
+                    .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (room == null)
+            {
+                throw new Result("Không tìm thấy phòng chiếu");
+            }
+
+            return room;
+        }
+
+        public async Task<Rooms> UpdateSeatLayout(UpdateSeatLayoutDto updateSeatLayoutDto, int id)
+        {
+            var room = await _context.Rooms
+                    .Include(r => r.Seats)
+                    .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (room == null)
+            {
+                throw new Result("Không tìm thấy phòng chiếu");
+            }
+
+            if (updateSeatLayoutDto.Seats == null || !updateSeatLayoutDto.Seats.Any())
+            {
+                throw new Result("Danh sách ghế không được để trống");
+            }
+
+            // Cập nhật thông tin ghế
+            foreach (var seatDto in updateSeatLayoutDto.Seats)
+            {
+                var seat = room.Seats?.FirstOrDefault(s => s.Id == seatDto.Id);
+                if (seat != null)
+                {
+                    // seat.Row = seatDto.Row; // Row/Col đã bị xóa khỏi model
+                    // seat.Col = seatDto.Col;
+                    seat.Name = seatDto.Name;
+                    seat.Price = seatDto.Price;
+                    seat.Type = seatDto.Type;
+                    seat.Status = seatDto.Status;
+                }
+            }
 
             return room;
         }

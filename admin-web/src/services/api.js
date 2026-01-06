@@ -14,9 +14,27 @@ const api = axios.create({
 // Request interceptor - Add token to requests
 api.interceptors.request.use(
   (config) => {
-    const token = getFromStorage(STORAGE_KEYS.TOKEN);
+    // Get token as plain string (not JSON parsed)
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    console.log('🔑 API Request:', config.url);
+    console.log('🎫 Token:', token ? `${token.substring(0, 20)}...` : 'No token');
+    
+    // Decode JWT to check role
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('👤 JWT Payload:', payload);
+        console.log('🎭 Role from token:', payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']);
+      } catch (e) {
+        console.error('❌ Error decoding JWT:', e);
+      }
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('✅ Authorization header set');
+    } else {
+      console.log('⚠️ No token found in localStorage');
     }
     return config;
   },
@@ -28,12 +46,14 @@ api.interceptors.request.use(
 // Response interceptor - Handle errors globally
 api.interceptors.response.use(
   (response) => {
+    console.log('✅ API Response:', response.config.url, response.status);
     return response;
   },
   (error) => {
     // Handle specific error cases
     if (error.response) {
       const { status, data } = error.response;
+      console.log('❌ API Error:', error.config.url, status, data);
       
       switch (status) {
         case 401:
@@ -45,6 +65,7 @@ api.interceptors.response.use(
           break;
         case 403:
           console.error('Forbidden - You do not have permission');
+          console.error('Response data:', data);
           break;
         case 404:
           console.error('Not found');

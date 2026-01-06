@@ -31,6 +31,8 @@ namespace Server.src.Mapper
                 Status = createRoomDto.Status ?? "Trống",
                 TheaterId = createRoomDto.TheaterId,
                 Type = createRoomDto.Type,
+                Rows = createRoomDto.Rows,
+                Columns = createRoomDto.Columns,
                 Seats = new List<Seats>()
             };
         }

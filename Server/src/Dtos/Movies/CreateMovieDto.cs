@@ -13,6 +13,7 @@ namespace Server.src.Dtos.Movies
         public string? Genre { get; set; } = null;// thể loại
         public string? Language { get; set; } = null;// ngôn ngữ
         public string? AgeLimit { get; set; } = null;// giới hạn tuổi
+        public int ReleaseYear { get; set; } = 0; // năm phát hành
         public DateTime StartDate { get; set; } // ngày khởi chiếu
         public DateTime EndDate { get; set; } // ngày kết thúc
         public string? Description { get; set; } = null; // mô tả

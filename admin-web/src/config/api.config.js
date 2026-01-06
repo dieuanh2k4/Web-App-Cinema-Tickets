@@ -1,5 +1,5 @@
 // API Base URL - CHANGE THIS TO YOUR BACKEND URL
-export const BASE_URL = "http://desktop-qedcej1/api";
+export const BASE_URL = "http://localhost:5001/api";
 
 export const API_ENDPOINTS = {
   // Authentication
@@ -13,16 +13,38 @@ export const API_ENDPOINTS = {
     GET_ALL: "/Movies/get-all-movies",
     GET_BY_ID: (id) => `/Movies/get-movie-by-id/${id}`,
     CREATE: "/Movies/create-movie",
-    UPDATE: (id) => `/Movies/update-subject/${id}`,
+    UPDATE: (id) => `/Movies/update-movie/${id}`,
     DELETE: (id) => `/Movies/delete-movie/${id}`,
   },
 
-  // Users (Accounts)
+  // Users (Accounts) - AdminController quản lý cả 3 roles
   USERS: {
-    GET_ALL: "/User/get-all-user",
-    CREATE: "/User/create-user",
-    UPDATE: (id) => `/User/update-user/${id}`,
-    DELETE: (id) => `/User/delete-user/${id}`,
+    // GET endpoints
+    GET_ALL_ADMIN: "/Admin/get-all-admin",
+    GET_ALL_STAFF: "/Admin/get-all-staff",
+    GET_ALL_CUSTOMER: "/Admin/get-all-customer",
+    GET_ALL: "/User/get-all-user", // Legacy endpoint, trả về tất cả
+    
+    // GET by ID endpoints
+    GET_ADMIN_BY_ID: (id) => `/Admin/get-info-admin?id=${id}`,
+    GET_STAFF_BY_ID: (id) => `/Staff/get-info-staff?id=${id}`,
+    GET_CUSTOMER_BY_ID: (id) => `/Customer/get-info-customer?id=${id}`,
+    
+    // CREATE endpoints by role
+    CREATE_ADMIN: "/Admin/create-admin",
+    CREATE_STAFF: "/Admin/create-staff",
+    CREATE_CUSTOMER: "/Auth/customer-register", // Customer register endpoint
+    
+    // UPDATE endpoints by role
+    UPDATE_ADMIN: (id) => `/Admin/update-admin/${id}`,
+    UPDATE_STAFF: (id) => `/Admin/update-staff/${id}`,
+    UPDATE_CUSTOMER: (id) => `/Customer/update-info-customer/${id}`,
+    
+    // DELETE endpoints by role
+    DELETE_ADMIN: (id) => `/Admin/delete-admin/${id}`,
+    DELETE_STAFF: (id) => `/Admin/delete-staff/${id}`,
+    DELETE_CUSTOMER: (id) => `/Admin/delete-customer/${id}`,
+    
     PROFILE: "/User/profile",
   },
 
@@ -38,9 +60,11 @@ export const API_ENDPOINTS = {
   // Rooms
   ROOMS: {
     GET_ALL: "/Room/get-all-room",
+    GET_DETAIL: (id) => `/Room/get-detail-room/${id}`,
     CREATE: "/Room/create-rooms",
     UPDATE: (id) => `/Room/update-room/${id}`,
     DELETE: (id) => `/Room/delete-room/${id}`,
+    UPDATE_SEAT_LAYOUT: (id) => `/Room/${id}/seat-layout`,
   },
 
   // Ticket Prices
@@ -58,5 +82,12 @@ export const API_ENDPOINTS = {
     CREATE: "/Theater/create-theater",
     UPDATE: (id) => `/Theater/update-theater/${id}`,
     DELETE: (id) => `/Theater/delete-theater/${id}`,
+  },
+
+  // Dashboard
+  DASHBOARD: {
+    STATISTICS: "/Dashboard/statistics",
+    REVENUE_BY_MONTH: "/Dashboard/revenue-by-month",
+    TOP_MOVIES: "/Dashboard/top-movies",
   },
 };

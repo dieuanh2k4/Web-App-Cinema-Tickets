@@ -51,9 +51,9 @@ namespace Server.src.Services.Implements
             }
 
             // Check if seats are already booked for this showtime
-            var bookedSeats = await _context.Tickets
-                .Where(t => t.ShowtimeId == createTicketDto.ShowtimeId && 
-                           createTicketDto.SeatIds.Contains(t.SeatId))
+            var bookedSeats = await _context.TicketSeats
+                .Where(ts => ts.Ticket!.ShowtimeId == createTicketDto.ShowtimeId && 
+                           createTicketDto.SeatIds.Contains(ts.SeatId))
                 .ToListAsync();
 
             if (bookedSeats.Any())
@@ -81,29 +81,39 @@ namespace Server.src.Services.Implements
                 await _context.SaveChangesAsync();
             }
 
+            // Lấy User từ Customer để có userId
+            var user = await _context.User.FirstOrDefaultAsync(u => u.Id == customer.Id);
+            if (user == null)
+            {
+                throw new Result("Không tìm thấy user tương ứng với customer");
+            }
+
             // 4. Calculate total price
             int totalPrice = seats.Sum(s => s.Price);
 
-            // 5. Create tickets for each seat
-            var tickets = new List<Ticket>();
-            foreach (var seat in seats)
+            // 5. Create one ticket with multiple TicketSeats
+            var ticket = new Ticket
             {
-                var ticket = new Ticket
-                {
-                    ShowtimeId = showtime.Id,
-                    UserId = customer.Id,
-                    SeatId = seat.Id,
-                    RoomId = showtime.RoomId,
-                    MovieId = showtime.MovieId,
-                    SumOfSeat = createTicketDto.SeatIds.Count,
-                    Date = showtime.Date,
-                    TotalPrice = totalPrice
-                };
-                tickets.Add(ticket);
-            }
+                ShowtimeId = showtime.Id,
+                UserId = user.Id, // Lưu userId thay vì customerId
+                RoomId = showtime.RoomId,
+                MovieId = showtime.MovieId,
+                SumOfSeat = createTicketDto.SeatIds.Count,
+                Date = showtime.Date,
+                TotalPrice = totalPrice
+            };
 
-            // 6. Save tickets
-            _context.Tickets.AddRange(tickets);
+            _context.Tickets.Add(ticket);
+            await _context.SaveChangesAsync();
+
+            // 5.1. Create TicketSeats for each seat
+            var ticketSeats = seats.Select(seat => new TicketSeat
+            {
+                TicketId = ticket.Id,
+                SeatId = seat.Id
+            }).ToList();
+
+            _context.TicketSeats.AddRange(ticketSeats);
             await _context.SaveChangesAsync();
 
             // 7. Update seat status to "Đã đặt"
@@ -113,17 +123,16 @@ namespace Server.src.Services.Implements
             }
             await _context.SaveChangesAsync();
 
-            // 8. Return the first ticket with all information (they all have same info except SeatId)
-            var user = await _context.User
-                .FirstOrDefaultAsync(u => u.Id == customer.Id);
+            // // 8. Load relationships and return
+            // var user = await _context.User
+            //     .FirstOrDefaultAsync(u => u.Id == customer.Id);
                 
-            var mainTicket = tickets.First();
-            mainTicket.User = user;
-            mainTicket.Showtimes = showtime;
-            mainTicket.Movies = showtime.Movies;
-            mainTicket.Rooms = showtime.Rooms;
+            ticket.User = user;
+            ticket.Showtimes = showtime;
+            ticket.Movies = showtime.Movies;
+            ticket.Rooms = showtime.Rooms;
 
-            return mainTicket.ToTicketDto(seats);
+            return ticket.ToTicketDto(seats);
         }
 
         public async Task<List<TicketDto>> GetAllTickets()
@@ -133,17 +142,15 @@ namespace Server.src.Services.Implements
                 .Include(t => t.Showtimes)
                 .Include(t => t.Movies)
                 .Include(t => t.Rooms)
-                .Include(t => t.Seats)
-                .GroupBy(t => new { t.ShowtimeId, t.UserId, t.Date })
+                .Include(t => t.TicketSeats)
+                    .ThenInclude(ts => ts.Seat)
                 .ToListAsync();
 
-            var ticketDtos = new List<TicketDto>();
-            foreach (var group in tickets)
+            var ticketDtos = tickets.Select(ticket => 
             {
-                var firstTicket = group.First();
-                var seats = group.Select(t => t.Seats!).ToList();
-                ticketDtos.Add(firstTicket.ToTicketDto(seats));
-            }
+                var seats = ticket.TicketSeats?.Select(ts => ts.Seat!).ToList() ?? new List<Seats>();
+                return ticket.ToTicketDto(seats);
+            }).ToList();
 
             return ticketDtos;
         }
@@ -155,7 +162,8 @@ namespace Server.src.Services.Implements
                 .Include(t => t.Showtimes)
                 .Include(t => t.Movies)
                 .Include(t => t.Rooms)
-                .Include(t => t.Seats)
+                .Include(t => t.TicketSeats)
+                    .ThenInclude(ts => ts.Seat)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
             if (ticket == null)
@@ -163,15 +171,7 @@ namespace Server.src.Services.Implements
                 throw new Result("Vé không tồn tại");
             }
 
-            // Get all tickets with same booking (same showtime, customer, date)
-            var relatedTickets = await _context.Tickets
-                .Include(t => t.Seats)
-                .Where(t => t.ShowtimeId == ticket.ShowtimeId && 
-                           t.UserId == ticket.UserId && 
-                           t.Date == ticket.Date)
-                .ToListAsync();
-
-            var seats = relatedTickets.Select(t => t.Seats!).ToList();
+            var seats = ticket.TicketSeats?.Select(ts => ts.Seat!).ToList() ?? new List<Seats>();
             return ticket.ToTicketDto(seats);
         }
 
@@ -190,18 +190,38 @@ namespace Server.src.Services.Implements
                 .Include(t => t.Showtimes)
                 .Include(t => t.Movies)
                 .Include(t => t.Rooms)
-                .Include(t => t.Seats)
+                .Include(t => t.TicketSeats)
+                    .ThenInclude(ts => ts.Seat)
                 .Where(t => t.UserId == customer.Id)
-                .GroupBy(t => new { t.ShowtimeId, t.Date })
                 .ToListAsync();
 
-            var ticketDtos = new List<TicketDto>();
-            foreach (var group in tickets)
+            var ticketDtos = tickets.Select(ticket => 
             {
-                var firstTicket = group.First();
-                var seats = group.Select(t => t.Seats!).ToList();
-                ticketDtos.Add(firstTicket.ToTicketDto(seats));
-            }
+                var seats = ticket.TicketSeats?.Select(ts => ts.Seat!).ToList() ?? new List<Seats>();
+                return ticket.ToTicketDto(seats);
+            }).ToList();
+
+            return ticketDtos;
+        }
+
+        public async Task<List<TicketDto>> GetTicketHistory(int userId)
+        {
+            var tickets = await _context.Tickets
+                .Include(t => t.User)
+                .Include(t => t.Showtimes)
+                .Include(t => t.Movies)
+                .Include(t => t.Rooms)
+                .Include(t => t.TicketSeats)
+                    .ThenInclude(ts => ts.Seat)
+                .Where(t => t.UserId == userId)
+                .OrderByDescending(t => t.Date)
+                .ToListAsync();
+
+            var ticketDtos = tickets.Select(ticket => 
+            {
+                var seats = ticket.TicketSeats?.Select(ts => ts.Seat!).ToList() ?? new List<Seats>();
+                return ticket.ToTicketDto(seats);
+            }).ToList();
 
             return ticketDtos;
         }
@@ -209,7 +229,8 @@ namespace Server.src.Services.Implements
         public async Task<bool> CancelTicket(int ticketId)
         {
             var ticket = await _context.Tickets
-                .Include(t => t.Seats)
+                .Include(t => t.TicketSeats)
+                    .ThenInclude(ts => ts.Seat)
                 .FirstOrDefaultAsync(t => t.Id == ticketId);
 
             if (ticket == null)
@@ -217,25 +238,20 @@ namespace Server.src.Services.Implements
                 throw new Result("Vé không tồn tại");
             }
 
-            // Get all tickets with same booking
-            var relatedTickets = await _context.Tickets
-                .Include(t => t.Seats)
-                .Where(t => t.ShowtimeId == ticket.ShowtimeId && 
-                           t.UserId == ticket.UserId && 
-                           t.Date == ticket.Date)
-                .ToListAsync();
-
             // Update seat status back to available
-            foreach (var relatedTicket in relatedTickets)
+            if (ticket.TicketSeats != null)
             {
-                if (relatedTicket.Seats != null)
+                foreach (var ticketSeat in ticket.TicketSeats)
                 {
-                    relatedTicket.Seats.Status = "Trống";
+                    if (ticketSeat.Seat != null)
+                    {
+                        ticketSeat.Seat.Status = "Trống";
+                    }
                 }
             }
 
-            // Remove all related tickets
-            _context.Tickets.RemoveRange(relatedTickets);
+            // Remove ticket (TicketSeats will be cascade deleted)
+            _context.Tickets.Remove(ticket);
             await _context.SaveChangesAsync();
 
             return true;

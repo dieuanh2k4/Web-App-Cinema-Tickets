@@ -14,8 +14,6 @@ namespace Server.src.Services.Implements
 {
     public class MovieService : IMovieService
     {
-        private static readonly List<Movies> _movies = new List<Movies>();
-
         private readonly ApplicationDbContext _context;
         private readonly IMinioStorageService _minioStorage;
 
@@ -25,14 +23,117 @@ namespace Server.src.Services.Implements
             _minioStorage = minioStorage;
         }
 
-        public Task<List<Movies>> GetAllMovies()
+        public async Task<List<Movies>> GetAllMovies()
         {
-            return _context.Movies.ToListAsync();
+            var movies = await _context.Movies.ToListAsync();
+            
+            // Chuyển path thành URL cho từng movie
+            foreach (var movie in movies)
+            {
+                if (!string.IsNullOrEmpty(movie.Thumbnail))
+                {
+                    movie.Thumbnail = _minioStorage.GetImageUrl(movie.Thumbnail);
+                }
+                // if (!string.IsNullOrEmpty(movie.BackdropUrl))
+                // {
+                //     movie.BackdropUrl = _minioStorage.GetImageUrl(movie.BackdropUrl);
+                // }
+            }
+            
+            return movies;
+        }
+
+        public async Task<(List<Movies> movies, int totalCount)> GetAllMoviesForAdmin(
+            string? search = null, 
+            int? year = null, 
+            string? genre = null, 
+            string? status = null, 
+            int page = 1, 
+            int limit = 10)
+        {
+            var query = _context.Movies.AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(m => m.Title.Contains(search) || 
+                                        m.Description.Contains(search) ||
+                                        m.Director.Contains(search));
+            }
+
+            // Apply year filter
+            if (year.HasValue)
+            {
+                query = query.Where(m => m.ReleaseYear == year.Value);
+            }
+
+            // Apply genre filter
+            if (!string.IsNullOrWhiteSpace(genre))
+            {
+                query = query.Where(m => m.Genre.Contains(genre));
+            }
+
+            // Apply status filter
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                var today = DateTime.Today;
+                query = status.ToLower() switch
+                {
+                    "sắp chiếu" => query.Where(m => today < m.StartDate),
+                    "ngừng chiếu" => query.Where(m => today > m.EndDate),
+                    "đang chiếu" => query.Where(m => today >= m.StartDate && today <= m.EndDate),
+                    _ => query
+                };
+            }
+
+            // Get total count before pagination
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var movies = await query
+                .OrderByDescending(m => m.StartDate)
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .ToListAsync();
+
+            // Chuyển path thành URL cho từng movie
+            foreach (var movie in movies)
+            {
+                if (!string.IsNullOrEmpty(movie.Thumbnail))
+                {
+                    movie.Thumbnail = _minioStorage.GetImageUrl(movie.Thumbnail);
+                    // Chuyển path thành URL
+                    if (movie != null)
+                    {
+                        if (!string.IsNullOrEmpty(movie.Thumbnail))
+                        {
+                            movie.Thumbnail = _minioStorage.GetImageUrl(movie.Thumbnail);
+                        }
+                        // if (!string.IsNullOrEmpty(movie.BackdropUrl))
+                        // {
+                        //     movie.BackdropUrl = _minioStorage.GetImageUrl(movie.BackdropUrl);
+                        // }
+                    }
+                }
+                // if (!string.IsNullOrEmpty(movie.BackdropUrl))
+                // {
+                //     movie.BackdropUrl = _minioStorage.GetImageUrl(movie.BackdropUrl);
+                // }
+            }
+
+            return (movies, totalCount);
         }
 
         public async Task<Movies> GetMovieById(int id)
         {
             var movie = await _context.Movies.FirstOrDefaultAsync(m => m.Id == id);
+            
+            // Chuyển path thành URL
+            if (movie != null && !string.IsNullOrEmpty(movie.Thumbnail))
+            {
+                movie.Thumbnail = _minioStorage.GetImageUrl(movie.Thumbnail);
+            }
+            
             return movie;
         }
 
@@ -45,10 +146,10 @@ namespace Server.src.Services.Implements
             }
 
             // Upload lên MinIO với folder "movies"
+            // Trả về path để lưu vào DB: cinebook/movies/abc.jpg
             var fileName = await _minioStorage.UploadImageAsync(file, "movies");
             
-            // Trả về URL đầy đủ
-            return _minioStorage.GetImageUrl(fileName);
+            return fileName;
         }
 
         public async Task<Movies> AddMovie(CreateMovieDto createmovieDto)
@@ -58,7 +159,9 @@ namespace Server.src.Services.Implements
                 throw new Result("Tiêu đề phim không được để trống");
             }
 
-            var checkMovie = _movies.FirstOrDefault(m => m.Title.Equals(createmovieDto.Title, StringComparison.OrdinalIgnoreCase));
+            // Kiểm tra trong database - dùng ToLower() thay vì StringComparison
+            var checkMovie = await _context.Movies
+                .FirstOrDefaultAsync(m => m.Title.ToLower() == createmovieDto.Title.ToLower());
 
             if (checkMovie != null)
             {
@@ -83,6 +186,9 @@ namespace Server.src.Services.Implements
             var newMovie = await createmovieDto.ToMovieFromCreateDto();
 
             newMovie.Thumbnail = createmovieDto.Thumbnail;
+
+            await _context.Movies.AddAsync(newMovie);
+            await _context.SaveChangesAsync();
 
             return newMovie;
         }
@@ -119,6 +225,7 @@ namespace Server.src.Services.Implements
             movie.Genre = updateMovieDto.Genre;
             movie.Language = updateMovieDto.Language;
             movie.AgeLimit = updateMovieDto.AgeLimit;
+            movie.ReleaseYear = updateMovieDto.ReleaseYear;
             movie.StartDate = updateMovieDto.StartDate;
             movie.EndDate = updateMovieDto.EndDate;
             movie.Description = updateMovieDto.Description;

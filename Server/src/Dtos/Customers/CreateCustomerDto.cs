@@ -11,5 +11,10 @@ namespace Server.src.Dtos.Customers
         public string Phone { get; set; } = string.Empty;
         public string? Avatar { get; set; }
         public int? UserId { get; set; } // Optional - cho registered user
+        public string? username { get; set; }
+        public string? Email { get; set; }
+        public string? password { get; set; }
+        public string? phoneNumber { get; set; }
+        public DateTime createdDate { get; set; }
     }
 }

@@ -14,8 +14,10 @@ namespace Server.src.Dtos.Booking
         // Thông tin khách hàng
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerPhone { get; set; } = string.Empty;
+        public string? Email { get; set; } // Email có thể rỗng
         
-        // Thanh toán tiền mặt
-        public decimal? PaidAmount { get; set; } // Số tiền khách đưa
+        // Thanh toán
+        public string PaymentMethod { get; set; } = "Cash"; // Cash, Banking, Momo
+        public decimal? PaidAmount { get; set; } // Số tiền khách đưa (cho Cash)
     }
 }

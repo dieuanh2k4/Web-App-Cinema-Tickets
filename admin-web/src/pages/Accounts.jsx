@@ -6,27 +6,49 @@ import userService from '../services/userService';
 
 const Accounts = () => {
   const [accounts, setAccounts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 10;
 
-  // Load accounts from API
+  // Load data from API
   useEffect(() => {
-    loadAccounts();
+    loadData();
   }, []);
 
-  const loadAccounts = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
+      console.log('🔍 Starting to load accounts...');
       const data = await userService.getAllUsers();
-      setAccounts(data || []);
+      console.log('✅ Received data:', data);
+      
+      // Map Backend data to Frontend format
+      const mappedData = data.map((user, index) => {
+        console.log('Raw user data:', user);
+        return {
+          id: user.id || user.Id,
+          uniqueKey: `${user.userType}-${user.id || user.Id}-${index}`, // Unique key for React
+          username: user.username || user.userName || user.Username || user.UserName || 'N/A',
+          fullName: user.name || user.Name || user.fullName || user.FullName || 'N/A',
+          email: user.email || user.Email || 'N/A',
+          phoneNumber: user.phone || user.Phone || user.phoneNumber || user.PhoneNumber || 'N/A',
+          avatar: user.avatar || user.Avatar || null,
+          role: user.userType?.toLowerCase() || 'staff',
+          status: 'active',
+          createdDate: user.createdDate || user.CreatedDate || new Date().toISOString()
+        };
+      });
+      
+      console.log('✅ Mapped data:', mappedData);
+      setAccounts(mappedData);
     } catch (error) {
-      console.error('Error loading accounts:', error);
-      alert('Không thể tải danh sách tài khoản. Vui lòng thử lại sau.');
-      setAccounts([]);
+      console.error('❌ Error loading accounts:', error);
+      console.error('❌ Error response:', error.response);
+      alert(`Không thể tải danh sách tài khoản: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -34,30 +56,22 @@ const Accounts = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await loadAccounts();
+    await loadData();
     setIsRefreshing(false);
   };
 
-  // Helper to convert userType number to role text
-  const getUserRole = (userType) => {
-    // BE: 0 = Admin, 1 = Staff, 2 = Customer
-    const roles = {
-      0: 'admin',
-      1: 'staff'
-    };
-    return roles[userType] || 'unknown';
-  };
-
   // Get unique roles for filter
-  const roles = [...new Set(accounts.map(a => getUserRole(a.userType)))].filter(r => r !== 'unknown').sort();
+  const roles = [...new Set(accounts.map(a => a.role))].sort();
 
   // Filter accounts
   const filteredAccounts = accounts.filter(account => {
-    const role = getUserRole(account.userType);
-    const matchSearch = (account.username?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-    const matchRole = !filterRole || role === filterRole;
+    const matchSearch = account.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       account.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       account.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchRole = !filterRole || account.role === filterRole;
+    const matchStatus = !filterStatus || account.status === filterStatus;
     
-    return matchSearch && matchRole;
+    return matchSearch && matchRole && matchStatus;
   });
 
   // Pagination
@@ -65,15 +79,15 @@ const Accounts = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentAccounts = filteredAccounts.slice(startIndex, startIndex + itemsPerPage);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, userType) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
       try {
-        await userService.deleteUser(id);
-        await loadAccounts();
+        await userService.deleteUser(id, userType);
         alert('Xóa tài khoản thành công!');
+        await loadData(); // Reload data
       } catch (error) {
         console.error('Error deleting account:', error);
-        alert('Không thể xóa tài khoản. Vui lòng thử lại sau.');
+        alert('Không thể xóa tài khoản. Vui lòng thử lại!');
       }
     }
   };
@@ -81,13 +95,15 @@ const Accounts = () => {
   const handleResetFilters = () => {
     setSearchTerm('');
     setFilterRole('');
+    setFilterStatus('');
     setCurrentPage(1);
   };
 
   const getRoleBadge = (role) => {
     const badges = {
       admin: 'bg-red-500/20 text-red-400 border-red-500/30',
-      staff: 'bg-green-500/20 text-green-400 border-green-500/30'
+      staff: 'bg-green-500/20 text-green-400 border-green-500/30',
+      customer: 'bg-purple-500/20 text-purple-400 border-purple-500/30'
     };
     return badges[role] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
   };
@@ -95,18 +111,26 @@ const Accounts = () => {
   const getRoleLabel = (role) => {
     const labels = {
       admin: 'Quản trị viên',
-      staff: 'Nhân viên'
+      staff: 'Nhân viên',
+      customer: 'Khách hàng'
     };
     return labels[role] || role;
   };
 
+  const getStatusBadge = (status) => {
+    return status === 'active' 
+      ? 'bg-green-500/20 text-green-400 border-green-500/30'
+      : 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+  };
+
+  const getStatusLabel = (status) => {
+    return status === 'active' ? 'Hoạt động' : 'Không hoạt động';
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-gray-400">Đang tải dữ liệu...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-white text-xl">Đang tải dữ liệu...</div>
       </div>
     );
   }
@@ -140,14 +164,14 @@ const Accounts = () => {
 
       {/* Filters */}
       <div className="bg-secondary rounded-lg p-8 border border-gray-700">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
           {/* Search */}
           <div className="md:col-span-2">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Tìm kiếm theo username..."
+                placeholder="Tìm kiếm theo tên, username, email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-primary border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent"
@@ -168,6 +192,19 @@ const Accounts = () => {
               ))}
             </select>
           </div>
+
+          {/* Status Filter */}
+          <div>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full px-4 py-2 bg-primary border border-gray-600 rounded-lg text-white focus:outline-none focus:border-accent"
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Không hoạt động</option>
+            </select>
+          </div>
         </div>
 
         <div className="flex justify-between items-center">
@@ -175,7 +212,7 @@ const Accounts = () => {
             Hiển thị <span className="text-white font-medium">{currentAccounts.length}</span> trong tổng số{' '}
             <span className="text-white font-medium">{filteredAccounts.length}</span> tài khoản
           </p>
-          {(searchTerm || filterRole) && (
+          {(searchTerm || filterRole || filterStatus) && (
             <button
               onClick={handleResetFilters}
               className="text-sm text-accent hover:text-accent/80 transition-colors"
@@ -192,67 +229,75 @@ const Accounts = () => {
           <table className="w-full">
             <thead className="bg-primary">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Tài khoản</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Avatar</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Tên</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vai trò</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">User ID</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Số điện thoại</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Trạng thái</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Ngày tạo</th>
                 <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
-              {currentAccounts.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-gray-400">
-                    Không có tài khoản nào
+              {currentAccounts.map((account) => (
+                <tr key={account.uniqueKey || `${account.role}-${account.id}`} className="hover:bg-primary/50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center justify-center">
+                      <div className="flex-shrink-0 h-10 w-10">
+                        {account.avatar ? (
+                          <img src={account.avatar} alt="User avatar" className="h-10 w-10 rounded-full object-cover" />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center">
+                            <FaUserCircle className="text-accent" size={20} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-white">{account.fullName}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getRoleBadge(account.role)}`}>
+                      {getRoleLabel(account.role)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-white">{account.email}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-white">{account.phoneNumber}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusBadge(account.status)}`}>
+                      {getStatusLabel(account.status)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-white">{formatDate(account.createdDate)}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <Link
+                        to={`/accounts/${account.id}`}
+                        state={{ userType: account.role }}
+                        className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                        title="Xem chi tiết"
+                      >
+                        <FaEye size={16} />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(account.id, account.role)}
+                        className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                        title="Xóa"
+                      >
+                        <FaTrash size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              ) : (
-                currentAccounts.map((account) => {
-                  const role = getUserRole(account.userType);
-                  return (
-                    <tr key={account.id} className="hover:bg-primary/50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-12 w-12">
-                            <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center">
-                              <FaUserCircle className="text-accent" size={24} />
-                            </div>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-white">{account.username || 'N/A'}</div>
-                            <div className="text-sm text-gray-400">ID: {account.id}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getRoleBadge(role)}`}>
-                          {getRoleLabel(role)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-400">Type: {account.userType}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Link
-                            to={`/accounts/${account.id}`}
-                            className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
-                            title="Xem chi tiết"
-                          >
-                            <FaEye size={16} />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(account.id)}
-                            className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                            title="Xóa"
-                          >
-                            <FaTrash size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
+              ))}
             </tbody>
           </table>
         </div>

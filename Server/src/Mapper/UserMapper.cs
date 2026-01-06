@@ -16,7 +16,14 @@ namespace Server.src.Mapper
             {
                 username = createUserDto.username,
                 password = PasswordHelper.HashPassword(createUserDto.password), // Hash password using MD5
-                createdDate = DateTime.UtcNow
+                createdDate = DateTime.UtcNow,
+                Name = createUserDto.Name,
+                Birth = createUserDto.Birth,
+                Gender = createUserDto.Gender,
+                Email = createUserDto.Email,
+                phoneNumber = createUserDto.phoneNumber,
+                Address = createUserDto.Address,
+                Avatar = createUserDto.Avatar
             };
         }
     }

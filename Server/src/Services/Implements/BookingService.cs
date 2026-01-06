@@ -7,6 +7,7 @@ using Server.src.Data;
 using Server.src.Dtos.Booking;
 using Server.src.Models;
 using Server.src.Services.Interfaces;
+using StackExchange.Redis;
 
 namespace Server.src.Services.Implements
 {
@@ -14,17 +15,25 @@ namespace Server.src.Services.Implements
     {
         private readonly ApplicationDbContext _context;
         private readonly ICustomerService _customerService;
+        private readonly IConnectionMultiplexer _redis;
 
-        public BookingService(ApplicationDbContext context, ICustomerService customerService)
+        public BookingService(
+            ApplicationDbContext context, 
+            ICustomerService customerService,
+            IConnectionMultiplexer redis)
         {
             _context = context;
             _customerService = customerService;
+            _redis = redis;
         }
 
         public async Task<BookingResponseDto> CreateGuestBookingAsync(CreateBookingDto dto)
         {
             try
             {
+                // DEBUG: Log ShowtimeId
+                Console.WriteLine($"[BookingService] CreateGuestBookingAsync - ShowtimeId: {dto.ShowtimeId} (Type: {dto.ShowtimeId.GetType().Name})");
+                
                 // 1. Validate showtime
                 var showtime = await _context.Showtimes
                     .Include(s => s.Movies)
@@ -65,24 +74,25 @@ namespace Server.src.Services.Implements
                     throw new ArgumentException($"Ghế {string.Join(", ", bookedSeatNames)} đã được đặt");
                 }
 
-                // 4. Tìm hoặc tạo customer
+                // 4. Tìm hoặc tạo customer và lấy userId
                 var customer = await _customerService.FindOrCreateByPhoneAsync(
                     dto.PhoneNumber,
                     dto.CustomerName,
                     dto.Email
                 );
 
+                // Kiểm tra customer có UserId không
+                if (!customer.UserId.HasValue)
+                    throw new ArgumentException("Customer chưa được liên kết với User");
+
                 // 5. Tính tổng tiền dựa trên Seats.Price
                 int totalAmount = (int)seats.Sum(s => s.Price);
 
-                // 6. Tạo Ticket (giả định Ticket model cũ - có thể cần điều chỉnh)
-                // Lưu ý: Model Ticket hiện tại có SeatId (1 ghế) nhưng ta đang book nhiều ghế
-                // → Tạm thời tạo 1 ticket cho ghế đầu tiên, sau này cần sửa lại model
+                // 6. Tạo Ticket với TicketSeats
                 var ticket = new Ticket
                 {
-                    UserId = customer.Id,
+                    UserId = customer.UserId.Value, // Lưu userId từ customer.UserId
                     ShowtimeId = dto.ShowtimeId,
-                    SeatId = seats.First().Id, // Tạm thời
                     RoomId = showtime.RoomId,
                     MovieId = showtime.MovieId,
                     TotalPrice = totalAmount,
@@ -91,6 +101,16 @@ namespace Server.src.Services.Implements
                 };
 
                 _context.Tickets.Add(ticket);
+                await _context.SaveChangesAsync();
+
+                // 6.1. Tạo TicketSeats cho từng ghế
+                var ticketSeats = seats.Select(seat => new TicketSeat
+                {
+                    TicketId = ticket.Id,
+                    SeatId = seat.Id
+                }).ToList();
+
+                _context.TicketSeats.AddRange(ticketSeats);
                 await _context.SaveChangesAsync();
 
                 // 7. Tạo Payment
@@ -189,26 +209,29 @@ namespace Server.src.Services.Implements
                     throw new ArgumentException($"Ghế {string.Join(", ", bookedSeatNames)} đã được đặt");
                 }
 
-                // 4. Tìm hoặc tạo customer
+                // 4. Tìm hoặc tạo customer và lấy userId
                 var customer = await _customerService.FindOrCreateByPhoneAsync(
                     dto.CustomerPhone,
                     dto.CustomerName,
-                    null // Staff không cần email
+                    dto.Email // Email có thể null
                 );
+
+                // Kiểm tra customer có UserId không
+                if (!customer.UserId.HasValue)
+                    throw new ArgumentException("Customer chưa được liên kết với User");
 
                 // 5. Tính tổng tiền
                 int totalAmount = (int)seats.Sum(s => s.Price);
 
-                // 6. Validate paid amount
-                if (dto.PaidAmount.HasValue && dto.PaidAmount < totalAmount)
+                // 6. Validate paid amount (chỉ cho Cash)
+                if (dto.PaymentMethod == "Cash" && dto.PaidAmount.HasValue && dto.PaidAmount < totalAmount)
                     throw new ArgumentException($"Số tiền khách đưa ({dto.PaidAmount:N0}đ) không đủ. Tổng tiền: {totalAmount:N0}đ");
 
-                // 7. Tạo Ticket
+                // 7. Tạo Ticket với TicketSeats
                 var ticket = new Ticket
                 {
-                    UserId = customer.Id,
+                    UserId = customer.UserId.Value, // Lưu userId từ customer.UserId
                     ShowtimeId = dto.ShowtimeId,
-                    SeatId = seats.First().Id, // Tạm thời
                     RoomId = showtime.RoomId,
                     MovieId = showtime.MovieId,
                     TotalPrice = totalAmount,
@@ -219,14 +242,24 @@ namespace Server.src.Services.Implements
                 _context.Tickets.Add(ticket);
                 await _context.SaveChangesAsync();
 
+                // 7.1. Tạo TicketSeats cho từng ghế
+                var ticketSeats = seats.Select(seat => new TicketSeat
+                {
+                    TicketId = ticket.Id,
+                    SeatId = seat.Id
+                }).ToList();
+
+                _context.TicketSeats.AddRange(ticketSeats);
+                await _context.SaveChangesAsync();
+
                 // 8. Tạo Payment
                 var payment = new Payment
                 {
                     TicketId = ticket.Id,
                     TotalPrice = totalAmount,
-                    paymentMethod = "Cash",
+                    paymentMethod = dto.PaymentMethod,
                     Date = showtime.Date,
-                    Status = "Đã Thanh toán" // Đã thanh toán
+                    Status = "Đã Thanh toán" // Staff tạo = đã thanh toán
                 };
 
                 _context.Payment.Add(payment);
@@ -242,8 +275,9 @@ namespace Server.src.Services.Implements
                 _context.StatusSeat.AddRange(statusSeats);
                 await _context.SaveChangesAsync();
 
-                // 10. Tính tiền thối
-                decimal change = dto.PaidAmount.HasValue ? dto.PaidAmount.Value - totalAmount : 0;
+                // 10. Tính tiền thối (chỉ cho Cash)
+                decimal change = (dto.PaymentMethod == "Cash" && dto.PaidAmount.HasValue) 
+                    ? dto.PaidAmount.Value - totalAmount : 0;
 
                 // 11. Return response
                 return new BookingResponseDto
@@ -263,7 +297,7 @@ namespace Server.src.Services.Implements
                     ),
                     SeatNumbers = seats.Select(s => s.Name!).ToList(),
                     TotalAmount = totalAmount,
-                    PaymentMethod = "Cash",
+                    PaymentMethod = dto.PaymentMethod,
                     PaymentStatus = "Paid",
                     PaidAmount = dto.PaidAmount,
                     ChangeAmount = change
@@ -285,18 +319,36 @@ namespace Server.src.Services.Implements
             if (showtime == null)
                 throw new ArgumentException("Suất chiếu không tồn tại");
 
+            // 1. Lấy tất cả ghế của phòng
             var allSeatIds = await _context.Seats
                 .Where(s => s.RoomId == showtime.RoomId)
                 .Select(s => s.Id)
                 .ToListAsync();
 
+            // 2. Lấy ghế đã book trong DB
             var bookedSeatIds = await _context.StatusSeat
                 .Where(ss => ss.ShowtimeId == showtimeId
                           && (ss.Status == "Booked" || ss.Status == "Pending"))
                 .Select(ss => ss.SeatId)
                 .ToListAsync();
 
-            return allSeatIds.Where(id => !bookedSeatIds.Contains(id)).ToList();
+            // 3. Lấy ghế đang hold trong Redis
+            var db = _redis.GetDatabase();
+            var heldSeatIds = new List<int>();
+            
+            foreach (var seatId in allSeatIds)
+            {
+                var seatKey = $"CineBook:seat:{showtimeId}:{seatId}";
+                var isHeld = await db.KeyExistsAsync(seatKey);
+                if (isHeld)
+                {
+                    heldSeatIds.Add(seatId);
+                }
+            }
+
+            // 4. Loại bỏ ghế đã book VÀ ghế đang hold
+            var unavailableSeatIds = bookedSeatIds.Concat(heldSeatIds).Distinct().ToList();
+            return allSeatIds.Where(id => !unavailableSeatIds.Contains(id)).ToList();
         }
 
         public async Task<decimal> CalculateTotalAmountAsync(List<int> seatIds, int showtimeId)

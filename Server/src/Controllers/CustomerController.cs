@@ -25,7 +25,7 @@ namespace Server.src.Controllers
             _minio = minio;
         }
 
-        [Authorize(Roles = "Customer")]
+        [Authorize(Roles = "Customer, Admin")]
         [HttpGet("get-info-customer")]
         public async Task<IActionResult> GetInfoCustomer(int id)
         {
@@ -41,7 +41,7 @@ namespace Server.src.Controllers
             } 
         }
 
-        [Authorize(Roles = "Customer")]
+        [Authorize(Roles = "Customer, Admin")]
         [HttpPut("update-info-customer/{id}")]
         public async Task<IActionResult> UpdateInfoCustomer([FromForm] UpdateCustomerDto updateCustomerDto, IFormFile? imageFile, int id)
         {
@@ -51,9 +51,9 @@ namespace Server.src.Controllers
                 {
                     try
                     {
-                        var imageName = await _minio.UploadImageAsync(imageFile);
-                        var imageUrl = _minio.GetImageUrl(imageName);
-                        updateCustomerDto.Avatar = imageUrl;
+                        // Chỉ lưu path vào DB: cinebook/images/abc.jpg
+                        var imagePath = await _minio.UploadImageAsync(imageFile);
+                        updateCustomerDto.Avatar = imagePath;
                     }
                     catch (Exception ex)
                     {

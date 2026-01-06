@@ -22,6 +22,7 @@ namespace Server.src.Mapper
         {
             return new MovieDto
             {
+                Id = movies.Id,
                 Title = movies.Title,
                 Thumbnail = movies.Thumbnail,
                 Duration = movies.Duration,
@@ -30,10 +31,12 @@ namespace Server.src.Mapper
                 AgeLimit = movies.AgeLimit,
                 StartDate = movies.StartDate,
                 EndDate = movies.EndDate,
+                ReleaseYear = movies.ReleaseYear,
                 Description = movies.Description,
                 Director = movies.Director,
-                Actors = movies.Actors,
-                Rating = movies.Rating
+                Rating = movies.Rating,
+                Trailer = movies.Trailer,
+                Status = movies.Status
             };
         }
         public static async Task<Movies> ToMovieFromCreateDto(this CreateMovieDto movieDto)
@@ -46,12 +49,14 @@ namespace Server.src.Mapper
                 Genre = movieDto.Genre,
                 Language = movieDto.Language,
                 AgeLimit = movieDto.AgeLimit,
+                ReleaseYear = movieDto.ReleaseYear,
                 StartDate = movieDto.StartDate,
                 EndDate = movieDto.EndDate,
                 Description = movieDto.Description,
                 Director = movieDto.Director,
                 Actors = movieDto.Actors,
-                Rating = movieDto.Rating
+                Rating = movieDto.Rating,
+                Trailer = movieDto.Trailer
             };
         }
 

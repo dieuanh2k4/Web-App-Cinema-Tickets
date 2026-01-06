@@ -25,6 +25,7 @@ namespace Server.src.Controllers
             _userService = userService;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("get-all-user")]
         public async Task<IActionResult> GetAllUser()
         {
@@ -40,62 +41,63 @@ namespace Server.src.Controllers
             }
         }
 
-        [HttpPost("create-user")]
-        public async Task<IActionResult> CreateUser([FromForm] CreateUserDto createUserDto)
-        {
-            try
-            {
-                var newUser = await _userService.CreateUser(createUserDto);
+        // [Authorize(Roles = "Admin")]
+        // [HttpPost("create-user")]
+        // public async Task<IActionResult> CreateUser([FromForm] CreateUserDto createUserDto)
+        // {
+        //     try
+        //     {
+        //         var newUser = await _userService.CreateUser(createUserDto);
 
-                await _context.User.AddAsync(newUser);
-                await _context.SaveChangesAsync();
+        //         // await _context.User.AddAsync(newUser);
+        //         // await _context.SaveChangesAsync();
 
-                return Ok(newUser);
-            }
-            catch (Exception ex)
-            {
-                return ReturnException(ex);
-            }
-        }
+        //         return Ok(newUser);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return ReturnException(ex);
+        //     }
+        // }
 
-        [HttpPut("update-user/{id}")]
-        public async Task<IActionResult> UpdateUser([FromForm] UpdateUserDto updateUserDto, int id)
-        {
-            try
-            {
-                var updateUser = await _userService.UpdateUser(updateUserDto, id);
+        // [Authorize(Roles = "Admin")]
+        // [HttpPut("update-user/{id}")]
+        // public async Task<IActionResult> UpdateUser([FromForm] UpdateUserDto updateUserDto, int id)
+        // {
+        //     try
+        //     {
+        //         var updateUser = await _userService.UpdateUser(updateUserDto, id);
 
-                await _context.SaveChangesAsync();
+        //         // await _context.SaveChangesAsync();
 
-                return Ok(updateUser);
-            }
-            catch (Exception ex)
-            {
-                return ReturnException(ex);
-            }
-        }
+        //         return Ok(updateUser);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return ReturnException(ex);
+        //     }
+        // }
 
-        [HttpDelete("delete-user/{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
-        {
-            try
-            {
-                var user = await _userService.DeleteUser(id);
+        // [Authorize(Roles = "Admin")]
+        // [HttpDelete("delete-user/{id}")]
+        // public async Task<IActionResult> DeleteUser(int id)
+        // {
+        //     try
+        //     {
+        //         var user = await _userService.DeleteUser(id);
 
-                _context.User.Remove(user);
-                await _context.SaveChangesAsync();
+        //         // _context.User.Remove(user);
+        //         // await _context.SaveChangesAsync();
 
-                return Ok(_userService);
-            }
-            catch (Exception ex)
-            {
-                return ReturnException(ex);
-            }
-        }
+        //         return Ok(_userService);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return ReturnException(ex);
+        //     }
+        // }
 
-        /// <summary>
         /// Get current user profile
-        /// </summary>
         [AllowAnonymous]
         [Authorize]
         [HttpGet("profile")]
@@ -132,9 +134,7 @@ namespace Server.src.Controllers
             }
         }
 
-        /// <summary>
         /// Get current user's tickets
-        /// </summary>
         [AllowAnonymous]
         [Authorize]
         [HttpGet("tickets")]

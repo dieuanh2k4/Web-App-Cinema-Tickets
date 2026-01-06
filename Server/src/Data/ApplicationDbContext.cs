@@ -27,6 +27,8 @@ namespace Server.src.Data
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<Admin> Admins { get; set; }
+        public DbSet<Staff> Staff { get; set; }
 
         public ApplicationDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions) {}
 
@@ -38,7 +40,7 @@ namespace Server.src.Data
             {
                 entity.ToTable(c =>
                 {
-                    c.HasCheckConstraint("CK_Customer_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
+                    c.HasCheckConstraint("CK_Customer_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
                 });
                 entity.HasKey(c => c.Id);
                 entity.Property(c => c.Id)
@@ -105,7 +107,7 @@ namespace Server.src.Data
                     .IsUnicode(true)
                     .IsRequired();
                 entity.Property(m => m.Director)
-                    .HasMaxLength(20)
+                    .HasMaxLength(200)
                     .IsRequired();
                 entity.Property(m => m.Actors)
                     .HasColumnType("Text[]")
@@ -261,7 +263,7 @@ namespace Server.src.Data
             {
                 entity.ToTable(c =>
                 {
-                    c.HasCheckConstraint("CK_User_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
+                    c.HasCheckConstraint("CK_User_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
                 });
                 entity.HasKey(u => u.Id);
                 entity.Property(t => t.Id)
@@ -392,12 +394,55 @@ namespace Server.src.Data
                     .IsUnique();
             });
 
-            // // StatusSeat unique constraint
-            // modelBuilder.Entity<StatusSeat>(entity => {
-            //     entity.HasIndex(ss => new { ss.ShowtimeId, ss.SeatId })
-            //         .IsUnique()
-            //         .HasFilter("\"Status\" IN ('Booked', 'Pending')");
-            // });
+            // StatusSeat unique constraint
+            modelBuilder.Entity<StatusSeat>(entity => {
+                entity.HasIndex(ss => new { ss.ShowtimeId, ss.SeatId })
+                    .IsUnique()
+                    .HasFilter("\"Status\" IN ('Booked', 'Pending')");
+            });
+
+            // Ticket configuration
+            modelBuilder.Entity<Ticket>(entity => {
+                entity.HasKey(t => t.Id);
+                entity.Property(t => t.Id)
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(t => t.ShowtimeId)
+                    .IsRequired();
+                entity.Property(t => t.UserId)
+                    .IsRequired();
+                entity.Property(t => t.RoomId)
+                    .IsRequired();
+                entity.Property(t => t.MovieId)
+                    .IsRequired();
+                entity.Property(t => t.SumOfSeat)
+                    .IsRequired();
+                entity.Property(t => t.Date)
+                    .IsRequired();
+                entity.Property(t => t.TotalPrice)
+                    .IsRequired();
+
+                // Relationships
+                entity.HasOne(t => t.Showtimes)
+                    .WithMany()
+                    .HasForeignKey(t => t.ShowtimeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(t => t.User)
+                    .WithMany()
+                    .HasForeignKey(t => t.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.Rooms)
+                    .WithMany()
+                    .HasForeignKey(t => t.RoomId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.Movies)
+                    .WithMany()
+                    .HasForeignKey(t => t.MovieId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
             // TicketSeat configuration
             modelBuilder.Entity<TicketSeat>(entity => {
@@ -412,6 +457,70 @@ namespace Server.src.Data
                     .WithMany()
                     .HasForeignKey(ts => ts.SeatId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Admin>(entity =>
+            {
+                entity.ToTable(c =>
+                {
+                    c.HasCheckConstraint("CK_Admin_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
+                });
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Id)
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(c => c.Name)
+                    .IsUnicode(true)
+                    .HasMaxLength(20)
+                    .IsRequired();
+                entity.Property(c => c.Birth)
+                    .HasColumnType("date")
+                    .IsRequired();
+                entity.Property(c => c.Gender)
+                    .HasMaxLength(5)
+                    .IsUnicode(false);
+                entity.Property(c => c.Address)
+                    .HasMaxLength(255);
+                entity.Property(c => c.Phone)
+                    .HasMaxLength(15)
+                    .IsUnicode(false)
+                    .IsRequired();
+                entity.HasIndex(c => c.Phone)
+                    .IsUnique();
+                entity.Property(c => c.Avatar)
+                    .HasMaxLength(255);
+            });
+
+            modelBuilder.Entity<Staff>(entity =>
+            {
+                entity.ToTable(c =>
+                {
+                    c.HasCheckConstraint("CK_Staff_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
+                });
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Id)
+                    .ValueGeneratedOnAdd()
+                    .IsRequired();
+                entity.Property(c => c.Name)
+                    .IsUnicode(true)
+                    .HasMaxLength(20)
+                    .IsRequired();
+                entity.Property(c => c.Birth)
+                    .HasColumnType("date")
+                    .IsRequired();
+                entity.Property(c => c.Gender)
+                    .HasMaxLength(5)
+                    .IsUnicode(false);
+                entity.Property(c => c.Address)
+                    .HasMaxLength(255);
+                entity.Property(c => c.Phone)
+                    .HasMaxLength(15)
+                    .IsUnicode(false)
+                    .IsRequired();
+                entity.HasIndex(c => c.Phone)
+                    .IsUnique();
+                entity.Property(c => c.Avatar)
+                    .HasMaxLength(255);
             });
         }
     }

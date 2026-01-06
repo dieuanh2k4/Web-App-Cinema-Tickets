@@ -12,6 +12,7 @@ namespace Server.src.Services.Interfaces
         Task<TicketDto> BookTicket(CreateTicketDto createTicketDto);
         Task<List<TicketDto>> GetAllTickets();
         Task<TicketDto> GetTicketById(int id);
+        Task<List<TicketDto>> GetTicketHistory(int userId);
         Task<List<TicketDto>> GetTicketsByCustomerEmail(string email);
         Task<bool> CancelTicket(int ticketId);
     }

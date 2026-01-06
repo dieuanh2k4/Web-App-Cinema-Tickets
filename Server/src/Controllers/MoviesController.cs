@@ -55,6 +55,36 @@ namespace Server.Controllers
         }
 
         [Authorize(Roles = "Admin")]
+        [HttpGet("get-all-movies-for-admin")]
+        public async Task<IActionResult> GetMovies(
+            [FromQuery] string? search = null,
+            [FromQuery] int? year = null,
+            [FromQuery] string? genre = null,
+            [FromQuery] string? status = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int limit = 10)
+        {
+            try
+            {
+                var (movies, totalCount) = await _movieService.GetAllMoviesForAdmin(search, year, genre, status, page, limit);
+                var movieDtos = movies.Select(m => m.ToMovieDto()).ToList();
+                
+                return Ok(new
+                {
+                    data = movieDtos,
+                    totalCount = totalCount,
+                    page = page,
+                    limit = limit,
+                    totalPages = (int)Math.Ceiling((double)totalCount / limit)
+                });
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
         [HttpPost("create-movie")]
         public async Task<IActionResult> CreateMovie([FromForm] CreateMovieDto movieDto, IFormFile? imageFile)
         {
@@ -68,9 +98,6 @@ namespace Server.Controllers
 
                 var createdMovie = await _movieService.AddMovie(movieDto);
 
-                await _context.Movies.AddAsync(createdMovie);
-                await _context.SaveChangesAsync();
-
                 return Ok(createdMovie);
             }
             catch (Exception ex)
@@ -80,7 +107,7 @@ namespace Server.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpPut("update-subject/{id}")]
+        [HttpPut("update-movie/{id}")]
         public async Task<IActionResult> UpdateMovie([FromForm] UpdateMovieDto updateMovieDto, IFormFile? imageFile, int id)
         {
             try
@@ -112,7 +139,7 @@ namespace Server.Controllers
                 _context.Movies.Remove(movie);
                 await _context.SaveChangesAsync();
 
-                return Ok(_movieService);
+                return Ok(movie);
             }
             catch (Exception ex)
             {

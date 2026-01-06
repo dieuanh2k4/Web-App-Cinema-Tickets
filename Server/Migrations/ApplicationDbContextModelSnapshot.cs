@@ -23,6 +23,61 @@ namespace Server.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Server.src.Models.Admin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Avatar")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateOnly>("Birth")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Gender")
+                        .HasMaxLength(5)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(true)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Admins", t =>
+                        {
+                            t.HasCheckConstraint("CK_Admin_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
+                        });
+                });
+
             modelBuilder.Entity("Server.src.Models.Customer", b =>
                 {
                     b.Property<int>("Id")
@@ -32,10 +87,12 @@ namespace Server.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("Avatar")
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<DateOnly>("Birth")
                         .HasColumnType("date");
@@ -44,22 +101,36 @@ namespace Server.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(true)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Phone")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(15)");
 
                     b.Property<int?>("UserId")
                         .HasColumnType("integer");
 
                     b.Property<string>("gender")
-                        .HasColumnType("text");
+                        .HasMaxLength(5)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(5)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
                     b.HasIndex("UserId");
 
-                    b.ToTable("Customers");
+                    b.ToTable("Customers", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Customer_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
+                        });
                 });
 
             modelBuilder.Entity("Server.src.Models.Movies", b =>
@@ -87,8 +158,8 @@ namespace Server.Migrations
 
                     b.Property<string>("Director")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("Duration")
                         .HasColumnType("integer");
@@ -111,6 +182,9 @@ namespace Server.Migrations
                         .HasColumnType("double precision")
                         .HasDefaultValue(0.0);
 
+                    b.Property<int>("ReleaseYear")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp without time zone");
 
@@ -131,7 +205,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Movies", t =>
+                    b.ToTable("Movies", null, t =>
                         {
                             t.HasCheckConstraint("CK_Movie_Duration", "\"Duration\" > 0");
 
@@ -166,7 +240,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("OTPCodes");
+                    b.ToTable("OTPCodes", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.Payment", b =>
@@ -199,7 +273,7 @@ namespace Server.Migrations
                     b.HasIndex("TicketId")
                         .IsUnique();
 
-                    b.ToTable("Payment", t =>
+                    b.ToTable("Payment", null, t =>
                         {
                             t.HasCheckConstraint("CK_Payment_Status", "\"Status\" IN('Đã Thanh toán', 'Chưa Thanh toán', 'Thanh toán thất bại')");
 
@@ -243,7 +317,7 @@ namespace Server.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("Permissions");
+                    b.ToTable("Permissions", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.RolePermission", b =>
@@ -270,7 +344,7 @@ namespace Server.Migrations
                     b.HasIndex("RoleId", "PermissionId")
                         .IsUnique();
 
-                    b.ToTable("RolePermissions");
+                    b.ToTable("RolePermissions", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.Roles", b =>
@@ -301,7 +375,7 @@ namespace Server.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Roles");
+                    b.ToTable("Roles", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.Rooms", b =>
@@ -315,10 +389,19 @@ namespace Server.Migrations
                     b.Property<int>("Capacity")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Columns")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<int>("Rows")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -336,7 +419,7 @@ namespace Server.Migrations
 
                     b.HasIndex("TheaterId");
 
-                    b.ToTable("Rooms");
+                    b.ToTable("Rooms", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.Seats", b =>
@@ -372,7 +455,7 @@ namespace Server.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Seats");
+                    b.ToTable("Seats", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.Showtimes", b =>
@@ -404,7 +487,62 @@ namespace Server.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Showtimes");
+                    b.ToTable("Showtimes", (string)null);
+                });
+
+            modelBuilder.Entity("Server.src.Models.Staff", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Avatar")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateOnly>("Birth")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Gender")
+                        .HasMaxLength(5)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(true)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Staff", t =>
+                        {
+                            t.HasCheckConstraint("CK_Staff_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
+                        });
                 });
 
             modelBuilder.Entity("Server.src.Models.StatusSeat", b =>
@@ -436,7 +574,11 @@ namespace Server.Migrations
 
                     b.HasIndex("ShowtimesId");
 
-                    b.ToTable("StatusSeat");
+                    b.HasIndex("ShowtimeId", "SeatId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" IN ('Booked', 'Pending')");
+
+                    b.ToTable("StatusSeat", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.Theater", b =>
@@ -464,7 +606,7 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Theater");
+                    b.ToTable("Theater", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.Ticket", b =>
@@ -481,25 +623,10 @@ namespace Server.Migrations
                     b.Property<int>("MovieId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("MoviesId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("RoomId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("RoomsId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SeatId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("SeatsId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("ShowtimeId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ShowtimesId")
                         .HasColumnType("integer");
 
                     b.Property<int>("SumOfSeat")
@@ -513,17 +640,15 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MoviesId");
+                    b.HasIndex("MovieId");
 
-                    b.HasIndex("RoomsId");
+                    b.HasIndex("RoomId");
 
-                    b.HasIndex("SeatsId");
-
-                    b.HasIndex("ShowtimesId");
+                    b.HasIndex("ShowtimeId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Tickets");
+                    b.ToTable("Tickets", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.TicketPrice", b =>
@@ -549,10 +674,33 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TicketPrices", t =>
+                    b.ToTable("TicketPrices", null, t =>
                         {
                             t.HasCheckConstraint("CK_Seats_Price", "\"Price\" > 0");
                         });
+                });
+
+            modelBuilder.Entity("Server.src.Models.TicketSeat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("SeatId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TicketId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SeatId");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("TicketSeats", (string)null);
                 });
 
             modelBuilder.Entity("Server.src.Models.User", b =>
@@ -609,9 +757,9 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("User", t =>
+                    b.ToTable("User", null, t =>
                         {
-                            t.HasCheckConstraint("CK_User_Gender", "Gender IN('Nam', 'Nữ', 'Khác')");
+                            t.HasCheckConstraint("CK_User_Gender", "\"Gender\" IN('Nam', 'Nữ', 'Khác')");
                         });
                 });
 
@@ -642,7 +790,16 @@ namespace Server.Migrations
                     b.HasIndex("UserId", "RoleId")
                         .IsUnique();
 
-                    b.ToTable("UserRoles");
+                    b.ToTable("UserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Server.src.Models.Admin", b =>
+                {
+                    b.HasOne("Server.src.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Server.src.Models.Customer", b =>
@@ -725,6 +882,15 @@ namespace Server.Migrations
                     b.Navigation("Rooms");
                 });
 
+            modelBuilder.Entity("Server.src.Models.Staff", b =>
+                {
+                    b.HasOne("Server.src.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Server.src.Models.StatusSeat", b =>
                 {
                     b.HasOne("Server.src.Models.Seats", "Seats")
@@ -744,35 +910,54 @@ namespace Server.Migrations
                 {
                     b.HasOne("Server.src.Models.Movies", "Movies")
                         .WithMany()
-                        .HasForeignKey("MoviesId");
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Server.src.Models.Rooms", "Rooms")
                         .WithMany()
-                        .HasForeignKey("RoomsId");
-
-                    b.HasOne("Server.src.Models.Seats", "Seats")
-                        .WithMany()
-                        .HasForeignKey("SeatsId");
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Server.src.Models.Showtimes", "Showtimes")
                         .WithMany()
-                        .HasForeignKey("ShowtimesId");
+                        .HasForeignKey("ShowtimeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Server.src.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Movies");
 
                     b.Navigation("Rooms");
 
-                    b.Navigation("Seats");
-
                     b.Navigation("Showtimes");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Server.src.Models.TicketSeat", b =>
+                {
+                    b.HasOne("Server.src.Models.Seats", "Seat")
+                        .WithMany()
+                        .HasForeignKey("SeatId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Server.src.Models.Ticket", "Ticket")
+                        .WithMany("TicketSeats")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Seat");
+
+                    b.Navigation("Ticket");
                 });
 
             modelBuilder.Entity("Server.src.Models.UserRole", b =>
@@ -826,6 +1011,8 @@ namespace Server.Migrations
             modelBuilder.Entity("Server.src.Models.Ticket", b =>
                 {
                     b.Navigation("Payment");
+
+                    b.Navigation("TicketSeats");
                 });
 
             modelBuilder.Entity("Server.src.Models.User", b =>

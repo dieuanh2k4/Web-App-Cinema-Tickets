@@ -15,13 +15,15 @@ using StackExchange.Redis;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Minio;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ==========================
 // Lấy hostname của máy và thay thế placeholder {HOSTNAME} trong config
 // ==========================
-var hostname = Environment.MachineName;
+var hostname = Environment.GetEnvironmentVariable("HOSTNAME") ?? Environment.MachineName;
 
 // Thay thế {HOSTNAME} trong tất cả config
 var config = builder.Configuration as IConfigurationRoot;
@@ -191,6 +193,9 @@ builder.Services.AddScoped<SeatHoldCleanupJob>();
 // Register notification service
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
+// Add HttpContextAccessor (required for MinioStorageService and other services)
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IMinioStorageService, MinioStorageService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -205,6 +210,7 @@ builder.Services.AddScoped<ITicketService, TicketService>();
 // Phase 2: Booking services
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IDistributedLockService, DistributedLockService>();
 
 // Payment & QR Code & Email services
 builder.Services.AddScoped<VNPayService>();
@@ -214,10 +220,18 @@ builder.Services.AddScoped<EmailService>();
 // Chat AI service
 builder.Services.AddScoped<IChatService, ChatService>();
 
+// RAG: Cinema RAG service
+builder.Services.AddScoped<ICinemaRagService, CinemaRagService>();
+// Dashboard service
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+
 // ==========================
 // Thêm Repository
 // ==========================
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IStaffService, StaffService>();
+
 
 // Phase 2: Customer repository
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
@@ -248,6 +262,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
         };
     });
+
+builder.Services.AddHttpClient("Groq", client =>
+{
+    var groqConfig = builder.Configuration.GetSection("Groq");
+
+    client.BaseAddress = new Uri(groqConfig["BaseUrl"]!);
+    client.DefaultRequestHeaders.Authorization =
+        new AuthenticationHeaderValue(
+            "Bearer",
+            groqConfig["ApiKey"]
+        );
+});
+
+
 
 // ==========================
 // Cấu hình CORS: cho phép frontend được gọi API

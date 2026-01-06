@@ -11,6 +11,9 @@ namespace Server.src.Models
         public string? Name { get; set; }
         public int Capacity { get; set; } // sức chứa
         public string? Type { get; set; } // loại phòng 
+        public int Rows { get; set; } // số hàng ghế
+        public int Columns { get; set; } // số cột ghế
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         // public int TicketpriceId { get; set; }
 
         private string _status = "Trống";

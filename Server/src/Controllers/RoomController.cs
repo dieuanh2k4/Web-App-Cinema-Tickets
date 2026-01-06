@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
 using Server.src.Dtos.Rooms;
+using Server.src.Dtos.Seats;
 using Server.src.Mapper;
 using Server.src.Models;
 using Server.src.Services.Interfaces;
@@ -92,6 +94,40 @@ namespace Server.src.Controllers
                 await _context.SaveChangesAsync();
 
                 return Ok(_roomService);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("get-detail-room/{id}")]
+        public async Task<IActionResult> GetDetailRoomById(int id)
+        {
+            try
+            {
+                var room = await _roomService.GetDetailRoomById(id);
+
+                return Ok(room);
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}/seat-layout")]
+        public async Task<IActionResult> UpdateSeatLayout([FromBody] UpdateSeatLayoutDto updateSeatLayoutDto, int id)
+        {
+            try
+            {
+                var room = await _roomService.UpdateSeatLayout(updateSeatLayoutDto, id);
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Cập nhật sơ đồ ghế thành công", room });
             }
             catch (Exception ex)
             {
