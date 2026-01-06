@@ -9,24 +9,24 @@ namespace Server.src.Services.Implements
     {
         private readonly ApplicationDbContext _db;
 
-        // ⭐ RAG: Inject DbContext
+        // RAG: Inject DbContext
         public CinemaRagService(ApplicationDbContext db)
         {
             _db = db;
         }
 
-        // ⭐ RAG: Build context cho AI dựa trên DB thật
+        // RAG: Build context cho AI dựa trên DB thật
         public async Task<string> BuildMovieContextAsync()
         {
             var sb = new StringBuilder();
-            var today = DateTime.UtcNow.Date; // ⭐ RAG: Dùng UtcNow theo yêu cầu
+            var today = DateTime.UtcNow.Date; // RAG: Dùng UtcNow theo yêu cầu
 
-            // ⭐ RAG: 1. Phim đang chiếu
+            // RAG: 1. Phim đang chiếu
             var allMovies = await _db.Movies
-                .ToListAsync(); // ⭐ RAG: Query DB trước
+                .ToListAsync(); // RAG: Query DB trước
 
             var movies = allMovies
-                .Where(m => m.Status == "Đang chiếu") // ⭐ RAG: Lọc trong memory
+                .Where(m => m.Status == "Đang chiếu") // RAG: Lọc trong memory
                 .Select(m => new
                 {
                     m.Id,
@@ -53,10 +53,10 @@ namespace Server.src.Services.Implements
                 sb.AppendLine($"  Mô tả: {m.Description}");
             }
 
-            // ⭐ RAG: 2. Suất chiếu hôm nay
+            // RAG: 2. Suất chiếu hôm nay
             var showtimes = await _db.Showtimes
-                .Include(s => s.Movies) // ⭐ RAG: Join phim
-                .Where(s => s.Date == DateOnly.FromDateTime(today)) // ⭐ RAG: Lọc hôm nay
+                .Include(s => s.Movies) // RAG: Join phim
+                .Where(s => s.Date == DateOnly.FromDateTime(today)) // RAG: Lọc hôm nay
                 .OrderBy(s => s.Start)
                 .ToListAsync();
 
@@ -71,7 +71,7 @@ namespace Server.src.Services.Implements
                 }
             }
 
-            // ⭐ RAG: 3. Giá vé từ TicketPrice
+            // RAG: 3. Giá vé từ TicketPrice
             var prices = await _db.TicketPrices.ToListAsync();
             if (prices.Any())
             {
@@ -84,7 +84,7 @@ namespace Server.src.Services.Implements
                 }
             }
 
-            return sb.ToString(); // ⭐ RAG: Trả context cho AI
+            return sb.ToString(); // RAG: Trả context cho AI
         }
     }
 }

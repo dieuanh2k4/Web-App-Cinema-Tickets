@@ -6,13 +6,13 @@ namespace Server.src.Services.Implements
 {
     public class ChatService : IChatService
     {
-        private readonly IHttpClientFactory _httpClientFactory; // ⭐ Chat
-        private readonly ICinemaRagService _ragService;          // ⭐ RAG
+        private readonly IHttpClientFactory _httpClientFactory; // Chat
+        private readonly ICinemaRagService _ragService;          // RAG
 
-        // ⭐ DI: inject HttpClient + RAG service
+        // DI: inject HttpClient + RAG service
         public ChatService(
             IHttpClientFactory httpClientFactory,
-            ICinemaRagService ragService // ⭐ RAG
+            ICinemaRagService ragService // RAG
         )
         {
             _httpClientFactory = httpClientFactory;
@@ -21,9 +21,9 @@ namespace Server.src.Services.Implements
 
         public async Task<string> ChatWithAIAsync(string message)
         {
-            var client = _httpClientFactory.CreateClient("Groq"); // ⭐ Groq client
+            var client = _httpClientFactory.CreateClient("Groq"); // Groq client
 
-            // ⭐ RAG: build context từ database (ưu tiên phim)
+            // RAG: build context từ database (ưu tiên phim)
             var context = await _ragService.BuildMovieContextAsync();
 
             var payload = new
@@ -32,7 +32,7 @@ namespace Server.src.Services.Implements
 
                 messages = new[]
                 {
-                    // ⭐ SYSTEM PROMPT + CONTEXT
+                    // SYSTEM PROMPT + CONTEXT
                     new
                     {
                         role = "system",
@@ -55,7 +55,7 @@ CONTEXT:
 " + context
                     },
 
-                    // ⭐ USER MESSAGE
+                    // USER MESSAGE
                     new
                     {
                         role = "user",
@@ -63,7 +63,7 @@ CONTEXT:
                     }
                 },
 
-                temperature = 0.2 // ⭐ RAG: giảm bịa
+                temperature = 0.2 // RAG: giảm bịa
             };
 
             var httpContent = new StringContent(
@@ -75,7 +75,7 @@ CONTEXT:
             var response = await client.PostAsync("chat/completions", httpContent);
             var json = await response.Content.ReadAsStringAsync();
 
-            // ⭐ DEBUG: trả lỗi Groq nếu có
+            // DEBUG: trả lỗi Groq nếu có
             if (!response.IsSuccessStatusCode)
             {
                 return $"[Groq API Error] {json}";
@@ -83,7 +83,7 @@ CONTEXT:
 
             using var doc = JsonDocument.Parse(json);
 
-            // ⭐ SAFETY CHECK
+            // SAFETY CHECK
             if (!doc.RootElement.TryGetProperty("choices", out var choices) ||
                 choices.GetArrayLength() == 0)
             {
