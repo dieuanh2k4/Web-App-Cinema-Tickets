@@ -55,7 +55,7 @@ namespace Server.src.Services.Implements
             // Lấy tất cả phòng chiếu
             var rooms = await _context.Rooms
                 .Include(r => r.Theater)
-                .Where(r => r.Status == "Trống" || r.Status == "Hoạt động")
+                .Where(r => r.Status == "Trống" || r.Status == "Hoạt động" || r.Status == "Available" || r.Status == "Đang hoạt động")
                 .OrderByDescending(r => r.Capacity) // Ưu tiên phòng lớn
                 .ToListAsync();
 
@@ -75,11 +75,16 @@ namespace Server.src.Services.Implements
 
             var generatedShowtimes = new List<Showtimes>();
 
-            // AI Logic: Phân bổ phim vào phòng
+            // AI Logic: Phân bổ phim vào phòng với thời gian bắt đầu offset
+            // Mỗi phòng bắt đầu khác nhau để tạo đa dạng khung giờ
+            var roomIndex = 0;
             foreach (var room in rooms)
             {
-                var roomShowtimes = GenerateShowtimesForRoom(room, movies, date);
+                // Offset 30 phút cho mỗi phòng (0, 30, 60 phút)
+                var startTimeOffset = (roomIndex % 3) * 30;
+                var roomShowtimes = GenerateShowtimesForRoom(room, movies, date, startTimeOffset);
                 generatedShowtimes.AddRange(roomShowtimes);
+                roomIndex++;
             }
 
             // Lưu vào database
@@ -91,24 +96,50 @@ namespace Server.src.Services.Implements
 
         /// <summary>
         /// Tạo lịch chiếu cho 1 phòng trong 1 ngày
+        /// Mỗi phòng sẽ chiếu nhiều phim khác nhau trong ngày, xen kẽ để tối ưu
         /// </summary>
-        private List<Showtimes> GenerateShowtimesForRoom(Rooms room, List<Movies> movies, DateOnly date)
+        private List<Showtimes> GenerateShowtimesForRoom(Rooms room, List<Movies> movies, DateOnly date, int startTimeOffsetMinutes = 0)
         {
             var showtimes = new List<Showtimes>();
-            var currentTime = new TimeOnly(OPENING_HOUR, 0);
+            var currentTime = new TimeOnly(OPENING_HOUR, 0).AddMinutes(startTimeOffsetMinutes);
             var closingTime = new TimeOnly(CLOSING_HOUR, 0);
 
             // AI Decision: Phân bổ phim dựa trên độ phổ biến và thời lượng
             var movieSchedule = OptimizeMovieSchedule(movies, room.Capacity);
 
-            foreach (var movie in movieSchedule)
+            // Xen kẽ phim để tạo đa dạng (phim A -> phim B -> phim C -> phim A...)
+            var movieIndex = 0;
+            var movieShowCount = new Dictionary<int, int>(); // Đếm số lần chiếu mỗi phim
+
+            while (currentTime.AddMinutes(90) <= closingTime) // Còn đủ thời gian cho phim ngắn nhất
             {
+                // Chọn phim theo vòng lặp
+                if (movieIndex >= movieSchedule.Count)
+                    movieIndex = 0;
+
+                var movie = movieSchedule[movieIndex];
                 var movieDuration = movie.Duration;
                 var endTime = currentTime.AddMinutes(movieDuration);
 
                 // Kiểm tra có đủ thời gian chiếu không
                 if (endTime.AddMinutes(CLEANUP_TIME) > closingTime)
-                    break;
+                {
+                    // Thử phim ngắn hơn
+                    movieIndex++;
+                    if (movieIndex >= movieSchedule.Count)
+                        break; // Hết phim
+                    continue;
+                }
+
+                // Giới hạn mỗi phim tối đa 3-4 suất/ngày ở 1 phòng
+                var currentCount = movieShowCount.GetValueOrDefault(movie.Id, 0);
+                if (currentCount >= 4)
+                {
+                    movieIndex++;
+                    if (movieIndex >= movieSchedule.Count)
+                        break;
+                    continue;
+                }
 
                 var showtime = new Showtimes
                 {
@@ -120,13 +151,13 @@ namespace Server.src.Services.Implements
                 };
 
                 showtimes.Add(showtime);
+                movieShowCount[movie.Id] = currentCount + 1;
 
                 // Cập nhật thời gian cho suất chiếu tiếp theo
                 currentTime = endTime.AddMinutes(CLEANUP_TIME);
-
-                // Nếu gần đóng cửa, dừng lại
-                if (currentTime.AddMinutes(90) > closingTime) // 90 phút = thời lượng phim tối thiểu
-                    break;
+                
+                // Chuyển sang phim khác
+                movieIndex++;
             }
 
             return showtimes;

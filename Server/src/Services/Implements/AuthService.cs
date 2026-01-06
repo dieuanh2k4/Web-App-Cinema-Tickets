@@ -70,11 +70,17 @@ namespace Server.src.Services.Implements
             if (existingCustomer != null)
                 throw new Result("Email đã được sử dụng");
 
+            // Kiểm tra số điện thoại đã tồn tại
+            var existingPhone = await _context.Customers
+                .FirstOrDefaultAsync(c => c.Phone == register.phoneNumber);
+            if (existingPhone != null)
+                throw new Result("Số điện thoại đã được sử dụng");
+
             // Hash password
             var hashedPassword = PasswordHelper.HashPassword(register.password);
 
             // Tạo User mới
-            var newUser = await register.ToUserFromRegisterDto();
+            var newUser = register.ToUserFromRegisterDto();
             newUser.Avatar = register.Avatar;
             newUser.password = hashedPassword;
 
@@ -106,6 +112,8 @@ namespace Server.src.Services.Implements
                 Email = register.Email,
                 Phone = register.phoneNumber,
                 Birth = register.Birth,
+                gender = register.Gender,
+                Address = register.Address,
                 UserId = newUser.Id
             };
 

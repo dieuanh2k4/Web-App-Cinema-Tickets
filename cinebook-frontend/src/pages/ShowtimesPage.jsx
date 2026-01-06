@@ -28,13 +28,31 @@ export default function ShowtimesPage() {
     error: showtimesError,
   } = useQuery({
     queryKey: ["all-showtimes", selectedDate, selectedTheaterId],
-    queryFn: () => {
-      return getShowtimesByTheater(selectedTheaterId, selectedDate);
+    queryFn: async () => {
+      console.log("📡 Fetching showtimes with params:", {
+        theaterId: selectedTheaterId,
+        date: selectedDate,
+      });
+      try {
+        const result = await getShowtimesByTheater(selectedTheaterId, selectedDate);
+        console.log("✅ Showtimes response:", result);
+        return result;
+      } catch (error) {
+        console.error("❌ Showtimes error:", error);
+        console.error("Error details:", error.response?.data);
+        // Nếu backend trả về lỗi "Không có suất chiếu", return empty array thay vì throw
+        if (error.response?.data?.message?.includes("Không có suất chiếu")) {
+          console.log("ℹ️ Không có suất chiếu - returning empty array");
+          return [];
+        }
+        throw error;
+      }
     },
     enabled: selectedTheaterId !== "all", // Chỉ fetch khi đã chọn rạp cụ thể
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
+    retry: false, // Không retry để tránh spam API
   });
 
   const {
@@ -51,26 +69,23 @@ export default function ShowtimesPage() {
 
   // Debug logs
   console.log("=== SHOWTIMES PAGE DEBUG ===");
-  console.log("Theaters:", theaters);
-  console.log(
-    "Theaters type:",
-    typeof theaters,
-    "Is Array:",
-    Array.isArray(theaters)
-  );
-  console.log("Showtimes raw:", showtimes);
-  console.log("Movies:", movies);
-  console.log("Selected Date:", selectedDate);
-  console.log("Selected Theater ID:", selectedTheaterId);
-  console.log("Loading states:", {
+  console.log("📍 Selected Theater ID:", selectedTheaterId, typeof selectedTheaterId);
+  console.log("📅 Selected Date:", selectedDate);
+  console.log("🎭 Theaters:", theaters);
+  console.log("🎬 Showtimes raw data:", showtimes);
+  console.log("🎥 Movies:", movies);
+  console.log("⏳ Loading states:", {
     isLoadingTheaters,
     isLoadingMovies,
     isLoadingShowtimes,
   });
-  console.log("Errors:", { theatersError, moviesError, showtimesError });
+  console.log("❌ Errors:", { theatersError, moviesError, showtimesError });
 
   // API đã filter sẵn theo date và theater, không cần filter lại
-  const filteredShowtimes = showtimes || [];
+  const filteredShowtimes = Array.isArray(showtimes) ? showtimes : [];
+  
+  console.log("🔍 Filtered showtimes:", filteredShowtimes);
+  console.log("🔍 Filtered showtimes count:", filteredShowtimes.length);
 
   // Group showtimes by movie
   const groupedByMovie = filteredShowtimes.reduce((acc, showtime) => {
@@ -78,6 +93,7 @@ export default function ShowtimesPage() {
 
     if (!acc[movieId]) {
       const movie = movies?.find((m) => m.id === movieId);
+      console.log(`🎬 Found movie for movieId ${movieId}:`, movie?.title);
       acc[movieId] = {
         movie,
         showtimes: [],
@@ -87,6 +103,9 @@ export default function ShowtimesPage() {
     acc[movieId].showtimes.push(showtime);
     return acc;
   }, {});
+  
+  console.log("📦 Grouped by movie:", groupedByMovie);
+  console.log("📦 Number of movies with showtimes:", Object.keys(groupedByMovie).length);
 
   // Generate next 7 days
   const dates = Array.from({ length: 7 }, (_, i) => {
@@ -161,30 +180,30 @@ export default function ShowtimesPage() {
                 </select>
                 <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
+            </div>
 
-              {/* Selected Theater Info */}
-              {selectedTheater && selectedTheaterId !== "all" && (
-                <div className="mt-4 p-4 bg-dark rounded-lg border border-purple/30">
-                  <div className="flex items-start space-x-3">
-                    <FiMapPin
-                      className="text-purple mt-1 flex-shrink-0"
-                      size={20}
-                    />
-                    <div>
-                      <p className="font-semibold text-white text-lg">
-                        {selectedTheater.Name}
-                      </p>
-                      <p className="text-gray-400 text-sm mt-1">
-                        {selectedTheater.Address}
-                      </p>
-                      <p className="text-purple text-sm mt-1">
-                        📍 {selectedTheater.City}
-                      </p>
-                    </div>
+            {/* Vị trí rạp chiếu - Hiển thị bên dưới dropdown chọn rạp */}
+            {selectedTheater && selectedTheaterId !== "all" && (
+              <div className="mb-6 p-4 bg-dark rounded-lg border border-purple/30">
+                <div className="flex items-start space-x-3">
+                  <FiMapPin
+                    className="text-purple mt-1 flex-shrink-0"
+                    size={20}
+                  />
+                  <div>
+                    <p className="font-semibold text-white text-lg">
+                      {selectedTheater.name || selectedTheater.Name}
+                    </p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      {selectedTheater.address || selectedTheater.Address}
+                    </p>
+                    <p className="text-purple text-sm mt-1">
+                      📍 {selectedTheater.city || selectedTheater.City}
+                    </p>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Date selector */}
             <div>
@@ -238,23 +257,32 @@ export default function ShowtimesPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple"></div>
           </div>
         ) : showtimesError ? (
-          <div className="text-center py-16 bg-dark-light rounded-xl border border-gray-custom/30">
-            <FiCalendar size={48} className="mx-auto text-gray-600 mb-4" />
+          <div className="text-center py-16 bg-dark-light rounded-xl border border-red-500/30">
+            <FiCalendar size={48} className="mx-auto text-red-500 mb-4" />
             <p className="text-gray-400 text-lg mb-2">
-              Không thể tải danh sách phim
+              Lỗi khi tải dữ liệu
             </p>
-            <p className="text-gray-500 text-sm">
-              Vui lòng thử lại sau hoặc liên hệ hỗ trợ
+            <p className="text-gray-500 text-sm mb-4">
+              {showtimesError?.response?.data?.message || "Vui lòng thử lại sau"}
             </p>
+            <button 
+              onClick={() => setSelectedDate(new Date().toISOString().split("T")[0])}
+              className="px-4 py-2 bg-purple hover:bg-purple-dark text-white rounded-lg transition-colors"
+            >
+              Thử lại
+            </button>
           </div>
         ) : Object.keys(groupedByMovie).length === 0 ? (
-          <div className="text-center py-16 bg-dark-light rounded-xl">
-            <FiCalendar size={48} className="mx-auto text-gray-600 mb-4" />
+          <div className="text-center py-16 bg-dark-light rounded-xl border border-yellow-500/30">
+            <FiCalendar size={48} className="mx-auto text-yellow-500 mb-4" />
             <p className="text-gray-400 text-lg mb-2">
               Chưa có lịch chiếu cho ngày này
             </p>
-            <p className="text-gray-500 text-sm">
-              Vui lòng chọn ngày khác hoặc quay lại sau
+            <p className="text-gray-500 text-sm mb-4">
+              Rạp <span className="text-purple font-semibold">{selectedTheater?.name || selectedTheater?.Name}</span> chưa có suất chiếu vào ngày <span className="text-purple font-semibold">{new Date(selectedDate).toLocaleDateString('vi-VN')}</span>
+            </p>
+            <p className="text-gray-600 text-xs">
+              💡 Tip: Thử chọn ngày khác hoặc liên hệ rạp để biết lịch chiếu mới nhất
             </p>
           </div>
         ) : (
@@ -355,11 +383,11 @@ export default function ShowtimesPage() {
                                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
                                     <div className="bg-dark-light border border-purple/30 rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
                                       <p className="text-purple font-semibold">
-                                        {showtime.rooomName}
+                                        {showtime.RoomName || showtime.roomName}
                                       </p>
                                       {selectedTheaterId === "all" && (
                                         <p className="text-gray-400 text-[10px] mt-1">
-                                          {showtime.theaterName}
+                                          {showtime.TheaterName || showtime.theaterName}
                                         </p>
                                       )}
                                     </div>
@@ -378,7 +406,7 @@ export default function ShowtimesPage() {
                           <p>
                             Phòng chiếu:{" "}
                             {movieGroup.showtimes
-                              .map((s) => s.rooomName)
+                              .map((s) => s.RoomName || s.roomName)
                               .filter((v, i, a) => a.indexOf(v) === i)
                               .join(", ")}
                           </p>

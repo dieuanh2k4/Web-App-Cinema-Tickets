@@ -2,19 +2,226 @@ using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
 using Server.src.Services.Interfaces;
+using System.Text.Json;
 
 namespace Server.src.Services.Implements
 {
     public class ChatService : IChatService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IOpenAIService _openAIService;
 
-        public ChatService(ApplicationDbContext context)
+        public ChatService(ApplicationDbContext context, IOpenAIService openAIService)
         {
             _context = context;
+            _openAIService = openAIService;
         }
 
         public async Task<ChatResponse> ProcessMessage(string message, string? userId)
+        {
+            var lowerMessage = message.ToLower().Trim();
+
+            try
+            {
+                // Build context data from database
+                var contextData = await BuildContextData(lowerMessage);
+                
+                // Get OpenAI response with context
+                var aiReply = await _openAIService.GetChatCompletionWithContext(message, contextData);
+                
+                // Generate smart suggestions based on message
+                var suggestions = GenerateSuggestions(lowerMessage);
+                
+                return new ChatResponse
+                {
+                    Reply = aiReply,
+                    Suggestions = suggestions
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in ChatService: {ex.Message}");
+                // Fallback to rule-based responses if OpenAI fails
+                return await GetRuleBasedResponse(message, userId);
+            }
+        }
+
+        private async Task<string> BuildContextData(string message)
+        {
+            var context = new System.Text.StringBuilder();
+            var lowerMessage = message.ToLower();
+
+            // 1. Always include current movies info if asking about movies
+            if (ContainsAny(lowerMessage, new[] { "phim", "movie", "xem", "chiếu" }))
+            {
+                var movies = await _context.Movies
+                    .Where(m => m.StartDate <= DateTime.UtcNow && m.EndDate >= DateTime.UtcNow)
+                    .Select(m => new
+                    {
+                        m.Title,
+                        m.Genre,
+                        m.Duration,
+                        m.AgeLimit,
+                        m.Rating,
+                        m.Description,
+                        m.Director,
+                        m.Actors,
+                        m.Language,
+                        Status = m.StartDate <= DateTime.UtcNow && m.EndDate >= DateTime.UtcNow ? "Đang chiếu" : "Sắp chiếu"
+                    })
+                    .Take(10)
+                    .ToListAsync();
+
+                if (movies.Any())
+                {
+                    context.AppendLine("=== PHIM ĐANG CHIẾU ===");
+                    foreach (var m in movies)
+                    {
+                        context.AppendLine($"- {m.Title}");
+                        context.AppendLine($"  Thể loại: {m.Genre} | Thời lượng: {m.Duration} phút");
+                        context.AppendLine($"  Giới hạn tuổi: {m.AgeLimit} | Đánh giá: {m.Rating}/10");
+                        context.AppendLine($"  Đạo diễn: {m.Director}");
+                        if (m.Actors != null && m.Actors.Any())
+                        {
+                            context.AppendLine($"  Diễn viên: {string.Join(", ", m.Actors)}");
+                        }
+                        context.AppendLine($"  Mô tả: {m.Description}");
+                        context.AppendLine();
+                    }
+                }
+            }
+
+            // 2. Theater information
+            if (ContainsAny(lowerMessage, new[] { "rạp", "theater", "cinema", "địa chỉ", "ở đâu" }))
+            {
+                var theaters = await _context.Theater
+                    .Select(t => new { t.Name, t.Address, t.City })
+                    .Take(10)
+                    .ToListAsync();
+
+                if (theaters.Any())
+                {
+                    context.AppendLine("=== THÔNG TIN RẠP CHIẾU ===");
+                    foreach (var t in theaters)
+                    {
+                        context.AppendLine($"- {t.Name}: {t.Address}, {t.City}");
+                    }
+                    context.AppendLine();
+                }
+            }
+
+            // 3. Showtime information
+            if (ContainsAny(lowerMessage, new[] { "lịch chiếu", "suất chiếu", "giờ chiếu", "showtime" }))
+            {
+                var today = DateTime.Today;
+                var showtimes = await _context.Showtimes
+                    .Where(s => s.Date >= DateOnly.FromDateTime(today))
+                    .Include(s => s.Movies)
+                    .Include(s => s.Rooms)
+                    .ThenInclude(r => r!.Theater)
+                    .Take(20)
+                    .Select(s => new
+                    {
+                        MovieTitle = s.Movies!.Title,
+                        Date = s.Date,
+                        StartTime = s.Start,
+                        TheaterName = s.Rooms!.Theater!.Name,
+                        RoomName = s.Rooms.Name
+                    })
+                    .ToListAsync();
+
+                if (showtimes.Any())
+                {
+                    context.AppendLine("=== LỊCH CHIẾU ===");
+                    foreach (var s in showtimes.GroupBy(x => x.MovieTitle).Take(5))
+                    {
+                        context.AppendLine($"Phim: {s.Key}");
+                        foreach (var show in s.Take(5))
+                        {
+                            context.AppendLine($"  - {show.Date:dd/MM/yyyy} {show.StartTime} tại {show.TheaterName} ({show.RoomName})");
+                        }
+                    }
+                    context.AppendLine();
+                }
+            }
+
+            // 4. Pricing information
+            if (ContainsAny(lowerMessage, new[] { "giá", "vé", "tiền", "cost", "price" }))
+            {
+                context.AppendLine("=== BẢNG GIÁ VÉ ===");
+                context.AppendLine("- Ghế Standard: 100.000₫");
+                context.AppendLine("- Ghế VIP (hàng A, B, C): 150.000₫");
+                context.AppendLine();
+                context.AppendLine("ƯU ĐÃI:");
+                context.AppendLine("- Giảm 20% cho suất chiếu trước 17h (Thứ 2-5)");
+                context.AppendLine("- Giảm 15% cho thành viên VIP");
+                context.AppendLine();
+            }
+
+            // 5. Booking process
+            if (ContainsAny(lowerMessage, new[] { "đặt vé", "booking", "đặt", "mua vé" }))
+            {
+                context.AppendLine("=== QUY TRÌNH ĐẶT VÉ ===");
+                context.AppendLine("1. Chọn phim bạn muốn xem từ danh sách phim đang chiếu");
+                context.AppendLine("2. Chọn rạp chiếu và suất chiếu phù hợp");
+                context.AppendLine("3. Chọn ghế ngồi (màu xanh là ghế trống, màu đỏ là đã có người đặt)");
+                context.AppendLine("4. Điền thông tin liên hệ (họ tên, email, số điện thoại)");
+                context.AppendLine("5. Thanh toán qua VNPay, Momo hoặc ZaloPay");
+                context.AppendLine("6. Nhận mã QR vé qua email sau khi thanh toán thành công");
+                context.AppendLine("7. Đưa mã QR tại quầy rạp để nhận vé");
+                context.AppendLine();
+                context.AppendLine("LƯU Ý:");
+                context.AppendLine("- Ghế sẽ được giữ trong 10 phút sau khi chọn");
+                context.AppendLine("- Vui lòng hoàn tất thanh toán trong thời gian này");
+                context.AppendLine("- Có thể hủy đặt vé trước 2 giờ trước suất chiếu");
+                context.AppendLine();
+            }
+
+            // 6. Payment methods
+            if (ContainsAny(lowerMessage, new[] { "thanh toán", "payment", "vnpay", "momo", "zalopay" }))
+            {
+                context.AppendLine("=== PHƯƠNG THỨC THANH TOÁN ===");
+                context.AppendLine("- VNPay (QR Code / Thẻ ATM / Internet Banking)");
+                context.AppendLine("- Momo");
+                context.AppendLine("- ZaloPay");
+                context.AppendLine("- Thẻ tín dụng/ghi nợ quốc tế (Visa, Mastercard)");
+                context.AppendLine();
+                context.AppendLine("BẢO MẬT: Tất cả giao dịch được mã hóa SSL 256-bit");
+                context.AppendLine("HOÀN TIỀN: 100% trong vòng 24h nếu có sự cố");
+                context.AppendLine();
+            }
+
+            return context.ToString();
+        }
+
+        private List<string> GenerateSuggestions(string message)
+        {
+            var lowerMessage = message.ToLower();
+
+            if (ContainsAny(lowerMessage, new[] { "phim", "movie" }))
+            {
+                return new List<string> { "Lịch chiếu hôm nay", "Giá vé bao nhiêu?", "Rạp nào gần tôi?" };
+            }
+
+            if (ContainsAny(lowerMessage, new[] { "giá", "vé", "tiền" }))
+            {
+                return new List<string> { "Có ưu đãi gì không?", "Đặt vé ngay", "Xem phim đang chiếu" };
+            }
+
+            if (ContainsAny(lowerMessage, new[] { "rạp", "địa chỉ" }))
+            {
+                return new List<string> { "Lịch chiếu", "Đặt vé online", "Xem phim hot" };
+            }
+
+            if (ContainsAny(lowerMessage, new[] { "đặt", "booking" }))
+            {
+                return new List<string> { "Xem phim đang chiếu", "Giá vé", "Phương thức thanh toán" };
+            }
+
+            return new List<string> { "Phim gì đang chiếu?", "Giá vé bao nhiêu?", "Hướng dẫn đặt vé", "Rạp gần tôi" };
+        }
+
+        private async Task<ChatResponse> GetRuleBasedResponse(string message, string? userId)
         {
             var lowerMessage = message.ToLower().Trim();
 

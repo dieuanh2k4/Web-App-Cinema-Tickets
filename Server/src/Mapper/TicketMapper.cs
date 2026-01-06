@@ -21,8 +21,11 @@ namespace Server.src.Mapper
                 CustomerPhone = ticket.User?.phoneNumber,
                 MovieId = ticket.MovieId,
                 MovieTitle = ticket.Movies?.Title,
+                MovieThumbnail = ticket.Movies?.Thumbnail,
                 RoomId = ticket.RoomId,
                 RoomName = ticket.Rooms?.Name,
+                TheaterId = ticket.Rooms?.TheaterId,
+                TheaterName = ticket.Rooms?.Theater?.Name,
                 Date = ticket.Date,
                 StartTime = ticket.Showtimes?.Start ?? TimeOnly.MinValue,
                 EndTime = ticket.Showtimes?.End ?? TimeOnly.MinValue,
@@ -35,6 +38,7 @@ namespace Server.src.Mapper
                 }).ToList(),
                 SumOfSeat = ticket.SumOfSeat,
                 TotalPrice = ticket.TotalPrice,
+                PaymentStatus = ticket.Payment?.Status,
                 CreatedAt = DateTime.Now
             };
         }

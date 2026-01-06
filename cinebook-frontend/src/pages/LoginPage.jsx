@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { login } from '../services/api'
+import { login, getCurrentUser, getCustomerInfo } from '../services/api'
 import { useAuthStore } from '../store/authStore'
 
 export default function LoginPage() {
@@ -17,12 +17,70 @@ export default function LoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: login,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      console.log('🔐 Login response:', data)
+      
       if (data.isSuccess) {
-        setAuth(data.data, data.data.token)
-        toast.success('Đăng nhập thành công!')
-        // Redirect về trang người dùng định vào
-        navigate(from, { replace: true })
+        const token = data.data.token
+        // Temporarily save token to localStorage for subsequent API calls
+        localStorage.setItem('token', token)
+        
+        try {
+          // Get userId from /Auth/me
+          console.log('📡 Fetching /Auth/me...')
+          const meData = await getCurrentUser()
+          console.log('✅ /Auth/me response:', meData)
+          const userId = meData.userId
+          
+          if (userId) {
+            // Get full customer info
+            console.log(`📡 Fetching customer info for userId: ${userId}`)
+            const customerInfo = await getCustomerInfo(userId)
+            console.log('✅ Customer info response:', customerInfo)
+            
+            // Map Customer fields to User fields
+            const fullUserInfo = {
+              // From Customer API
+              id: customerInfo.id,
+              name: customerInfo.name,
+              email: customerInfo.email,
+              phoneNumber: customerInfo.phone, // Customer uses 'phone' field
+              birth: customerInfo.birth,
+              gender: customerInfo.gender,
+              address: customerInfo.address,
+              avatar: customerInfo.avatar,
+              // From Login response
+              username: data.data.username,
+              role: data.data.role,
+              userId: userId
+            }
+            
+            console.log('💾 Saving to authStore:', fullUserInfo)
+            setAuth(fullUserInfo, token)
+            
+            toast.success('Đăng nhập thành công!')
+            navigate(from, { replace: true })
+          } else {
+            console.warn('⚠️ No userId in /Auth/me response')
+            // Fallback: just save basic info from login response
+            setAuth({
+              username: data.data.username,
+              role: data.data.role
+            }, token)
+            toast.success('Đăng nhập thành công!')
+            navigate(from, { replace: true })
+          }
+        } catch (error) {
+          console.error('❌ Failed to fetch user info:', error)
+          console.error('Error details:', error.response?.data)
+          // Still save basic login data
+          setAuth({
+            username: data.data.username,
+            role: data.data.role
+          }, token)
+          toast.success('Đăng nhập thành công!')
+          navigate(from, { replace: true })
+        }
       } else {
         toast.error(data.message || 'Đăng nhập thất bại')
       }

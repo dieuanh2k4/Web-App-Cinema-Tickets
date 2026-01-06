@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -231,11 +232,129 @@ namespace Server.src.Controllers
                 {
                     success = true,
                     message = "Đặt vé thành công!",
-                    booking
+                    booking = new
+                    {
+                        ticket = new
+                        {
+                            id = booking.TicketId,
+                            bookingCode = booking.BookingCode,
+                            totalPrice = booking.TotalAmount
+                        },
+                        showtime = new
+                        {
+                            id = booking.ShowtimeId,
+                            start = booking.ShowtimeStart,
+                            date = booking.ShowtimeStart.ToString("yyyy-MM-dd")
+                        },
+                        movieTitle = booking.MovieTitle,
+                        roomName = booking.RoomName,
+                        theaterName = booking.TheaterName,
+                        seatNumbers = booking.SeatNumbers,
+                        seats = booking.SeatNumbers,
+                        paymentMethod = booking.PaymentMethod,
+                        paymentStatus = booking.PaymentStatus
+                    }
                 });
             }
             catch (Exception ex)
             {
+                return ReturnException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Hủy đặt vé - Tạo ticket với status "Đã hủy" để lưu lại lịch sử
+        /// </summary>
+        [Authorize]
+        [HttpPost("cancel-booking")]
+        public async Task<IActionResult> CancelBooking([FromBody] CancelBookingDto dto)
+        {
+            try
+            {
+                _logger.LogInformation("[CancelBooking] START - HoldId: {HoldId}", dto.HoldId);
+                
+                var db = _redis.GetDatabase();
+                var holdKey = $"CineBook:hold:{dto.HoldId}";
+                
+                _logger.LogInformation("[CancelBooking] Checking Redis key: {Key}", holdKey);
+                var holdDataString = await db.StringGetAsync(holdKey);
+
+                if (holdDataString.IsNullOrEmpty)
+                {
+                    _logger.LogWarning("[CancelBooking] Hold data NOT FOUND in Redis for key: {Key}", holdKey);
+                    return NotFound(new { message = "Không tìm thấy thông tin giữ ghế hoặc đã hết hạn" });
+                }
+                
+                _logger.LogInformation("[CancelBooking] Hold data found: {Data}", holdDataString.ToString());
+
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                var holdData = System.Text.Json.JsonSerializer.Deserialize<HoldDataModel>(holdDataString!, options);
+                
+                if (holdData == null)
+                {
+                    return BadRequest(new { message = "Dữ liệu không hợp lệ" });
+                }
+
+                // 1. Tạo ticket với trạng thái "Đã hủy"
+                var createBookingDto = new CreateBookingDto
+                {
+                    ShowtimeId = holdData.ShowtimeId,
+                    SeatIds = holdData.SeatIds,
+                    CustomerName = holdData.CustomerName,
+                    PhoneNumber = holdData.CustomerPhone,
+                    Email = holdData.CustomerEmail,
+                    PaymentMethod = "Banking"
+                };
+
+                var booking = await _bookingService.CreateGuestBookingAsync(createBookingDto);
+
+                // 2. Update Payment status thành "Đã hủy"
+                var payment = await _context.Payment
+                    .FirstOrDefaultAsync(p => p.TicketId == booking.TicketId);
+                
+                if (payment != null)
+                {
+                    payment.Status = "Đã hủy";
+                    await _context.SaveChangesAsync();
+                }
+
+                // 3. Release StatusSeat (xóa để ghế có thể đặt lại)
+                var statusSeats = await _context.StatusSeat
+                    .Where(ss => ss.ShowtimeId == holdData.ShowtimeId 
+                            && holdData.SeatIds.Contains(ss.SeatId))
+                    .ToListAsync();
+
+                _context.StatusSeat.RemoveRange(statusSeats);
+
+                // 4. Xóa hold khỏi Redis
+                await db.KeyDeleteAsync(holdKey);
+                
+                foreach (var seatId in holdData.SeatIds)
+                {
+                    var seatKey = $"CineBook:seat:{holdData.ShowtimeId}:{seatId}";
+                    await db.KeyDeleteAsync(seatKey);
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Đã hủy đặt vé thành công",
+                    ticket = new
+                    {
+                        id = booking.TicketId,
+                        bookingCode = booking.BookingCode,
+                        status = "Đã hủy"
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[CancelBooking] Error occurred");
                 return ReturnException(ex);
             }
         }
@@ -249,6 +368,11 @@ namespace Server.src.Controllers
     }
 
     public class ConfirmBookingDto
+    {
+        public string HoldId { get; set; } = string.Empty;
+    }
+
+    public class CancelBookingDto
     {
         public string HoldId { get; set; } = string.Empty;
     }

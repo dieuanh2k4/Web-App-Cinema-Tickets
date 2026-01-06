@@ -1,8 +1,9 @@
 import axios from "axios";
 
-const API_BASE_URL =
-  // import.meta.env.VITE_API_URL || "http://desktop-qedcej1/api";
-  import.meta.env.VITE_API_URL || "http://192.168.102.5:5001/api";
+// Use environment variable, fallback to localhost
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+
+console.log('🔗 API Base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -42,12 +43,33 @@ export const login = async (credentials) => {
   return api.post("/Auth/login", credentials);
 };
 
-export const register = async (userData) => {
-  return api.post("/Auth/register", userData);
+export const register = async (formData) => {
+  // FormData for file upload (avatar)
+  return api.post("/Auth/customer-register", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 
 export const getCurrentUser = async () => {
   return api.get("/Auth/me");
+};
+
+export const getCustomerInfo = async (customerId) => {
+  return api.get(`/Customer/get-info-customer?id=${customerId}`);
+};
+
+export const getCustomerByUserId = async (userId) => {
+  return api.get(`/Customer/get-by-user-id/${userId}`);
+};
+
+export const updateCustomerInfo = async (customerId, formData) => {
+  return api.put(`/Customer/update-info-customer/${customerId}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 
 export const sendOTP = async (emailData) => {
@@ -170,14 +192,37 @@ export const checkSeatAvailability = async (showtimeId, seatIds) => {
 };
 
 // ============================================
-// BOOKING APIs
+// BOOKING APIs - 2-Step Flow
 // ============================================
-export const createBooking = async (bookingData) => {
-  return api.post("/Booking/create", bookingData);
+// Step 1: Hold seats for 10 minutes
+export const holdSeats = async (data) => {
+  return api.post("/Booking/hold-seats", data);
 };
 
+// Step 2: Confirm booking after payment
+export const confirmBooking = async (data) => {
+  return api.post("/Booking/confirm-booking", data);
+};
+
+// Cancel booking - Release ghế và đánh dấu hủy
+export const cancelBooking = async (holdId) => {
+  console.log('🚫 cancelBooking API called with holdId:', holdId)
+  return api.post("/Booking/cancel-booking", { HoldId: holdId });
+};
+
+// Release seats if user cancels
+export const releaseSeats = async (holdId) => {
+  return api.post("/Booking/release-seats", { holdId });
+};
+
+// Get available seats for showtime
 export const getAvailableSeats = async (showtimeId) => {
   return api.get(`/Booking/available-seats/${showtimeId}`);
+};
+
+// DEPRECATED - Old API (keep for backward compatibility)
+export const createBooking = async (bookingData) => {
+  return api.post("/Booking/create", bookingData);
 };
 
 // ============================================
@@ -209,18 +254,29 @@ export const getTicketPrices = async () => {
 };
 
 // ============================================
-// USER APIs
+// USER/PROFILE APIs
 // ============================================
 export const getUserProfile = async () => {
   return api.get("/User/profile");
 };
 
 export const updateUserProfile = async (userData) => {
-  return api.put("/User/profile", userData);
+  return api.put("/Customer/update-profile", userData);
 };
 
-export const getUserTickets = async () => {
-  return api.get("/User/tickets");
+export const getUserTickets = async (email) => {
+  return api.get(`/Ticket/customer/${email}`);
+};
+
+// ============================================
+// CUSTOMER APIs
+// ============================================
+export const getCustomerProfile = async () => {
+  return api.get("/Customer/profile");
+};
+
+export const updateCustomerProfile = async (customerId, data) => {
+  return api.put(`/Customer/update-customer/${customerId}`, data);
 };
 
 export default api;

@@ -15,14 +15,18 @@ namespace Server.src.Dtos.Tickets
         public string? CustomerPhone { get; set; }
         public int MovieId { get; set; }
         public string? MovieTitle { get; set; }
+        public string? MovieThumbnail { get; set; }
         public int RoomId { get; set; }
         public string? RoomName { get; set; }
+        public int? TheaterId { get; set; }
+        public string? TheaterName { get; set; }
         public DateOnly Date { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
         public List<SeatInfoDto>? Seats { get; set; }
         public int SumOfSeat { get; set; }
         public int TotalPrice { get; set; }
+        public string? PaymentStatus { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 

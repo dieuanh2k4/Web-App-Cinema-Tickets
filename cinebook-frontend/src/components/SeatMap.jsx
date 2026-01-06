@@ -56,15 +56,6 @@ export default function SeatMap({ seats, selectedSeats, onSeatSelect, bookedSeat
 
   return (
     <div className="space-y-8">
-      {/* Screen */}
-      <div className="space-y-4 mb-8">
-        <div className="text-center">
-          <div className="inline-block px-32 py-2 bg-gradient-to-b from-blue-500/30 to-transparent border-t-4 border-blue-500/50 rounded-t-3xl">
-            <span className="text-sm font-medium text-gray-300">Màn hình</span>
-          </div>
-        </div>
-      </div>
-
       {/* Seat Map */}
       <div className="flex justify-center bg-dark/50 rounded-xl p-8">
         <div className="space-y-2.5">
@@ -103,11 +94,17 @@ export default function SeatMap({ seats, selectedSeats, onSeatSelect, bookedSeat
       <div className="flex flex-wrap justify-center gap-6 pt-6 border-t border-gray-custom/30">
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-md bg-gray-600"></div>
-          <span className="text-sm text-gray-300 font-medium">Ghế thường</span>
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-300 font-medium">Ghế thường (Hàng D-J)</span>
+            <span className="text-xs text-green-400 font-semibold">100.000đ</span>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-md bg-orange-500"></div>
-          <span className="text-sm text-gray-300 font-medium">Ghế Vip</span>
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-300 font-medium">Ghế VIP (Hàng A-C)</span>
+            <span className="text-xs text-orange-400 font-semibold">150.000đ</span>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-md bg-pink-600"></div>

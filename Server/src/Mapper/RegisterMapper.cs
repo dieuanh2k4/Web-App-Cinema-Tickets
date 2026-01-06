@@ -9,7 +9,7 @@ namespace Server.src.Mapper
 {
     public static class RegisterMapper
     {
-        public static async Task<User> ToUserFromRegisterDto(this RegisterDto dto)
+        public static User ToUserFromRegisterDto(this RegisterDto dto)
         {
             return new User
             {

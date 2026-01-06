@@ -58,7 +58,9 @@ namespace Server.src.Controllers
                 {
                     SeatId = seat.Id,
                     SeatNumber = seat.Name ?? "",
+                    SeatName = seat.Name ?? "",
                     SeatType = seat.Type ?? "",
+                    Price = seat.Price,
                     IsAvailable = !bookedSeatIds.Contains(seat.Id),
                     Status = bookedSeatIds.Contains(seat.Id) ? "Booked" : "Available"
                 }).ToList();
@@ -68,9 +70,15 @@ namespace Server.src.Controllers
                     showtimeId = showtimeId,
                     roomName = showtime.Rooms?.Name,
                     movieTitle = showtime.Movies?.Title,
+                    moviePoster = showtime.Movies?.Thumbnail,
                     theaterName = showtime.Rooms?.Theater?.Name,
                     theaterAddress = showtime.Rooms?.Theater?.Address,
                     theaterCity = showtime.Rooms?.Theater?.City,
+                    showtime = new
+                    {
+                        date = showtime.Date.ToString("yyyy-MM-dd"),
+                        start = $"{showtime.Start.Hour:D2}:{showtime.Start.Minute:D2}:00"
+                    },
                     showtimeDate = showtime.Date.ToString("yyyy-MM-dd"),
                     showtimeTime = showtime.Start.ToString("HH:mm"),
                     totalSeats = seats.Count,

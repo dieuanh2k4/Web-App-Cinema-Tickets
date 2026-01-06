@@ -217,6 +217,8 @@ builder.Services.AddScoped<EmailService>();
 
 // Chat AI service
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IOpenAIService, OpenAIService>();
+builder.Services.AddHttpClient<IOpenAIService, OpenAIService>();
 // builder.Services.AddScoped<IGeminiService, GeminiService>(); // Commented out - service not implemented
 
 // Dashboard service
@@ -301,6 +303,42 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("Đang chạy database migrations...");
         context.Database.Migrate();
         Console.WriteLine("Migrations hoàn tất!");
+        
+        // Fix Payment constraint nếu chưa có "Đã hủy"
+        try
+        {
+            Console.WriteLine("Checking Payment constraint...");
+            await context.Database.ExecuteSqlRawAsync(@"
+                ALTER TABLE ""Payment"" DROP CONSTRAINT IF EXISTS ""CK_Payment_Status"";
+                ALTER TABLE ""Payment"" ADD CONSTRAINT ""CK_Payment_Status"" 
+                CHECK (""Status"" IN('Đã Thanh toán', 'Chưa Thanh toán', 'Thanh toán thất bại', 'Đã hủy'));
+            ");
+            Console.WriteLine("✅ Payment constraint updated successfully!");
+        }
+        catch (Exception constraintEx)
+        {
+            Console.WriteLine($"⚠️  Payment constraint warning: {constraintEx.Message}");
+        }
+        
+        // Update seat prices: A-C = VIP (150k), D+ = Standard (100k)
+        try
+        {
+            Console.WriteLine("Updating seat prices...");
+            await context.Database.ExecuteSqlRawAsync(@"
+                UPDATE ""Seats"" 
+                SET ""Type"" = 'VIP', ""Price"" = 150000
+                WHERE SUBSTRING(""Name"", 1, 1) IN ('A', 'B', 'C');
+
+                UPDATE ""Seats"" 
+                SET ""Type"" = 'Standard', ""Price"" = 100000
+                WHERE SUBSTRING(""Name"", 1, 1) NOT IN ('A', 'B', 'C');
+            ");
+            Console.WriteLine("✅ Seat prices updated successfully!");
+        }
+        catch (Exception seatsEx)
+        {
+            Console.WriteLine($"⚠️  Seat prices warning: {seatsEx.Message}");
+        }
         
         // Seed dữ liệu
         DataSeeder.Seed(context);

@@ -57,11 +57,11 @@ namespace Server.src.Services.Implements
                 if (invalidSeats.Any())
                     throw new ArgumentException($"Ghế {string.Join(", ", invalidSeats.Select(s => s.Name))} không thuộc phòng này");
 
-                // 3. Kiểm tra ghế đã được đặt chưa
+                // 3. Kiểm tra ghế đã được đặt chưa (CHỈ check "Booked", vì "Pending" là từ hold seats)
                 var bookedSeatIds = await _context.StatusSeat
                     .Where(ss => dto.SeatIds.Contains(ss.SeatId)
                               && ss.ShowtimeId == dto.ShowtimeId
-                              && (ss.Status == "Booked" || ss.Status == "Pending"))
+                              && ss.Status == "Booked") // Chỉ check Booked
                     .Select(ss => ss.SeatId)
                     .ToListAsync();
 
@@ -109,27 +109,40 @@ namespace Server.src.Services.Implements
                 _context.TicketSeats.AddRange(ticketSeats);
                 await _context.SaveChangesAsync();
 
-                // 7. Tạo Payment
+                // 7. Tạo Payment - Đặt luôn "Đã Thanh toán" vì đã qua trang payment
                 var payment = new Payment
                 {
                     TicketId = ticket.Id,
                     TotalPrice = totalAmount,
                     paymentMethod = dto.PaymentMethod,
                     Date = showtime.Date,
-                    Status = "Chưa Thanh toán" // Chờ xác nhận thanh toán
+                    Status = "Đã Thanh toán" // PHẢI viết hoa chữ T
                 };
 
                 _context.Payment.Add(payment);
 
-                // 8. Cập nhật StatusSeat
-                var statusSeats = seats.Select(seat => new StatusSeat
-                {
-                    SeatId = seat.Id,
-                    ShowtimeId = dto.ShowtimeId,
-                    Status = "Pending" // Chờ thanh toán
-                }).ToList();
+                // 8. Cập nhật StatusSeat - CHỈ tạo mới nếu chưa có, nếu có rồi thì skip
+                // Vì khi hold seats đã tạo StatusSeat với status "Pending" rồi
+                var existingStatusSeatIds = await _context.StatusSeat
+                    .Where(ss => dto.SeatIds.Contains(ss.SeatId) && ss.ShowtimeId == dto.ShowtimeId)
+                    .Select(ss => ss.SeatId)
+                    .ToListAsync();
 
-                _context.StatusSeat.AddRange(statusSeats);
+                // Chỉ tạo StatusSeat cho những ghế CHƯA có trong database
+                var newStatusSeats = dto.SeatIds
+                    .Where(seatId => !existingStatusSeatIds.Contains(seatId))
+                    .Select(seatId => new StatusSeat
+                    {
+                        SeatId = seatId,
+                        ShowtimeId = dto.ShowtimeId,
+                        Status = "Pending" // Chờ xác nhận
+                    }).ToList();
+
+                if (newStatusSeats.Any())
+                {
+                    _context.StatusSeat.AddRange(newStatusSeats);
+                }
+
                 await _context.SaveChangesAsync();
 
                 // 9. Return response
@@ -140,6 +153,7 @@ namespace Server.src.Services.Implements
                     ShowtimeId = dto.ShowtimeId,
                     MovieTitle = showtime.Movies!.Title!,
                     RoomName = showtime.Rooms!.Name!,
+                    TheaterName = showtime.Rooms!.Theater?.Name ?? "CGV",
                     ShowtimeStart = new DateTime(
                         showtime.Date.Year,
                         showtime.Date.Month,
@@ -192,7 +206,7 @@ namespace Server.src.Services.Implements
                 var bookedSeatIds = await _context.StatusSeat
                     .Where(ss => dto.SeatIds.Contains(ss.SeatId)
                               && ss.ShowtimeId == dto.ShowtimeId
-                              && (ss.Status == "Booked" || ss.Status == "Pending"))
+                              && ss.Status == "Booked") // Chỉ check Booked cho staff booking
                     .Select(ss => ss.SeatId)
                     .ToListAsync();
 

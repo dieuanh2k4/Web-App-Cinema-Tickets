@@ -122,7 +122,7 @@ namespace Server.src.Data
                 entity.ToTable(p =>
                 {
                     p.HasCheckConstraint("CK_Payment_TotalPrice", "\"TotalPrice\" > 0");
-                    p.HasCheckConstraint("CK_Payment_Status", "\"Status\" IN('Đã Thanh toán', 'Chưa Thanh toán', 'Thanh toán thất bại')");
+                    p.HasCheckConstraint("CK_Payment_Status", "\"Status\" IN('Đã Thanh toán', 'Chưa Thanh toán', 'Thanh toán thất bại', 'Đã hủy')");
                     p.HasCheckConstraint("CK_Payment_paymentMethod", "\"paymentMethod\" IN('Momo', 'Banking', 'Cash')");
                 });
                 entity.HasKey(p => p.Id);

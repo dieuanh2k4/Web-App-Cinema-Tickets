@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Server.src.Data;
 using Server.src.Dtos.Customers;
 using Server.src.Services.Interfaces;
@@ -32,6 +33,26 @@ namespace Server.src.Controllers
             try
             {
                 var customer = await _customer.GetByIdAsync(id);
+
+                return Ok(customer);
+            } 
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            } 
+        }
+
+        [Authorize(Roles = "Customer")]
+        [HttpGet("get-by-user-id/{userId}")]
+        public async Task<IActionResult> GetCustomerByUserId(int userId)
+        {
+            try
+            {
+                var customer = await _context.Customers
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
+
+                if (customer == null)
+                    return NotFound(new { message = "Không tìm thấy thông tin khách hàng" });
 
                 return Ok(customer);
             } 

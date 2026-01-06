@@ -178,6 +178,9 @@ namespace Server.src.Data
                         Name = "Phòng 1",
                         TheaterId = theater1.Id,
                         Capacity = 100,
+                        Rows = 10,      // 10 hàng (A-J)
+                        Columns = 10,   // 10 cột
+                        Type = "Standard",
                         Status = "Available"
                     },
                     new Rooms
@@ -185,6 +188,9 @@ namespace Server.src.Data
                         Name = "Phòng 2",
                         TheaterId = theater1.Id,
                         Capacity = 80,
+                        Rows = 10,      // 10 hàng (A-J)
+                        Columns = 8,    // 8 cột
+                        Type = "Standard",
                         Status = "Available"
                     },
                     new Rooms
@@ -192,6 +198,9 @@ namespace Server.src.Data
                         Name = "Phòng IMAX",
                         TheaterId = theater2.Id,
                         Capacity = 150,
+                        Rows = 10,      // 10 hàng (A-J)
+                        Columns = 15,   // 15 cột
+                        Type = "IMAX",
                         Status = "Available"
                     },
                     new Rooms
@@ -199,6 +208,9 @@ namespace Server.src.Data
                         Name = "Phòng VIP",
                         TheaterId = theater2.Id,
                         Capacity = 50,
+                        Rows = 5,       // 5 hàng (A-E)
+                        Columns = 10,   // 10 cột
+                        Type = "VIP",
                         Status = "Available"
                     }
                 };
@@ -216,21 +228,26 @@ namespace Server.src.Data
 
                 foreach (var room in rooms)
                 {
-                    int seatsPerRow = 10;
-                    int totalRows = room.Capacity / seatsPerRow;
+                    int totalRows = room.Rows;
+                    int seatsPerRow = room.Columns;
 
                     for (int row = 0; row < totalRows; row++)
                     {
                         char rowLetter = (char)('A' + row);
                         for (int seatNum = 1; seatNum <= seatsPerRow; seatNum++)
                         {
+                            // Hàng A, B, C là VIP (3 hàng đầu)
+                            // Hàng D trở đi là Standard
+                            // Đảm bảo MỌI phòng đều có cả ghế VIP và Standard
+                            bool isVipSeat = row < 3; // Hàng 0,1,2 (A,B,C) là VIP
+                            
                             seats.Add(new Seats
                             {
                                 Name = $"{rowLetter}{seatNum}",
                                 RoomId = room.Id,
-                                Type = (row < 2) ? "VIP" : "Standard",
+                                Type = isVipSeat ? "VIP" : "Standard",
                                 Status = "Available",
-                                Price = (row < 2) ? 150000 : 100000
+                                Price = isVipSeat ? 150000 : 100000 // VIP: 150k, Standard: 100k
                             });
                         }
                     }

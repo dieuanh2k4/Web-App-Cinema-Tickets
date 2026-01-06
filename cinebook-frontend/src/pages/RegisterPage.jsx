@@ -27,24 +27,41 @@ export default function RegisterPage() {
   const registerMutation = useMutation({
     mutationFn: registerUser,
     onSuccess: (data) => {
-      if (data.isSuccess) {
-        toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
-        navigate('/login');
-      } else {
-        toast.error(data.message || 'Đăng ký thất bại');
-      }
+      toast.success(data.message || 'Đăng ký thành công! Vui lòng đăng nhập.');
+      navigate('/login');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || 'Đăng ký thất bại');
+      toast.error(error.response?.data?.message || error.response?.data || 'Đăng ký thất bại');
     },
   });
 
   const onSubmit = (data) => {
-    registerMutation.mutate({
-      username: data.username,
-      email: data.email,
-      password: data.password,
-    });
+    // Create FormData for multipart/form-data upload
+    const formData = new FormData();
+    
+    // Required fields matching RegisterDto in server
+    formData.append('username', data.username);
+    formData.append('Email', data.email);
+    formData.append('password', data.password);
+    formData.append('Name', data.name || data.username);
+    formData.append('phoneNumber', data.phoneNumber || '');
+    
+    // Birth: Convert to yyyy-MM-dd format for DateOnly
+    const birthDate = data.birth || new Date().toISOString().split('T')[0];
+    formData.append('Birth', birthDate);
+    
+    formData.append('Gender', data.gender || 'Khác');
+    formData.append('Address', data.address || '');
+    
+    // createdDate: Current datetime in ISO format
+    formData.append('createdDate', new Date().toISOString());
+    
+    // Optional avatar file (if you add file input later)
+    // if (data.avatar && data.avatar[0]) {
+    //   formData.append('imageFile', data.avatar[0]);
+    // }
+
+    registerMutation.mutate(formData);
   };
 
   return (
@@ -142,6 +159,34 @@ export default function RegisterPage() {
               )}
             </div>
 
+            {/* Full Name */}
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Họ và tên
+              </label>
+              <input
+                id="name"
+                type="text"
+                {...register('name', {
+                  required: 'Vui lòng nhập họ và tên',
+                  minLength: {
+                    value: 3,
+                    message: 'Họ và tên phải có ít nhất 3 ký tự',
+                  },
+                })}
+                className="w-full px-4 py-3 bg-dark-light border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white placeholder-gray-500"
+                placeholder="Nhập họ và tên của bạn"
+              />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
+
             {/* Email */}
             <div>
               <label
@@ -168,6 +213,101 @@ export default function RegisterPage() {
                   {errors.email.message}
                 </p>
               )}
+            </div>
+
+            {/* Phone Number */}
+            <div>
+              <label
+                htmlFor="phoneNumber"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Số điện thoại
+              </label>
+              <input
+                id="phoneNumber"
+                type="tel"
+                {...register('phoneNumber', {
+                  required: 'Vui lòng nhập số điện thoại',
+                  pattern: {
+                    value: /^[0-9]{10,11}$/,
+                    message: 'Số điện thoại không hợp lệ (10-11 chữ số)',
+                  },
+                })}
+                className="w-full px-4 py-3 bg-dark-light border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white placeholder-gray-500"
+                placeholder="Nhập số điện thoại"
+              />
+              {errors.phoneNumber && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.phoneNumber.message}
+                </p>
+              )}
+            </div>
+
+            {/* Birth Date */}
+            <div>
+              <label
+                htmlFor="birth"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Ngày sinh
+              </label>
+              <input
+                id="birth"
+                type="date"
+                {...register('birth', {
+                  required: 'Vui lòng nhập ngày sinh',
+                })}
+                className="w-full px-4 py-3 bg-dark-light border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white"
+              />
+              {errors.birth && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.birth.message}
+                </p>
+              )}
+            </div>
+
+            {/* Gender */}
+            <div>
+              <label
+                htmlFor="gender"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Giới tính
+              </label>
+              <select
+                id="gender"
+                {...register('gender', {
+                  required: 'Vui lòng chọn giới tính',
+                })}
+                className="w-full px-4 py-3 bg-dark-light border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white"
+              >
+                <option value="">Chọn giới tính</option>
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+                <option value="Khác">Khác</option>
+              </select>
+              {errors.gender && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.gender.message}
+                </p>
+              )}
+            </div>
+
+            {/* Address */}
+            <div>
+              <label
+                htmlFor="address"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Địa chỉ (tùy chọn)
+              </label>
+              <input
+                id="address"
+                type="text"
+                {...register('address')}
+                className="w-full px-4 py-3 bg-dark-light border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white placeholder-gray-500"
+                placeholder="Nhập địa chỉ của bạn"
+              />
             </div>
 
             {/* Password */}

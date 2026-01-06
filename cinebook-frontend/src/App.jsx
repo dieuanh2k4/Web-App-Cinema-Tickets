@@ -6,6 +6,7 @@ import MoviesPage from './pages/MoviesPage'
 import MovieDetailPage from './pages/MovieDetailPage'
 import ShowtimesPage from './pages/ShowtimesPage'
 import BookingPage from './pages/BookingPage'
+import PaymentPage from './pages/PaymentPage'
 import BookingSuccessPage from './pages/BookingSuccessPage'
 import BookingFailedPage from './pages/BookingFailedPage'
 import ProfilePage from './pages/ProfilePage'
@@ -26,7 +27,12 @@ function App() {
             <BookingPage />
           </ProtectedRoute>
         } />
-        <Route path="booking-success/:ticketId" element={
+        <Route path="payment" element={
+          <ProtectedRoute>
+            <PaymentPage />
+          </ProtectedRoute>
+        } />
+        <Route path="booking/success/:ticketId" element={
           <ProtectedRoute>
             <BookingSuccessPage />
           </ProtectedRoute>

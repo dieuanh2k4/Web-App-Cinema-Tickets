@@ -132,9 +132,11 @@ namespace Server.src.Services.Implements
         {
             var tickets = await _context.Tickets
                 .Include(t => t.User)
+                .Include(t => t.Payment)
                 .Include(t => t.Showtimes)
                 .Include(t => t.Movies)
                 .Include(t => t.Rooms)
+                    .ThenInclude(r => r!.Theater)
                 .Include(t => t.TicketSeats)
                     .ThenInclude(ts => ts.Seat)
                 .ToListAsync();
@@ -152,9 +154,11 @@ namespace Server.src.Services.Implements
         {
             var ticket = await _context.Tickets
                 .Include(t => t.User)
+                .Include(t => t.Payment)
                 .Include(t => t.Showtimes)
                 .Include(t => t.Movies)
                 .Include(t => t.Rooms)
+                    .ThenInclude(r => r!.Theater)
                 .Include(t => t.TicketSeats)
                     .ThenInclude(ts => ts.Seat)
                 .FirstOrDefaultAsync(t => t.Id == id);
@@ -180,9 +184,11 @@ namespace Server.src.Services.Implements
 
             var tickets = await _context.Tickets
                 .Include(t => t.User)
+                .Include(t => t.Payment)
                 .Include(t => t.Showtimes)
                 .Include(t => t.Movies)
                 .Include(t => t.Rooms)
+                    .ThenInclude(r => r!.Theater)
                 .Include(t => t.TicketSeats)
                     .ThenInclude(ts => ts.Seat)
                 .Where(t => t.UserId == customer.Id)

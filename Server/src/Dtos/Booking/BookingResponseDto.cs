@@ -16,6 +16,7 @@ namespace Server.src.Dtos.Booking
         public string MovieTitle { get; set; } = string.Empty;
         public DateTime ShowtimeStart { get; set; }
         public string RoomName { get; set; } = string.Empty;
+        public string TheaterName { get; set; } = string.Empty;
         
         // Ghế đã đặt
         public List<string> SeatNumbers { get; set; } = new();

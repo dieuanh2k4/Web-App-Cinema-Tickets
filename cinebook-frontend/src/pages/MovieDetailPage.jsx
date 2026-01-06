@@ -8,7 +8,11 @@ import TrailerModal from '../components/TrailerModal'
 export default function MovieDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  // Use current date
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  })
   const [selectedTheater, setSelectedTheater] = useState('all')
   const [showTrailer, setShowTrailer] = useState(false)
 
@@ -20,29 +24,86 @@ export default function MovieDetailPage() {
     refetchOnWindowFocus: false,
   })
 
-  const { data: theaters } = useQuery({
+  const { data: theaters, isLoading: isLoadingTheaters, error: theatersError } = useQuery({
     queryKey: ['theaters'],
-    queryFn: getTheaters,
+    queryFn: async () => {
+      console.log('🎭 Fetching theaters from API...')
+      try {
+        const data = await getTheaters()
+        console.log('🎭 Theaters API response:', data)
+        console.log('🎭 Theaters type:', typeof data, 'Is array:', Array.isArray(data))
+        if (data && Array.isArray(data)) {
+          console.log('🎭 Total theaters:', data.length)
+          if (data.length > 0) {
+            console.log('🎭 First theater sample:', data[0])
+            console.log('🎭 Theater fields:', Object.keys(data[0]))
+            // Log chi tiết từng field
+            console.log('🎭 Theater details:', {
+              id: data[0].id || data[0].Id,
+              name: data[0].name || data[0].Name,
+              address: data[0].address || data[0].Address,
+              city: data[0].city || data[0].City
+            })
+          } else {
+            console.warn('⚠️ Theaters array is EMPTY')
+          }
+          return data
+        } else {
+          console.error('❌ Theaters response is not an array:', data)
+          return []
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch theaters:', error)
+        throw error
+      }
+    },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    retry: 2,
   })
 
   const { data: showtimes, isLoading: isLoadingShowtimes } = useQuery({
     queryKey: ['showtimes', id, selectedTheater, selectedDate],
-    queryFn: () => {
+    queryFn: async () => {
       if (selectedTheater === 'all') return []
-      return getShowtimesByMovie(
-        selectedTheater,
-        id,
-        selectedDate
-      )
+      
+      console.log('📡 API Call - Fetching showtimes:', {
+        theaterId: selectedTheater,
+        movieId: id,
+        date: selectedDate,
+        url: `/Showtimes/get-showtime-by-movieId?theaterId=${selectedTheater}&movieId=${id}&date=${selectedDate}`
+      })
+      
+      try {
+        const data = await getShowtimesByMovie(selectedTheater, id, selectedDate)
+        console.log('✅ API Response - Showtimes:', data)
+        console.log('📄 Response type:', typeof data, 'Is array:', Array.isArray(data))
+        
+        if (data && Array.isArray(data)) {
+          console.log('🎬 Total showtimes found:', data.length)
+          if (data.length > 0) {
+            console.log('🔍 First showtime sample:', data[0])
+          }
+          return data
+        }
+        
+        return []
+      } catch (error) {
+        console.error('❌ API Error:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        })
+        // Trả về array rỗng thay vì throw error
+        return []
+      }
     },
     enabled: selectedTheater !== 'all',
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
+    retry: 1,
   })
 
   // Generate next 7 days
@@ -71,20 +132,25 @@ export default function MovieDetailPage() {
   const groupShowtimesByTheater = () => {
     if (!showtimes || showtimes.length === 0) return []
     
-    const grouped = {}
-    showtimes.forEach(showtime => {
-      const theaterName = showtime.room?.theater?.Name || 'Unknown'
-      if (!grouped[theaterName]) {
-        grouped[theaterName] = {
-          theaterName,
-          address: showtime.room?.theater?.Address,
-          showtimes: []
-        }
-      }
-      grouped[theaterName].showtimes.push(showtime)
+    const theater = theaters?.find(t => {
+      const theaterId = t.id || t.Id
+      return theaterId === parseInt(selectedTheater)
     })
     
-    return Object.values(grouped)
+    if (!theater) {
+      console.warn('⚠️ Theater not found for selectedTheater:', selectedTheater)
+      return []
+    }
+    
+    // Use lowercase fields from server
+    return [{
+      theaterId: theater.id || theater.Id,
+      theaterName: theater.name || theater.Name,
+      address: theater.address || theater.Address,
+      city: theater.city || theater.City || 'Chưa cập nhật',
+      distance: '2.0 km',
+      showtimes: showtimes
+    }]
   }
 
   if (isLoadingMovie) {
@@ -283,56 +349,114 @@ export default function MovieDetailPage() {
 
               {/* Theater selector */}
               <div className="mb-6">
-                <p className="text-sm text-gray-400 mb-3">Chọn rạp</p>
-                <select
-                  value={selectedTheater}
-                  onChange={(e) => setSelectedTheater(e.target.value)}
-                  className="w-full px-4 py-3 bg-dark border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white"
-                >
-                  <option value="all">-- Chọn rạp --</option>
-                  {theaters?.map(theater => (
-                    <option key={theater.id} value={theater.id}>
-                      {theater.Name}
-                    </option>
-                  ))}
-                </select>
+                <p className="text-sm text-gray-400 mb-3">Chọn rạp chiếu</p>
+                {isLoadingTheaters ? (
+                  <div className="w-full px-4 py-3 bg-dark border border-gray-custom rounded-lg flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple mr-2"></div>
+                    <span className="text-gray-400 text-sm">Đang tải rạp...</span>
+                  </div>
+                ) : theatersError ? (
+                  <div className="w-full px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                    ❌ Lỗi tải danh sách rạp
+                  </div>
+                ) : !theaters || theaters.length === 0 ? (
+                  <div className="w-full px-4 py-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-400 text-sm">
+                    ⚠️ Không có rạp nào
+                  </div>
+                ) : (
+                  <select
+                    value={selectedTheater}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      console.log('🎭 Theater selected:', value)
+                      setSelectedTheater(value)
+                    }}
+                    className="w-full px-4 py-3 bg-dark border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white text-sm"
+                  >
+                    <option value="all">-- Chọn rạp ({theaters?.length || 0} rạp) --</option>
+                    {theaters && Array.isArray(theaters) && theaters.map((theater) => {
+                      // Server trả về lowercase fields: id, name, address, city
+                      const theaterId = theater.id || theater.Id
+                      const theaterName = theater.name || theater.Name
+                      const theaterAddress = theater.address || theater.Address
+                      
+                      if (!theaterId || !theaterName) {
+                        console.warn('⚠️ Theater missing required fields:', theater)
+                        return null
+                      }
+                      
+                      return (
+                        <option key={theaterId} value={theaterId}>
+                          {theaterName} - {theaterAddress}
+                        </option>
+                      )
+                    })}
+                  </select>
+                )}
               </div>
 
-              {/* Showtimes */}
+              {/* Showtimes by Theater */}
               {selectedTheater === 'all' ? (
                 <div className="text-center py-8 text-gray-400">
-                  Vui lòng chọn rạp để xem lịch chiếu
+                  <FiMapPin className="mx-auto mb-3" size={32} />
+                  <p>Vui lòng chọn rạp để xem lịch chiếu</p>
                 </div>
               ) : isLoadingShowtimes ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple"></div>
                 </div>
-              ) : !showtimes || showtimes.length === 0 ? (
-                <div className="text-center py-8 text-gray-400">
-                  Không có suất chiếu nào
+              ) : groupShowtimesByTheater().length === 0 ? (
+                <div className="text-center py-10 text-gray-400">
+                  <FiCalendar className="mx-auto mb-4" size={40} />
+                  <p className="text-lg font-semibold mb-2">Không có suất chiếu nào</p>
+                  <p className="text-sm mb-4">Rạp chưa có lịch chiếu cho phim này vào ngày {new Date(selectedDate).toLocaleDateString('vi-VN')}</p>
+                  <div className="bg-dark rounded-lg p-4 max-w-sm mx-auto">
+                    <p className="text-xs text-gray-500 mb-2">💡 Gợi ý:</p>
+                    <ul className="text-xs text-left space-y-1">
+                      <li>• Thử chọn ngày khác</li>
+                      <li>• Chọn rạp khác</li>
+                      <li>• Liên hệ rạp để biết lịch chiếu mới nhất</li>
+                    </ul>
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {groupShowtimesByTheater().map((theater, idx) => (
-                    <div key={idx}>
-                      <h4 className="font-semibold mb-2">{theater.theaterName}</h4>
-                      <div className="flex items-start space-x-2 mb-3">
-                        <FiMapPin className="text-gray-400 mt-1 flex-shrink-0" size={16} />
-                        <p className="text-sm text-gray-400">{theater.address}</p>
+                <div className="space-y-6">
+                  {groupShowtimesByTheater().map((theater) => (
+                    <div key={theater.theaterId} className="bg-dark rounded-xl p-4 border border-gray-custom/30 hover:border-purple/50 transition-all">
+                      {/* Theater header */}
+                      <div className="mb-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-bold text-lg">{theater.theaterName}</h4>
+                          <span className="text-xs bg-purple/20 text-purple px-2 py-1 rounded-full">2D SUB</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-sm text-gray-400">
+                          <FiMapPin className="flex-shrink-0" size={14} />
+                          <span className="line-clamp-1">{theater.address}</span>
+                        </div>
                       </div>
+                      
+                      {/* Showtimes */}
                       <div className="grid grid-cols-3 gap-2">
-                        {theater.showtimes.map((showtime) => (
-                          <button
-                            key={showtime.id}
-                            onClick={() => navigate(`/booking/${showtime.id}`)}
-                            className="bg-dark hover:bg-purple border border-gray-custom hover:border-purple text-sm py-2 rounded-lg transition-all"
-                          >
-                            {new Date(showtime.startTime).toLocaleTimeString('vi-VN', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </button>
-                        ))}
+                        {theater.showtimes.map((showtime) => {
+                          // Server trả về Start (TimeOnly format: "HH:mm:ss")
+                          const timeStr = showtime.start || showtime.Start || '00:00:00'
+                          const [hours, minutes] = timeStr.split(':')
+                          const displayTime = `${hours}:${minutes}`
+                          
+                          return (
+                            <button
+                              key={showtime.id || showtime.Id}
+                              onClick={() => {
+                                const showtimeId = showtime.id || showtime.Id
+                                console.log('🎬 Navigating to booking with showtimeId:', showtimeId)
+                                navigate(`/booking/${showtimeId}`)
+                              }}
+                              className="bg-dark-light hover:bg-purple border border-gray-custom hover:border-purple text-sm font-semibold py-2.5 rounded-lg transition-all hover:scale-105"
+                            >
+                              {displayTime}
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                   ))}
