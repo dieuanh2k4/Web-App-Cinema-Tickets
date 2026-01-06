@@ -125,7 +125,7 @@ export default function TheaterDetailScreen() {
       const movie = movies.find((m) => m.id === movieId);
       const movieTitle =
         movie?.title || showtime.movieTitle || `Phim ${movieId}`;
-      const moviePoster = movie?.posterUrl || null;
+      const moviePoster = movie?.thumbnail || null;
       const ageRating = movie?.ageRating || "P";
 
       if (!acc[movieId]) {

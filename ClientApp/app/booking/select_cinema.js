@@ -16,7 +16,7 @@ import { showtimeService } from "../../services/showtimeService";
 export default function SelectCinemaScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { movieId, movieTitle } = params;
+  const { movieId, movieTitle, movieThumbnail } = params;
 
   const [theaters, setTheaters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -137,6 +137,7 @@ export default function SelectCinemaScreen() {
         showtimeId: showtime.id,
         movieId: movieId,
         movieTitle: movieTitle,
+        movieThumbnail: movieThumbnail || "",
         theaterId: theater.id,
         theaterName: theater.name,
         showtime: showtime.start,

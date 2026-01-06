@@ -102,7 +102,7 @@ export default function SearchScreen() {
         })
       }
     >
-      <Image source={{ uri: movie.posterUrl }} style={styles.moviePoster} />
+      <Image source={{ uri: movie.thumbnail }} style={styles.moviePoster} />
       <View style={styles.movieInfo}>
         <Text style={styles.movieTitle} numberOfLines={2}>
           {movie.title}
@@ -122,7 +122,7 @@ export default function SearchScreen() {
 
   return (
     <LinearGradient
-      colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
+      colors={["#0F0F0F", "#0F0F0F", "#260d71ff"]}
       locations={[0, 0.7, 1]}
       style={styles.gradient}
     >
