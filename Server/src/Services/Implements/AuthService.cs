@@ -58,6 +58,24 @@ namespace Server.src.Services.Implements
 
         public async Task<User> RegisterAsync(RegisterDto register)
         {
+            // Validate các trường bắt buộc
+            if (string.IsNullOrWhiteSpace(register.Name))
+                throw new Result("Tên không được để trống");
+            if (register.Name.Length > 20)
+                throw new Result("Tên không được vượt quá 20 ký tự");
+            if (string.IsNullOrWhiteSpace(register.phoneNumber))
+                throw new Result("Số điện thoại không được để trống");
+            if (string.IsNullOrWhiteSpace(register.username))
+                throw new Result("Tên đăng nhập không được để trống");
+            if (string.IsNullOrWhiteSpace(register.password))
+                throw new Result("Mật khẩu không được để trống");
+            if (string.IsNullOrWhiteSpace(register.Email))
+                throw new Result("Email không được để trống");
+            if (string.IsNullOrWhiteSpace(register.Gender))
+                throw new Result("Giới tính không được để trống");
+            if (string.IsNullOrWhiteSpace(register.Address))
+                throw new Result("Địa chỉ không được để trống");
+
             // Kiểm tra username đã tồn tại
             var existingUser = await _context.User
                 .FirstOrDefaultAsync(u => u.username == register.username);
@@ -69,6 +87,12 @@ namespace Server.src.Services.Implements
                 .FirstOrDefaultAsync(c => c.Email == register.Email);
             if (existingCustomer != null)
                 throw new Result("Email đã được sử dụng");
+
+            // Kiểm tra số điện thoại đã tồn tại trong Customer
+            var existingPhone = await _context.Customers
+                .FirstOrDefaultAsync(c => c.Phone == register.phoneNumber);
+            if (existingPhone != null)
+                throw new Result("Số điện thoại đã được sử dụng");
 
             // Hash password
             var hashedPassword = PasswordHelper.HashPassword(register.password);

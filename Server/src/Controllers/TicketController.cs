@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -98,6 +99,39 @@ namespace Server.src.Controllers
             try
             {
                 var tickets = await _ticketService.GetTicketsByCustomerEmail(email);
+                return Ok(new
+                {
+                    success = true,
+                    data = tickets,
+                    count = tickets.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
+
+                /// <summary>
+        /// Lấy lịch sử đặt vé của người dùng hiện tại
+        /// </summary>
+        [Authorize]
+        [HttpGet("history")]
+        public async Task<IActionResult> GetTicketHistory()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        message = "Không tìm thấy thông tin người dùng"
+                    });
+                }
+
+                var tickets = await _ticketService.GetTicketHistory(userId);
                 return Ok(new
                 {
                     success = true,

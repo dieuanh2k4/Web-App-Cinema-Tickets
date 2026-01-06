@@ -308,6 +308,27 @@ const AccountDetail = () => {
               <span className={`px-4 py-2 text-sm font-medium rounded-full border ${getStatusBadge(account.status)}`}>
                 {getStatusLabel(account.status)}
               </span>
+              <span className={`px-4 py-2 text-sm font-medium rounded-full border ${getStatusBadge(account.status)}`}>
+                {getStatusLabel(account.status)}
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Info */}
+          <div className="bg-secondary rounded-lg p-6 border border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <FaHistory className="text-accent" />
+              Thông tin hệ thống
+            </h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Ngày tạo:</span>
+                <span className="text-white">{formatDate(account.createdDate)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Đăng nhập lần cuối:</span>
+                <span className="text-white">{formatDate(account.lastLogin)}</span>
+              </div>
             </div>
           </div>
 

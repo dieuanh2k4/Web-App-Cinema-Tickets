@@ -35,7 +35,6 @@ export default function MovieDetailScreen() {
       setLoading(true);
       const movieData = await movieService.getMovieById(id);
       setMovie(movieData);
-      await loadShowtimes(movieData.id);
       setLoading(false);
     } catch (error) {
       console.error("Error loading movie detail:", error);
@@ -43,39 +42,20 @@ export default function MovieDetailScreen() {
     }
   };
 
-  const loadShowtimes = async (movieId) => {
-    try {
-      const [allShowtimes, allTheaters] = await Promise.all([
-        showtimeService.getAllShowtimes(),
-        theaterService.getAllTheaters(),
-      ]);
-
-      const movieShowtimes = allShowtimes.filter(
-        (st) => st.movieId === parseInt(movieId)
-      );
-      setShowtimes(movieShowtimes);
-
-      // Group với theater data để có đầy đủ thông tin
-      const groupedByTheater = showtimeService.groupShowtimesByTheater(
-        movieShowtimes,
-        allTheaters
-      );
-      setTheaters(groupedByTheater);
-    } catch (error) {
-      console.error("Error loading showtimes:", error);
-    }
-  };
-
   const handleBookTicket = () => {
     if (!movie) return;
+
+    console.log("Movie object:", movie);
+    console.log("Movie title:", movie.title);
+    console.log("Movie poster:", movie.thumbnail);
 
     // Chuyển đến màn hình chọn rạp với thông tin phim
     router.push({
       pathname: "/booking/select_cinema",
       params: {
         movieId: movie.id,
-        movieTitle: movie.title,
-        thumbnail: movie.thumbnail,
+        movieTitle: movie.title || movie.name || "Phim",
+        movieThumbnail: movie.thumbnail || "",
       },
     });
   };
@@ -132,7 +112,7 @@ export default function MovieDetailScreen() {
                     size={16}
                     color="#CCCCCC"
                   />
-                  <Text style={styles.metaText}>{movie.duration}</Text>
+                  <Text style={styles.metaText}>{movie.duration}m</Text>
                 </View>
                 <View style={styles.metaItem}>
                   <MaterialCommunityIcons
@@ -151,7 +131,6 @@ export default function MovieDetailScreen() {
             </View>
           </View>
         </View>
-
         {/* Thông tin chi tiết */}
         <View style={styles.detailsContainer}>
           <View style={styles.section}>
@@ -174,19 +153,61 @@ export default function MovieDetailScreen() {
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Diễn viên</Text>
                 <Text style={styles.infoValue}>
-                  {movie.cast || "Đang cập nhật"}
+                  {Array.isArray(movie.actors)
+                    ? movie.actors.join(", ")
+                    : movie.actors || "Đang cập nhật"}
                 </Text>
               </View>
               <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Quốc gia</Text>
+                <Text style={styles.infoLabel}>Thể loại</Text>
                 <Text style={styles.infoValue}>
-                  {movie.country || "Việt Nam"}
+                  {movie.genre || "Đang cập nhật"}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Thời lượng</Text>
+                <Text style={styles.infoValue}>
+                  {movie.duration ? `${movie.duration} phút` : "Đang cập nhật"}
                 </Text>
               </View>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Ngôn ngữ</Text>
                 <Text style={styles.infoValue}>
-                  {movie.language || "Tiếng Việt"}
+                  {movie.language || "Đang cập nhật"}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Giới hạn tuổi</Text>
+                <Text style={styles.infoValue}>
+                  {movie.ageLimit || "Đang cập nhật"}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Ngày khởi chiếu</Text>
+                <Text style={styles.infoValue}>
+                  {movie.startDate
+                    ? new Date(movie.startDate).toLocaleDateString("vi-VN")
+                    : "Đang cập nhật"}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Ngày kết thúc</Text>
+                <Text style={styles.infoValue}>
+                  {movie.endDate
+                    ? new Date(movie.endDate).toLocaleDateString("vi-VN")
+                    : "Đang cập nhật"}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Trạng thái</Text>
+                <Text style={[styles.infoValue, { color: movie.status === "Đang chiếu" ? "#4CAF50" : "#FFA500" }]}>
+                  {movie.status || "Đang cập nhật"}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Đánh giá</Text>
+                <Text style={styles.infoValue}>
+                  {movie.rating ? `${movie.rating}/10 ⭐` : "Chưa có đánh giá"}
                 </Text>
               </View>
             </View>

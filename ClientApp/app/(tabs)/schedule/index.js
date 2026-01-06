@@ -239,7 +239,7 @@ export default function ScheduleScreen() {
 
   return (
     <LinearGradient
-      colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
+      colors={["#0F0F0F", "#0F0F0F", "#6C47DB"]}
       locations={[0, 0.7, 1]}
       style={styles.gradient}
     >
@@ -331,9 +331,8 @@ export default function ScheduleScreen() {
                     <View style={styles.badgeRow}>
                       {formatFeatures(theater).map((feature, index) => (
                         <View
-                          key={`${
-                            theater.id || theater.theaterId
-                          }-feature-${index}`}
+                          key={`${theater.id || theater.theaterId
+                            }-feature-${index}`}
                           style={styles.badge}
                         >
                           <Text style={styles.badgeText}>{feature}</Text>
@@ -383,7 +382,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 60,
   },
   loadingContainer: {
     flex: 1,
@@ -395,7 +394,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
     color: "#FFFFFF",
-    paddingTop: 32,
+    marginTop: 30,
   },
   screenSubtitle: {
     color: "#9CA3AF",

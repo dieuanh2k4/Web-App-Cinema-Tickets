@@ -36,15 +36,24 @@ export default function TheaterDetailScreen() {
       const theaterData = await theaterService.getTheaterById(theaterId);
       setTheater(theaterData);
 
+      console.log("Theater data:", theaterData);
+
       // Load all showtimes for this theater
       const allShowtimes = await showtimeService.getAllShowtimes();
+      console.log("All showtimes:", allShowtimes);
+
+      // Match by theater name instead of theaterId
       const theaterShowtimes = allShowtimes.filter((st) => {
-        return st.theaterId === parseInt(theaterId);
+        return st.theaterName === theaterData.name;
       });
+
+      console.log("Filtered showtimes for this theater:", theaterShowtimes);
+
       setShowtimes(theaterShowtimes);
 
       // Load movies for poster and details
       const allMovies = await movieService.getAllMovies();
+      console.log("All movies with thumbnails:", allMovies.map(m => ({ id: m.id, title: m.title, thumbnail: m.thumbnail })));
       setMovies(allMovies);
     } catch (error) {
       console.error("Error loading theater detail:", error);
@@ -113,15 +122,21 @@ export default function TheaterDetailScreen() {
       return showtimeDate === selectedDateStr;
     })
     .reduce((acc, showtime) => {
-      const movieId = showtime.movieId;
-      const movie = movies.find((m) => m.id === movieId);
-      const movieTitle =
-        movie?.title || showtime.movieTitle || `Phim ${movieId}`;
+      // Backend returns movieId: 0, so we match by movieTitle instead
+      const showtimeMovieTitle = showtime.movieTitle;
+      const movie = movies.find(
+        (m) => m.title?.toLowerCase() === showtimeMovieTitle?.toLowerCase()
+      );
+      const movieId = movie?.id || showtime.movieId || 0;
+      const movieTitle = movie?.title || showtimeMovieTitle || "Phim";
       const moviePoster = movie?.thumbnail || null;
-      const ageRating = movie?.ageRating || "P";
+      const ageRating = movie?.ageRating || movie?.ageLimit || "P";
 
-      if (!acc[movieId]) {
-        acc[movieId] = {
+      // Use movieTitle as key since movieId might be 0
+      const key = movieTitle;
+
+      if (!acc[key]) {
+        acc[key] = {
           movieId,
           movieTitle,
           moviePoster,
@@ -130,11 +145,11 @@ export default function TheaterDetailScreen() {
         };
       }
 
-      acc[movieId].showtimes.push({
+      acc[key].showtimes.push({
         id: showtime.id,
         time: showtime.start?.substring(0, 5) || showtime.start,
         roomId: showtime.roomId,
-        roomName: showtime.roomName || `Phòng ${showtime.roomId}`,
+        roomName: showtime.rooomName || showtime.roomName || `Phòng ${showtime.roomId}`,
       });
 
       return acc;
@@ -245,8 +260,15 @@ export default function TheaterDetailScreen() {
                         pathname: "/booking/select_seat",
                         params: {
                           movieId: movie.movieId,
+                          movieTitle: movie.movieTitle,
+                          movieThumbnail: movie.moviePoster || "",
                           showtimeId: showtime.id,
                           theaterId,
+                          theaterName: theater.name,
+                          showtime: showtime.time,
+                          format: "2D",
+                          date: selectedDateStr,
+                          roomName: showtime.roomName,
                         },
                       });
                     }}

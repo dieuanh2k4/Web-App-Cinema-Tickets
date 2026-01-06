@@ -95,6 +95,12 @@ namespace Server.src.Services.Implements
             if (existingAdmin != null)
                 throw new Result("Email đã được sử dụng");
 
+                 // Kiểm tra số điện thoại đã tồn tại trong Customer
+            var existingPhone = await _context.Admins
+                .FirstOrDefaultAsync(c => c.Phone == createAdminDto.phoneNumber);
+            if (existingPhone != null)
+                throw new Result("Số điện thoại đã được sử dụng");
+
             // Hash password
             var hashedPassword = PasswordHelper.HashPassword(createAdminDto.password);
 
@@ -178,6 +184,12 @@ namespace Server.src.Services.Implements
                 .FirstOrDefaultAsync(c => c.Email == createStaffDto.Email);
             if (existingStaff != null)
                 throw new Result("Email đã được sử dụng");
+
+             // Kiểm tra số điện thoại đã tồn tại trong Customer
+            var existingPhone = await _context.Staff
+                .FirstOrDefaultAsync(c => c.Phone == createStaffDto.phoneNumber);
+            if (existingPhone != null)
+                throw new Result("Số điện thoại đã được sử dụng");
 
             // Hash password
             var hashedPassword = PasswordHelper.HashPassword(createStaffDto.password);

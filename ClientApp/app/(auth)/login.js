@@ -6,164 +6,261 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import AuthLayout from "../../components/AuthLayout/auth_layout";
-import { authService } from "../../services/authService";
+import { authService } from "../../services";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function Login() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!username.trim()) {
+      newErrors.username = "Vui lòng nhập tên đăng nhập";
+    } else if (username.length < 3) {
+      newErrors.username = "Tên đăng nhập phải có ít nhất 3 ký tự";
+    }
+
+    if (!password) {
+      newErrors.password = "Vui lòng nhập mật khẩu";
+    } else if (password.length < 6) {
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleLogin = async () => {
-    console.log("=== LOGIN TEST ===");
-    console.log("Email:", email);
-    console.log("Password:", password ? "***" : "empty");
+    if (!validateForm()) {
+      return;
+    }
 
-    // TODO: Sẽ dùng sau khi có API backend
-    // try {
-    //   const result = await authService.login(email, password);
-    //   console.log("Login result:", result);
-
-    //   if (result.success) {
-    //     console.log("Login success");
-    //     await login({
-    //       token: result.data.token,
-    //       user: result.data.user,
-    //     });
-    //   } else {
-    //     console.log("Login failed:", result.error);
-    //     Alert.alert("Lỗi đăng nhập", JSON.stringify(result.error));
-    //   }
-    // } catch (error) {
-    //   console.log("Exception:", error);
-    //   Alert.alert("Lỗi", error.message);
-    // }
-
-    // Tạm thời bypass - đăng nhập trực tiếp không cần API
     try {
-      await login({
-        token: "temp-token-" + Date.now(),
-        user: {
-          id: 1,
-          email: email || "user@example.com",
-          name: "User Test",
-        },
-      });
-      console.log("Đăng nhập thành công - vào trang home");
+      setLoading(true);
+      setErrors({});
+
+      // Sử dụng login từ AuthContext - nó sẽ tự động lưu token và user info
+      const result = await login(username, password);
+
+      if (!result.success) {
+        Alert.alert(
+          "Đăng nhập thất bại",
+          result.error?.message || "Tên đăng nhập hoặc mật khẩu không đúng"
+        );
+      }
+      // Nếu thành công, AuthContext sẽ tự động redirect đến home
     } catch (error) {
-      console.log("Exception:", error);
-      Alert.alert("Lỗi", error.message);
+      console.error("Login error:", error);
+      Alert.alert(
+        "Lỗi kết nối",
+        "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <AuthLayout>
-      <View style={styles.form}>
-        <Text style={styles.loginText}>Đăng nhập</Text>
-        <View>
-          <TextInput
-            style={[styles.input, errors.email && styles.inputError]}
-            placeholder="Email"
-            placeholderTextColor="rgba(255, 255, 255, 0.27)"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              if (errors.email) {
-                setErrors({ ...errors, email: null });
-              }
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-        </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.container}
+      >
+        <View style={styles.form}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Chào mừng trở lại!</Text>
+            <Text style={styles.subtitle}>Đăng nhập để tiếp tục</Text>
+          </View>
 
-        <View>
-          <TextInput
-            style={[styles.input, errors.password && styles.inputError]}
-            placeholder="Mật khẩu"
-            placeholderTextColor="rgba(255, 255, 255, 0.27)"
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              if (errors.password) {
-                setErrors({ ...errors, password: null });
-              }
-            }}
-            secureTextEntry
-          />
-          {errors.password && (
-            <Text style={styles.errorText}>{errors.password}</Text>
-          )}
-        </View>
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Đăng nhập</Text>
-        </TouchableOpacity>
+          <View style={styles.inputContainer}>
+            <View style={styles.inputWrapper}>
+              <Ionicons
+                name="person-outline"
+                size={20}
+                color="rgba(255, 255, 255, 0.5)"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={[styles.input, errors.username && styles.inputError]}
+                placeholder="Tên đăng nhập"
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                value={username}
+                onChangeText={(text) => {
+                  setUsername(text);
+                  if (errors.username) {
+                    setErrors({ ...errors, username: null });
+                  }
+                }}
+                autoCapitalize="none"
+                editable={!loading}
+              />
+            </View>
+            {errors.username && (
+              <Text style={styles.errorText}>{errors.username}</Text>
+            )}
+          </View>
 
-        <TouchableOpacity
-          onPress={() => router.push("/(auth)/register")}
-          style={styles.linkButton}
-        >
-          <Text style={styles.linkText}>Chưa có tài khoản? Đăng ký ngay</Text>
-        </TouchableOpacity>
-      </View>
+          <View style={styles.inputContainer}>
+            <View style={styles.inputWrapper}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={20}
+                color="rgba(255, 255, 255, 0.5)"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={[styles.input, errors.password && styles.inputError]}
+                placeholder="Mật khẩu"
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (errors.password) {
+                    setErrors({ ...errors, password: null });
+                  }
+                }}
+                secureTextEntry={!showPassword}
+                editable={!loading}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeIcon}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-outline" : "eye-off-outline"}
+                  size={20}
+                  color="rgba(255, 255, 255, 0.5)"
+                />
+              </TouchableOpacity>
+            </View>
+            {errors.password && (
+              <Text style={styles.errorText}>{errors.password}</Text>
+            )}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Đăng nhập</Text>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Chưa có tài khoản? </Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(auth)/register")}
+              disabled={loading}
+            >
+              <Text style={styles.linkText}>Đăng ký ngay</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
     </AuthLayout>
   );
 }
 const styles = StyleSheet.create({
+  container: {
+    width: "100%",
+  },
   form: {
     width: "100%",
     maxWidth: 400,
-    gap: 16,
   },
-  loginText: {
-    fontSize: 24,
+  header: {
+    marginBottom: 32,
+  },
+  title: {
+    fontSize: 28,
     fontWeight: "bold",
-    color: "white",
-    marginBottom: 24,
-    textAlign: "center",
+    color: "#FFFFFF",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: "rgba(255, 255, 255, 0.6)",
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  inputIcon: {
+    marginLeft: 16,
   },
   input: {
-    backgroundColor: "rgba(77, 77, 77, 0.5)",
-    padding: 12,
-    borderRadius: 8,
-    fontSize: 16,
+    flex: 1,
+    padding: 16,
+    paddingLeft: 12,
+    fontSize: 15,
     color: "#FFFFFF",
   },
-  button: {
-    backgroundColor: "#6C47DB",
+  eyeIcon: {
     padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 16,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  linkButton: {
-    marginTop: 16,
-    alignItems: "center",
-  },
-  linkText: {
-    color: "#6C47DB",
-    fontSize: 14,
-    textDecorationLine: "underline",
   },
   inputError: {
     borderColor: "#FF6B6B",
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   errorText: {
     color: "#FF6B6B",
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 6,
     marginLeft: 4,
+  },
+  button: {
+    backgroundColor: "#6366F1",
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 24,
+  },
+  footerText: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: 14,
+  },
+  linkText: {
+    color: "#6366F1",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

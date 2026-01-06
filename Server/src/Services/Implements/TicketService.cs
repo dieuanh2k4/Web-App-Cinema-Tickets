@@ -81,6 +81,13 @@ namespace Server.src.Services.Implements
                 await _context.SaveChangesAsync();
             }
 
+            // Lấy User từ Customer để có userId
+            var user = await _context.User.FirstOrDefaultAsync(u => u.Id == customer.Id);
+            if (user == null)
+            {
+                throw new Result("Không tìm thấy user tương ứng với customer");
+            }
+
             // 4. Calculate total price
             int totalPrice = seats.Sum(s => s.Price);
 
@@ -88,7 +95,7 @@ namespace Server.src.Services.Implements
             var ticket = new Ticket
             {
                 ShowtimeId = showtime.Id,
-                UserId = customer.Id,
+                UserId = user.Id, // Lưu userId thay vì customerId
                 RoomId = showtime.RoomId,
                 MovieId = showtime.MovieId,
                 SumOfSeat = createTicketDto.SeatIds.Count,
@@ -116,9 +123,9 @@ namespace Server.src.Services.Implements
             }
             await _context.SaveChangesAsync();
 
-            // 8. Load relationships and return
-            var user = await _context.User
-                .FirstOrDefaultAsync(u => u.Id == customer.Id);
+            // // 8. Load relationships and return
+            // var user = await _context.User
+            //     .FirstOrDefaultAsync(u => u.Id == customer.Id);
                 
             ticket.User = user;
             ticket.Showtimes = showtime;
@@ -186,6 +193,28 @@ namespace Server.src.Services.Implements
                 .Include(t => t.TicketSeats)
                     .ThenInclude(ts => ts.Seat)
                 .Where(t => t.UserId == customer.Id)
+                .ToListAsync();
+
+            var ticketDtos = tickets.Select(ticket => 
+            {
+                var seats = ticket.TicketSeats?.Select(ts => ts.Seat!).ToList() ?? new List<Seats>();
+                return ticket.ToTicketDto(seats);
+            }).ToList();
+
+            return ticketDtos;
+        }
+
+        public async Task<List<TicketDto>> GetTicketHistory(int userId)
+        {
+            var tickets = await _context.Tickets
+                .Include(t => t.User)
+                .Include(t => t.Showtimes)
+                .Include(t => t.Movies)
+                .Include(t => t.Rooms)
+                .Include(t => t.TicketSeats)
+                    .ThenInclude(ts => ts.Seat)
+                .Where(t => t.UserId == userId)
+                .OrderByDescending(t => t.Date)
                 .ToListAsync();
 
             var ticketDtos = tickets.Select(ticket => 

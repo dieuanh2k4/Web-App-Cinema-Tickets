@@ -87,41 +87,155 @@ export const authService = {
     }
   },
 
-  // Đăng nhập (chỉ dùng mock data)
-  async login(email, password) {
+  // Đăng nhập
+  async login(username, password) {
     try {
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`;
-      console.log("🔵 Login Request:", { url, email });
-
-      const res = await api.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, {
-        Username: email, // Backend expects 'Username' not 'email'
-        Password: password, // Backend expects 'Password' with capital P
+      const response = await api.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, {
+        Username: username,
+        Password: password,
       });
 
-      console.log("✅ Login Response:", res.data);
+      // Backend response: { isSuccess, message, data: { username, role, token } }
+      if (response.data?.isSuccess && response.data?.data?.token) {
+        const { token, username: userName, role } = response.data.data;
+        const userInfo = { username: userName, role };
+        await this.saveAuthData(token, userInfo);
 
-      if (res?.data?.isSuccess || res?.data?.token || res?.data?.data) {
-        // Response shape may vary; try to extract token and user
-        const token =
-          res.data?.data?.token ||
-          res.data?.token ||
-          res.data?.data?.accessToken;
-        const user = res.data?.data?.user || res.data?.data || null;
-        if (token) {
-          await this.saveAuthData(token, user);
-        }
-        return { success: true, data: { token, user }, raw: res.data };
+        return {
+          success: true,
+          data: {
+            token,
+            user: userInfo,
+          },
+          message: response.data.message,
+        };
       }
 
-      return { success: false, error: res.data || "Login failed" };
+      return {
+        success: false,
+        error: {
+          message: response.data?.message || "Đăng nhập thất bại",
+        },
+      };
     } catch (error) {
       console.error("Login error:", error);
-      console.error("Error details:", {
-        message: error.message,
-        response: error?.response?.data,
-        status: error?.response?.status,
-      });
-      return { success: false, error: error?.response?.data || error.message };
+      return {
+        success: false,
+        error: {
+          message:
+            error?.response?.data?.message ||
+            error?.response?.data ||
+            error.message ||
+            "Không thể kết nối đến server",
+        },
+      };
+    }
+  },
+
+  // Đăng ký khách hàng
+  async register(registerData, imageFile = null) {
+    try {
+      // Backend yêu cầu FormData (multipart/form-data)
+      const formData = new FormData();
+
+      // Append tất cả các field
+      formData.append("Name", registerData.Name || "");
+      formData.append("username", registerData.username || "");
+      formData.append("Email", registerData.Email || "");
+      formData.append("password", registerData.password || "");
+      formData.append("phoneNumber", registerData.phoneNumber || "");
+      formData.append("Birth", registerData.Birth || "2000-01-01");
+      formData.append("Gender", registerData.Gender || "Khác");
+      formData.append("Address", registerData.Address || "Chưa cập nhật");
+      formData.append(
+        "createdDate",
+        registerData.createdDate || new Date().toISOString()
+      );
+
+      // Append file nếu có
+      if (imageFile) {
+        formData.append("imageFile", imageFile);
+      }
+
+      const response = await api.post(
+        API_CONFIG.ENDPOINTS.AUTH.REGISTER,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      // Xử lý response từ backend
+      if (response.status === 200 || response.status === 201) {
+        // Response thành công
+        if (response.data) {
+          return {
+            success: true,
+            data: {
+              user: response.data.user || response.data.data || response.data,
+            },
+            message: response.data.message || "Đăng ký thành công",
+          };
+        }
+      }
+
+      return {
+        success: false,
+        error: {
+          message: response.data?.message || "Đăng ký thất bại",
+        },
+      };
+    } catch (error) {
+      console.error("Register error:", error);
+
+      // Xử lý các loại lỗi khác nhau
+      let errorMessage = "Không thể kết nối đến server";
+
+      if (error.response) {
+        // Server responded with error
+        if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.data?.errors) {
+          // Validation errors
+          const errors = error.response.data.errors;
+          errorMessage = Object.values(errors).flat().join(", ");
+        } else if (typeof error.response.data === "string") {
+          errorMessage = error.response.data;
+        } else if (error.response.status === 400) {
+          errorMessage = "Thông tin đăng ký không hợp lệ";
+        } else if (error.response.status === 409) {
+          errorMessage = "Tên đăng nhập hoặc email đã tồn tại";
+        } else if (error.response.status === 500) {
+          errorMessage = "Lỗi server, vui lòng thử lại sau";
+        }
+      } else if (error.request) {
+        // Request was made but no response
+        errorMessage =
+          "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.";
+      } else {
+        // Something else happened
+        errorMessage = error.message || "Đã xảy ra lỗi không xác định";
+      }
+
+      return {
+        success: false,
+        error: {
+          message: errorMessage,
+        },
+      };
+    }
+  },
+
+  // Lấy thông tin user hiện tại
+  async getMe() {
+    try {
+      const response = await api.get(API_CONFIG.ENDPOINTS.AUTH.ME);
+      return response.data;
+    } catch (error) {
+      console.error("Get me error:", error);
+      throw error;
     }
   },
 

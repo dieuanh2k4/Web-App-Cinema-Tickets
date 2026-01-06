@@ -93,7 +93,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
+        colors={["#0F0F0F", "#0F0F0F", "#260d71ff"]}
         locations={[0, 0.7, 1]}
         style={styles.gradient}
       >
@@ -235,8 +235,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 15,
+    paddingTop: 45,
+    paddingBottom: 10,
     backgroundColor: "transparent",
   },
   headerIcon: {
@@ -261,8 +261,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   logoImage: {
-    width: 120,
-    height: 120,
+    width: 80,
+    height: 80,
   },
   dotIndicator: {
     width: 6,
