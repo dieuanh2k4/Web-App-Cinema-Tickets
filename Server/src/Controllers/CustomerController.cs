@@ -25,7 +25,7 @@ namespace Server.src.Controllers
             _minio = minio;
         }
 
-        [Authorize(Roles = "Customer")]
+        [Authorize(Roles = "Customer, Admin")]
         [HttpGet("get-info-customer")]
         public async Task<IActionResult> GetInfoCustomer(int id)
         {
