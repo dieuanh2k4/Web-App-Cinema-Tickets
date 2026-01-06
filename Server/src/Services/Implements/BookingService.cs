@@ -74,12 +74,16 @@ namespace Server.src.Services.Implements
                     throw new ArgumentException($"Ghế {string.Join(", ", bookedSeatNames)} đã được đặt");
                 }
 
-                // 4. Tìm hoặc tạo customer
+                // 4. Tìm hoặc tạo customer và lấy userId
                 var customer = await _customerService.FindOrCreateByPhoneAsync(
                     dto.PhoneNumber,
                     dto.CustomerName,
                     dto.Email
                 );
+
+                // Kiểm tra customer có UserId không
+                if (!customer.UserId.HasValue)
+                    throw new ArgumentException("Customer chưa được liên kết với User");
 
                 // 5. Tính tổng tiền dựa trên Seats.Price
                 int totalAmount = (int)seats.Sum(s => s.Price);
@@ -87,7 +91,7 @@ namespace Server.src.Services.Implements
                 // 6. Tạo Ticket với TicketSeats
                 var ticket = new Ticket
                 {
-                    UserId = customer.Id,
+                    UserId = customer.UserId.Value, // Lưu userId từ customer.UserId
                     ShowtimeId = dto.ShowtimeId,
                     RoomId = showtime.RoomId,
                     MovieId = showtime.MovieId,
@@ -205,12 +209,16 @@ namespace Server.src.Services.Implements
                     throw new ArgumentException($"Ghế {string.Join(", ", bookedSeatNames)} đã được đặt");
                 }
 
-                // 4. Tìm hoặc tạo customer
+                // 4. Tìm hoặc tạo customer và lấy userId
                 var customer = await _customerService.FindOrCreateByPhoneAsync(
                     dto.CustomerPhone,
                     dto.CustomerName,
                     dto.Email // Email có thể null
                 );
+
+                // Kiểm tra customer có UserId không
+                if (!customer.UserId.HasValue)
+                    throw new ArgumentException("Customer chưa được liên kết với User");
 
                 // 5. Tính tổng tiền
                 int totalAmount = (int)seats.Sum(s => s.Price);
@@ -222,7 +230,7 @@ namespace Server.src.Services.Implements
                 // 7. Tạo Ticket với TicketSeats
                 var ticket = new Ticket
                 {
-                    UserId = customer.Id,
+                    UserId = customer.UserId.Value, // Lưu userId từ customer.UserId
                     ShowtimeId = dto.ShowtimeId,
                     RoomId = showtime.RoomId,
                     MovieId = showtime.MovieId,
