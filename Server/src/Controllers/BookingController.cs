@@ -42,31 +42,6 @@ namespace Server.src.Controllers
 
 
         /// <summary>
-        /// Staff tạo vé tại quầy (thanh toán tiền mặt)
-        /// </summary>
-        [Authorize(Roles = "Staff,Admin")]
-        [HttpPost("create-by-staff")]
-        public async Task<IActionResult> CreateBookingByStaff([FromBody] StaffBookingDto dto)
-        {
-            try
-            {
-                // Lấy UserId từ JWT token
-                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int staffId))
-                {
-                    return Unauthorized(new { message = "Không xác định được Staff" });
-                }
-
-                var result = await _bookingService.CreateStaffBookingAsync(dto, staffId);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return ReturnException(ex);
-            }
-        }
-
-        /// <summary>
         /// Lấy danh sách ghế khả dụng cho suất chiếu
         /// </summary>
         [AllowAnonymous]
