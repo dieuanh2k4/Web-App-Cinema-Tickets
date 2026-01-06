@@ -106,6 +106,8 @@ namespace Server.src.Services.Implements
                 Email = register.Email,
                 Phone = register.phoneNumber,
                 Birth = register.Birth,
+                gender = register.Gender,
+                Address = register.Address,
                 UserId = newUser.Id
             };
 

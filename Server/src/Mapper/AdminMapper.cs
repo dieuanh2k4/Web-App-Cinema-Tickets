@@ -20,7 +20,7 @@ namespace Server.src.Mapper
                 Email = dto.Email,
                 password = dto.password,
                 phoneNumber = dto.phoneNumber,
-                createdDate = dto.createdDate,
+                createdDate = DateTime.UtcNow,
                 Address = dto.Address,
                 Avatar = dto.Avatar
             };

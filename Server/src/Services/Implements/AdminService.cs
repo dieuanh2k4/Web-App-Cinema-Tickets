@@ -131,6 +131,8 @@ namespace Server.src.Services.Implements
                 Email = createAdminDto.Email,
                 Phone = createAdminDto.phoneNumber,
                 Birth = createAdminDto.Birth,
+                Gender = createAdminDto.Gender,
+                Address = createAdminDto.Address,
                 UserId = newAdmin.Id
             };
 
@@ -189,34 +191,36 @@ namespace Server.src.Services.Implements
             await _context.User.AddAsync(newStaff);
             await _context.SaveChangesAsync();
 
-            // Tìm role "Customer" trong database
-            var adminRole = await _context.Roles
+            // Tìm role "Staff" trong database
+            var staffRole = await _context.Roles
                 .FirstOrDefaultAsync(r => r.Name == "Staff");
 
-            if (adminRole != null)
+            if (staffRole != null)
             {
-                // Tạo UserRole để gán role Customer cho user mới
+                // Tạo UserRole để gán role Staff cho user mới
                 var userRole = new UserRole
                 {
                     UserId = newStaff.Id,
-                    RoleId = adminRole.Id,
+                    RoleId = staffRole.Id,
                     AssignedDate = DateTime.UtcNow
                 };
 
                 await _context.UserRoles.AddAsync(userRole);
             }
 
-            // Tạo Customer mới liên kết với User
-            var newStaffs = new Admin
+            // Tạo Staff mới liên kết với User
+            var newStaffs = new Staff
             {
                 Name = createStaffDto.Name,
                 Email = createStaffDto.Email,
                 Phone = createStaffDto.phoneNumber,
                 Birth = createStaffDto.Birth,
+                Gender = createStaffDto.Gender,
+                Address = createStaffDto.Address,
                 UserId = newStaff.Id
             };
 
-            await _context.Admins.AddAsync(newStaffs);
+            await _context.Staff.AddAsync(newStaffs);
             await _context.SaveChangesAsync();
 
             return newStaff;

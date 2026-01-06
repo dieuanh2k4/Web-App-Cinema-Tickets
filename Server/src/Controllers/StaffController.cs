@@ -25,7 +25,7 @@ namespace Server.src.Controllers
             _minio = minio;
         }
 
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff, Admin")]
         [HttpGet("get-info-staff")]
         public async Task<IActionResult> GetInfoStaff(int id)
         {
@@ -41,7 +41,7 @@ namespace Server.src.Controllers
             } 
         }
 
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff, Admin")]
         [HttpPut("update-info-staff/{id}")]
         public async Task<IActionResult> UpdateInfoStaff([FromForm] UpdateStaffDto updateStaffDto, IFormFile? imageFile, int id)
         {

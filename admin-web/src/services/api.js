@@ -18,6 +18,18 @@ api.interceptors.request.use(
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
     console.log('🔑 API Request:', config.url);
     console.log('🎫 Token:', token ? `${token.substring(0, 20)}...` : 'No token');
+    
+    // Decode JWT to check role
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('👤 JWT Payload:', payload);
+        console.log('🎭 Role from token:', payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']);
+      } catch (e) {
+        console.error('❌ Error decoding JWT:', e);
+      }
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('✅ Authorization header set');
