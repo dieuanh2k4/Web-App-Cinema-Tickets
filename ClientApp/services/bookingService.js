@@ -55,14 +55,14 @@ export const bookingService = {
       // Backend ConfirmBookingDto hiện tại chỉ nhận HoldId
       const payload = { HoldId: holdId };
 
-      console.log("🎫 Confirm booking request:", payload);
+      console.log("Confirm booking request:", payload);
 
       const res = await apiClient.post(
         API_CONFIG.ENDPOINTS.BOOKING.CONFIRM_BOOKING,
         payload
       );
 
-      console.log("✅ Confirm booking response:", res.data);
+      console.log("Confirm booking response:", res.data);
 
       const booking = res.data?.booking ?? res.data?.data ?? res.data;
       return {
@@ -76,8 +76,8 @@ export const bookingService = {
           booking?.id,
       };
     } catch (error) {
-      console.error("❌ Error confirming booking:", error);
-      console.error("❌ Error response:", error.response?.data);
+      console.error("Error confirming booking:", error);
+      console.error("Error response:", error.response?.data);
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       }
@@ -88,7 +88,7 @@ export const bookingService = {
   // Giữ ghế tạm thời
   holdSeats: async (seatIds, showtimeId) => {
     try {
-      console.log("🎫 Hold seats request:", {
+      console.log("Hold seats request:", {
         ShowtimeId: showtimeId,
         SeatIds: seatIds,
       });
@@ -101,7 +101,7 @@ export const bookingService = {
         }
       );
 
-      console.log("✅ Hold seats response:", res.data);
+      console.log("Hold seats response:", res.data);
 
       return {
         success: res.data.success || true,

@@ -84,7 +84,7 @@ export default function SelectShowtimeScreen() {
       const formattedDate = formatDateForBackend(selectedDate);
       const allTheaters = await theaterService.getAllTheaters();
 
-      console.log("📅 Loading showtimes for:", {
+      console.log("Loading showtimes for:", {
         movieId,
         formattedDate,
         selectedCity,
@@ -96,14 +96,14 @@ export default function SelectShowtimeScreen() {
         allTheaters
       );
 
-      console.log("🎬 All theaters with showtimes:", data);
+      console.log("All theaters with showtimes:", data);
 
       // Tạm thời bỏ filter để xem tất cả rạp
       const filteredTheaters = selectedCity
         ? data.filter((theater) => theater.city === selectedCity)
         : data;
 
-      console.log("🏙️ Filtered theaters by city:", {
+      console.log("Filtered theaters by city:", {
         selectedCity,
         filteredTheaters,
         totalTheaters: data.length,

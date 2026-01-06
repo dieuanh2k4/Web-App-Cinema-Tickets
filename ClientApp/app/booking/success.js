@@ -27,7 +27,7 @@ export default function BookingSuccessScreen() {
       setLoading(true);
       // Lấy thông tin booking từ backend bằng ticketId
       const response = await bookingService.getTicketById(params.ticketId);
-      console.log("✅ Ticket details:", response);
+      console.log("Ticket details:", response);
       setBookingDetails(response?.data || response);
     } catch (error) {
       console.error("Error loading booking details:", error);

@@ -28,9 +28,6 @@ export function MovieCard({ title, poster, rating, onPress }) {
         <Text style={styles.title} numberOfLines={2}>
           {title}
         </Text>
-        <View style={styles.ratingContainer}>
-          <Text style={styles.rating}>{rating}/10</Text>
-        </View>
       </View>
     </TouchableOpacity>
   );
