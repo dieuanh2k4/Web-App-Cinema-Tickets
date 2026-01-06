@@ -22,6 +22,7 @@ export default function SelectSeatScreen() {
     showtimeId,
     movieId,
     movieTitle,
+    movieThumbnail,
     theaterId,
     theaterName,
     showtime,
@@ -237,33 +238,6 @@ export default function SelectSeatScreen() {
     try {
       setIsHolding(true);
 
-      // Kiểm tra profile user có đầy đủ name & phone không
-      // Backend cần thông tin này để tạo Customer record
-      try {
-        const profile = await customerService.getProfile();
-        const hasName = profile?.name && profile.name.trim() !== "";
-        const hasPhone = profile?.phone && profile.phone.trim() !== "";
-
-        if (!hasName || !hasPhone) {
-          setIsHolding(false);
-          Alert.alert(
-            "Thông tin chưa đầy đủ",
-            "Vui lòng cập nhật họ tên và số điện thoại trong phần Tài khoản trước khi đặt vé.",
-            [
-              { text: "Hủy" },
-              {
-                text: "Cập nhật ngay",
-                onPress: () => router.push("/account/edit-profile"),
-              },
-            ]
-          );
-          return;
-        }
-      } catch (profileError) {
-        console.error("Error checking profile:", profileError);
-        // Nếu không lấy được profile, tiếp tục (backend sẽ báo lỗi cụ thể hơn)
-      }
-
       // Lấy seatIds từ seatsData
       const allSeats = await seatService.getSeatsByShowtime(showtimeId);
       const seatIds = selectedSeats
@@ -271,8 +245,8 @@ export default function SelectSeatScreen() {
           const seat = Array.isArray(allSeats)
             ? allSeats.find((s) => s.name === seatName)
             : (allSeats?.seats || allSeats?.data || []).find(
-                (s) => s.name === seatName
-              );
+              (s) => s.name === seatName
+            );
           return seat?.id;
         })
         .filter(Boolean);
@@ -308,11 +282,13 @@ export default function SelectSeatScreen() {
           showtimeId,
           movieId,
           movieTitle,
+          movieThumbnail: movieThumbnail || "",
           theaterId,
           theaterName,
           showtime,
           format,
           date,
+          time: showtime,
           seats: selectedSeats.sort().join(", "),
           seatIds: seatIds.join(","),
           seatCount: selectedSeats.length,
@@ -458,7 +434,7 @@ export default function SelectSeatScreen() {
           style={[
             styles.bookButton,
             (selectedSeats.length === 0 || isHolding) &&
-              styles.bookButtonDisabled,
+            styles.bookButtonDisabled,
           ]}
           onPress={handleBooking}
           disabled={selectedSeats.length === 0 || isHolding}

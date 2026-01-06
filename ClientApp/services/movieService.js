@@ -9,16 +9,15 @@ export const movieService = {
       // Map backend fields (PascalCase) to frontend expected fields (camelCase)
       return movies.map((movie) => {
         // Decode URL-encoded characters in thumbnail URLs
-        let posterUrl = movie.Thumbnail || movie.thumbnail || movie.posterUrl;
-        if (posterUrl && posterUrl.includes("%")) {
-          posterUrl = decodeURIComponent(posterUrl);
+        let thumbnail = movie.Thumbnail || movie.thumbnail;
+        if (thumbnail && thumbnail.includes("%")) {
+          thumbnail = decodeURIComponent(thumbnail);
         }
 
         return {
           id: movie.Id || movie.id,
           title: movie.Title || movie.title,
-          posterUrl: posterUrl,
-          backdropUrl: posterUrl,
+          thumbnail: thumbnail,
           duration: movie.Duration || movie.duration,
           genre: movie.Genre || movie.genre,
           language: movie.Language || movie.language,
@@ -47,12 +46,17 @@ export const movieService = {
       const movie = res.data || null;
       if (!movie) return null;
 
+      // Decode thumbnail URL
+      let thumbnail = movie.Thumbnail || movie.thumbnail;
+      if (thumbnail && thumbnail.includes("%")) {
+        thumbnail = decodeURIComponent(thumbnail);
+      }
+
       // Map backend fields (PascalCase) to frontend expected fields (camelCase)
       return {
         id: movie.Id || movie.id,
         title: movie.Title || movie.title,
-        posterUrl: movie.Thumbnail || movie.thumbnail || movie.posterUrl,
-        backdropUrl: movie.Thumbnail || movie.thumbnail || movie.backdropUrl,
+        thumbnail: thumbnail,
         duration: movie.Duration || movie.duration,
         genre: movie.Genre || movie.genre,
         language: movie.Language || movie.language,
@@ -108,3 +112,4 @@ export const movieService = {
     }
   },
 };
+
