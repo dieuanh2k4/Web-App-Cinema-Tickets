@@ -3,7 +3,6 @@ import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import Layout from './layouts/Layout';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
 import Movies from './pages/Movies';
 import AddMovie from './pages/AddMovie';
 import EditMovie from './pages/EditMovie';
@@ -13,6 +12,8 @@ import Showtimes from './pages/Showtimes';
 import TicketPrices from './pages/TicketPrices';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
+import CreateOrder from './pages/CreateOrder';
+import PaymentConfirmation from './pages/PaymentConfirmation';
 import Accounts from './pages/Accounts';
 import AddAccount from './pages/AddAccount';
 import AccountDetail from './pages/AccountDetail';
@@ -68,7 +69,7 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Dashboard />} />
+            <Route index element={<Navigate to="/movies" replace />} />
             <Route path="movies">
               <Route index element={<Movies />} />
               <Route path="add" element={<AddMovie />} />
@@ -80,6 +81,8 @@ function App() {
             <Route path="ticket-prices" element={<TicketPrices />} />
             <Route path="orders">
               <Route index element={<Orders />} />
+              <Route path="create" element={<CreateOrder />} />
+              <Route path="payment" element={<PaymentConfirmation />} />
               <Route path=":id" element={<OrderDetail />} />
             </Route>
             <Route path="accounts">

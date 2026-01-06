@@ -3,8 +3,11 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaSave, FaTimes, FaUserCircle, FaEdit, FaHistory } from 'react-icons/fa';
 import userService from '../services/userService';
 import { formatDate } from '../utils/helpers';
+import { useAuth } from '../hooks/useAuth';
 
 const AccountDetail = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -235,6 +238,19 @@ const AccountDetail = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-white text-xl">Không tìm thấy tài khoản</div>
+      </div>
+    );
+  }
+
+  // Check if user is Admin
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-400 text-6xl mb-4">⛔</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Không có quyền truy cập</h2>
+          <p className="text-gray-400">Chỉ Admin mới có quyền quản lý tài khoản</p>
+        </div>
       </div>
     );
   }

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaSyncAlt, FaDoorOpen, FaTimes, FaCouch } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaSyncAlt, FaDoorOpen, FaTimes, FaCouch, FaEye } from 'react-icons/fa';
 import { formatDate } from '../utils/helpers';
 import roomService from '../services/roomService';
 import theaterService from '../services/theaterService';
 import ticketPriceService from '../services/ticketPriceService';
+import { useAuth } from '../hooks/useAuth';
 
 const Rooms = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const [rooms, setRooms] = useState([]);
   const [theaters, setTheaters] = useState([]);
   const [ticketPrices, setTicketPrices] = useState([]);
@@ -362,13 +365,15 @@ const Rooms = () => {
             <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
-          <button
-            onClick={handleAdd}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            <FaPlus />
-            <span>Thêm phòng chiếu</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={handleAdd}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              <FaPlus />
+              <span>Thêm phòng chiếu</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -418,7 +423,9 @@ const Rooms = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-300">{room.theater?.name || 'Chưa có rạp'}</span>
+                    <span className="text-sm text-gray-300">
+                      {theaters.find(t => t.id === room.theaterId || t.id === room.TheaterId)?.name || 'Chưa có rạp'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getRoomTypeBadge(room.type)}`}>
@@ -446,20 +453,24 @@ const Rooms = () => {
                       >
                         <FaCouch size={18} />
                       </button>
-                      <button
-                        onClick={() => handleEdit(room)}
-                        className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all"
-                        title="Chỉnh sửa"
-                      >
-                        <FaEdit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(room.id)}
-                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
-                        title="Xóa"
-                      >
-                        <FaTrash size={18} />
-                      </button>
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={() => handleEdit(room)}
+                            className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all"
+                            title="Chỉnh sửa"
+                          >
+                            <FaEdit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(room.id)}
+                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
+                            title="Xóa"
+                          >
+                            <FaTrash size={18} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

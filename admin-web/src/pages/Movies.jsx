@@ -3,8 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaEye, FaSyncAlt } from 'react-icons/fa';
 import { formatDate } from '../utils/helpers';
 import movieService from '../services/movieService';
+import { useAuth } from '../hooks/useAuth';
 
 const Movies = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const [movies, setMovies] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterYear, setFilterYear] = useState('');
@@ -141,13 +144,15 @@ const Movies = () => {
             <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
-          <Link
-            to="/movies/add"
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            <FaPlus />
-            <span>Tạo phim</span>
-          </Link>
+          {isAdmin && (
+            <Link
+              to="/movies/add"
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              <FaPlus />
+              <span>Tạo phim</span>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -274,9 +279,15 @@ const Movies = () => {
                   </td>
                   <td className="px-8 py-5 text-center text-white">{movie.duration} phút</td>
                   <td className="px-8 py-5 text-center">
-                    <span className="px-3 py-1 bg-orange-600/20 text-orange-400 text-sm rounded-full">
-                      Xem lịch
-                    </span>
+                    {movie.startDate && movie.endDate ? (
+                      <div className="text-sm">
+                        <div className="text-gray-300">{formatDate(movie.startDate)}</div>
+                        <div className="text-gray-500 text-xs">→</div>
+                        <div className="text-gray-300">{formatDate(movie.endDate)}</div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 text-sm">Chưa có lịch</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className={`px-3 py-1 text-sm rounded-full ${
@@ -294,20 +305,24 @@ const Movies = () => {
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => navigate(`/movies/edit/${movie.id}`)}
-                        className="p-2 text-blue-400 hover:bg-blue-600/20 rounded transition-colors"
-                        title="Sửa"
-                      >
-                        <FaEdit />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(movie.id)}
-                        className="p-2 text-red-400 hover:bg-red-600/20 rounded transition-colors"
-                        title="Xóa"
-                      >
-                        <FaTrash />
-                      </button>
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={() => navigate(`/movies/edit/${movie.id}`)}
+                            className="p-2 text-blue-400 hover:bg-blue-600/20 rounded transition-colors"
+                            title="Sửa"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(movie.id)}
+                            className="p-2 text-red-400 hover:bg-red-600/20 rounded transition-colors"
+                            title="Xóa"
+                          >
+                            <FaTrash />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

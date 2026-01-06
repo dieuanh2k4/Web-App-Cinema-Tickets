@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.src.Dtos.Tickets;
 using Server.src.Services.Interfaces;
@@ -23,6 +24,7 @@ namespace Server.src.Controllers
         /// Đặt vé xem phim
         /// </summary>
         [HttpPost("book")]
+        [Authorize(Roles = "Staff, Admin")]
         public async Task<IActionResult> BookTicket([FromBody] CreateTicketDto createTicketDto)
         {
             try
@@ -45,6 +47,7 @@ namespace Server.src.Controllers
         /// Lấy tất cả vé
         /// </summary>
         [HttpGet("all")]
+        [Authorize(Roles = "Staff, Admin")]
         public async Task<IActionResult> GetAllTickets()
         {
             try
@@ -67,6 +70,7 @@ namespace Server.src.Controllers
         /// Lấy thông tin vé theo ID
         /// </summary>
         [HttpGet("{id}")]
+        [Authorize(Roles = "Staff, Admin")]
         public async Task<IActionResult> GetTicketById(int id)
         {
             try
@@ -88,6 +92,7 @@ namespace Server.src.Controllers
         /// Lấy danh sách vé theo email khách hàng
         /// </summary>
         [HttpGet("customer/{email}")]
+        [Authorize(Roles = "Staff, Admin")]
         public async Task<IActionResult> GetTicketsByCustomerEmail(string email)
         {
             try
@@ -110,6 +115,7 @@ namespace Server.src.Controllers
         /// Hủy vé
         /// </summary>
         [HttpDelete("cancel/{id}")]
+        [Authorize(Roles = "Staff, Admin")]
         public async Task<IActionResult> CancelTicket(int id)
         {
             try

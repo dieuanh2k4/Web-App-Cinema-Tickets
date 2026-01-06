@@ -60,7 +60,8 @@ namespace Server.src.Controllers
                     SeatNumber = seat.Name ?? "",
                     SeatType = seat.Type ?? "",
                     IsAvailable = !bookedSeatIds.Contains(seat.Id),
-                    Status = bookedSeatIds.Contains(seat.Id) ? "Booked" : "Available"
+                    Status = bookedSeatIds.Contains(seat.Id) ? "Booked" : "Available",
+                    Price = seat.Price
                 }).ToList();
 
                 return Ok(new

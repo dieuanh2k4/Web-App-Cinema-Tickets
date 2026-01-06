@@ -3,8 +3,11 @@ import { Link } from 'react-router-dom';
 import { FaPlus, FaTrash, FaSearch, FaEye, FaUserCircle, FaSyncAlt } from 'react-icons/fa';
 import { formatDate } from '../utils/helpers';
 import userService from '../services/userService';
+import { useAuth } from '../hooks/useAuth';
 
 const Accounts = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const [accounts, setAccounts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('');
@@ -131,6 +134,19 @@ const Accounts = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-white text-xl">Đang tải dữ liệu...</div>
+      </div>
+    );
+  }
+
+  // Check if user is Admin
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-400 text-6xl mb-4">⛔</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Không có quyền truy cập</h2>
+          <p className="text-gray-400">Chỉ Admin mới có quyền quản lý tài khoản</p>
+        </div>
       </div>
     );
   }

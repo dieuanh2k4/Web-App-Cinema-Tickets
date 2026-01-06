@@ -1,51 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaSyncAlt, FaShoppingCart, FaEye } from 'react-icons/fa';
-import { orders as initialOrders } from '../data/mockData';
+import { FaSyncAlt, FaShoppingCart, FaEye, FaPlus } from 'react-icons/fa';
 import { formatDate, formatCurrency } from '../utils/helpers';
+import ticketService from '../services/ticketService';
+import { useAuth } from '../hooks/useAuth';
 
 const Orders = () => {
-  const [orders, setOrders] = useState(initialOrders);
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
   const itemsPerPage = 10;
 
-  const handleRefresh = () => {
+  // Load tickets from API
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await ticketService.getAllTickets();
+      setOrders(data || []);
+    } catch (error) {
+      console.error('Error loading tickets:', error);
+      alert('Không thể tải danh sách đơn hàng. Vui lòng thử lại!');
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    // TODO: Load data from DB
-    setTimeout(() => {
-      setIsRefreshing(false);
-      console.log('Orders data refreshed');
-    }, 1000);
+    await loadOrders();
+    setIsRefreshing(false);
   };
 
   const handleViewDetail = (orderId) => {
     navigate(`/orders/${orderId}`);
   };
 
-  const getStatusBadge = (status) => {
-    const badges = {
-      'paid': 'bg-green-500/20 text-green-400 border-green-500/30',
-      'pending': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      'cancelled': 'bg-red-500/20 text-red-400 border-red-500/30'
-    };
-    return badges[status] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-  };
-
-  const getStatusText = (status) => {
-    const text = {
-      'paid': 'Đã thanh toán',
-      'pending': 'Chờ thanh toán',
-      'cancelled': 'Đã hủy'
-    };
-    return text[status] || status;
-  };
-
   // Pagination
   const totalPages = Math.ceil(orders.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentOrders = orders.slice(startIndex, startIndex + itemsPerPage);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-white text-xl">Đang tải dữ liệu...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -64,6 +74,15 @@ const Orders = () => {
             <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
+          {(isAdmin || user?.role?.toLowerCase() === 'staff') && (
+            <button
+              onClick={() => navigate('/orders/create')}
+              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-accent to-purple-600 hover:from-accent/90 hover:to-purple-700 text-white rounded-lg transition-all shadow-lg shadow-accent/25 font-medium"
+            >
+              <FaPlus />
+              <span>Tạo đơn hàng mới</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -108,31 +127,33 @@ const Orders = () => {
                         <FaShoppingCart className="text-white" size={18} />
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-white">{order.id}</div>
+                        <div className="text-sm font-medium text-white">#{order.id}</div>
+                        <div className="text-xs text-gray-400">{order.customerName || order.customerEmail}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-white">{order.movieTitle}</div>
+                    <div className="text-sm text-white">{order.movieTitle || 'N/A'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                      {order.showtime}
-                    </span>
+                    <div className="text-sm">
+                      <div className="text-gray-300">{formatDate(order.date)}</div>
+                      <div className="text-xs text-orange-400">{order.startTime?.substring(0, 5) || 'N/A'}</div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <div className="text-sm text-white">{order.roomName}</div>
+                    <div className="text-sm text-white">{order.roomName || 'N/A'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(order.status)}`}>
-                      {getStatusText(order.status)}
+                    <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full border bg-green-500/20 text-green-400 border-green-500/30">
+                      Đã thanh toán
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className="text-sm font-medium text-white">{formatCurrency(order.finalAmount)}</span>
+                    <span className="text-sm font-medium text-white">{formatCurrency(order.totalPrice)}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className="text-sm text-gray-300">{formatDate(order.createdDate)}</span>
+                    <span className="text-sm text-gray-300">{formatDate(order.createdAt)}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <button
