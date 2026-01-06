@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { FiStar, FiClock, FiCalendar, FiMapPin, FiPlay, FiShoppingCart } from 'react-icons/fi'
-import { getMovieById, getShowtimesByMovie, getTheaters } from '../services/api'
+import { getMovieById, getShowtimesByTheater, getTheaters } from '../services/api'
 import TrailerModal from '../components/TrailerModal'
 
 export default function MovieDetailPage() {
@@ -33,11 +33,25 @@ export default function MovieDetailPage() {
     queryKey: ['showtimes', id, selectedTheater, selectedDate],
     queryFn: () => {
       if (selectedTheater === 'all') return []
-      return getShowtimesByMovie(
+      console.log('Fetching showtimes with:', { theaterId: selectedTheater, date: selectedDate })
+      return getShowtimesByTheater(
         selectedTheater,
-        id,
         selectedDate
-      )
+      ).then(data => {
+        console.log('Raw API Response:', data);
+        console.log('Response type:', typeof data);
+        console.log('Is Array:', Array.isArray(data));
+        // Nếu response được wrapped trong object với 'data' field
+        const actualData = Array.isArray(data) ? data : (data?.data || data?.result || []);
+        console.log('Processed data:', actualData);
+        // Filter by current movieId
+        const filtered = actualData.filter(s => String(s.movieId) === String(id));
+        console.log('Filtered by movieId:', filtered);
+        return filtered;
+      }).catch(error => {
+        console.error('Fetch showtimes error:', error);
+        return [];
+      })
     },
     enabled: selectedTheater !== 'all',
     staleTime: 2 * 60 * 1000,
@@ -68,22 +82,117 @@ export default function MovieDetailPage() {
     return match ? match[1] : null
   }
 
-  const groupShowtimesByTheater = () => {
-    if (!showtimes || showtimes.length === 0) return []
+  // Chuẩn hóa dữ liệu rạp từ server (server có thể trả Name/Address hoặc name/address)
+  const normalizedTheaters = useMemo(() => {
+    if (!theaters) return []
+    return theaters
+      .map((t) => ({
+        id: t.id ?? t.theaterId ?? t.idTheater ?? t.Id ?? t.ID,
+        name: t.Name ?? t.name ?? t.theaterName ?? 'Unknown',
+        address: t.Address ?? t.address ?? t.location ?? '',
+      }))
+      .filter((t) => t.id)
+  }, [theaters])
+
+  const theaterAddressMap = useMemo(() => {
+    const map = new Map()
+    normalizedTheaters.forEach((t) => map.set(String(t.id), t.address))
+    return map
+  }, [normalizedTheaters])
+
+  const selectedTheaterObj = useMemo(() => {
+    return normalizedTheaters.find((t) => String(t.id) === String(selectedTheater))
+  }, [normalizedTheaters, selectedTheater])
+
+  // Chuẩn hóa showtime theo format của server
+  const normalizedShowtimes = useMemo(() => {
+    console.log('=== NORMALIZE SHOWTIMES ===');
+    console.log('Input showtimes:', showtimes);
+    console.log('Showtimes length:', showtimes?.length);
+    console.log('Current movieId from URL:', id);
     
+    if (!showtimes || showtimes.length === 0) {
+      console.log('❌ No showtimes data');
+      return [];
+    }
+    
+    const normalized = showtimes.map((s, idx) => {
+      console.log(`\n--- Showtime ${idx} raw data ---`);
+      console.log('Full object:', s);
+      console.log('Available fields:', Object.keys(s));
+      
+      // Server trả: start (lowercase), date (lowercase), không phải Start/Date (uppercase)
+      let startTime = null;
+      
+      if (s.start && s.date) {
+        // Combine start time + date into ISO format
+        // start format: "HH:mm:ss", date format: "YYYY-MM-DD"
+        startTime = `${s.date}T${s.start}`;
+      } else if (s.Start && s.Date) {
+        // Fallback for uppercase versions
+        startTime = `${s.Date}T${s.Start}`;
+      } else if (s.startTime) {
+        startTime = s.startTime;
+      }
+
+      const normalized = {
+        id: s.id ?? s.Id ?? s.showtimeId,
+        movieId: s.movieId ?? s.MovieId,
+        startTime: startTime,
+        start: s.start,
+        date: s.date,
+        end: s.end,
+        room: s.room || s.Room || {
+          theater: {
+            Name: s.theaterName ?? s.TheaterName ?? s.theater?.Name,
+            Address: s.address ?? s.Address ?? s.theater?.Address,
+            Id: s.theaterId ?? s.TheaterId ?? s.theater?.Id,
+          },
+        },
+        theaterId: s.theaterId ?? s.TheaterId ?? s.room?.theaterId,
+        roomNo: s.roomNo,
+        roomType: s.roomType,
+      };
+
+      console.log('Normalized:', normalized);
+      return normalized;
+    });
+
+    console.log('\n=== FILTERING ===');
+    console.log('Before filter count:', normalized.length);
+    
+    const filtered = normalized.filter((s) => {
+      const hasId = !!s.id;
+      const hasTime = !!(s.startTime || s.start);
+      const matchesMovie = String(s.movieId) === String(id);
+      
+      console.log(`Showtime ${s.id}: hasId=${hasId}, hasTime=${hasTime}, startTime=${s.startTime}, start=${s.start}, movieId=${s.movieId}, currentId=${id}, matches=${matchesMovie}`);
+      
+      return hasId && hasTime;
+    });
+
+    console.log('After filter count:', filtered.length);
+    console.log('Final normalized showtimes:', filtered);
+    return filtered;
+  }, [showtimes, id])
+
+  const groupShowtimesByTheater = () => {
+    if (!normalizedShowtimes || normalizedShowtimes.length === 0) return []
+
     const grouped = {}
-    showtimes.forEach(showtime => {
+    normalizedShowtimes.forEach((showtime) => {
       const theaterName = showtime.room?.theater?.Name || 'Unknown'
+      const address = showtime.room?.theater?.Address || theaterAddressMap.get(String(showtime.theaterId)) || ''
       if (!grouped[theaterName]) {
         grouped[theaterName] = {
           theaterName,
-          address: showtime.room?.theater?.Address,
+          address,
           showtimes: []
         }
       }
       grouped[theaterName].showtimes.push(showtime)
     })
-    
+
     return Object.values(grouped)
   }
 
@@ -290,12 +399,18 @@ export default function MovieDetailPage() {
                   className="w-full px-4 py-3 bg-dark border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white"
                 >
                   <option value="all">-- Chọn rạp --</option>
-                  {theaters?.map(theater => (
+                  {normalizedTheaters?.map(theater => (
                     <option key={theater.id} value={theater.id}>
-                      {theater.Name}
+                      {theater.name}
                     </option>
                   ))}
                 </select>
+                {selectedTheaterObj && (
+                  <div className="mt-3 flex items-start space-x-2 text-sm text-gray-400">
+                    <FiMapPin className="mt-0.5 flex-shrink-0" size={16} />
+                    <span>{selectedTheaterObj.address || 'Đang cập nhật địa chỉ'}</span>
+                  </div>
+                )}
               </div>
 
               {/* Showtimes */}
@@ -307,9 +422,9 @@ export default function MovieDetailPage() {
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple"></div>
                 </div>
-              ) : !showtimes || showtimes.length === 0 ? (
+              ) : !normalizedShowtimes || normalizedShowtimes.length === 0 ? (
                 <div className="text-center py-8 text-gray-400">
-                  Không có suất chiếu nào
+                  Không có suất chiếu nào (Normalized: {normalizedShowtimes?.length ?? 0})
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -321,18 +436,32 @@ export default function MovieDetailPage() {
                         <p className="text-sm text-gray-400">{theater.address}</p>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
-                        {theater.showtimes.map((showtime) => (
-                          <button
-                            key={showtime.id}
-                            onClick={() => navigate(`/booking/${showtime.id}`)}
-                            className="bg-dark hover:bg-purple border border-gray-custom hover:border-purple text-sm py-2 rounded-lg transition-all"
-                          >
-                            {new Date(showtime.startTime).toLocaleTimeString('vi-VN', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </button>
-                        ))}
+                        {theater.showtimes.map((showtime) => {
+                          // Format thời gian từ start field (HH:mm:ss)
+                          let displayTime = 'N/A';
+                          if (showtime.start) {
+                            displayTime = showtime.start.substring(0, 5); // Lấy HH:mm
+                          } else if (showtime.startTime) {
+                            try {
+                              displayTime = new Date(showtime.startTime).toLocaleTimeString('vi-VN', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              });
+                            } catch (e) {
+                              displayTime = 'N/A';
+                            }
+                          }
+
+                          return (
+                            <button
+                              key={showtime.id}
+                              onClick={() => navigate(`/booking/${showtime.id}`)}
+                              className="bg-dark hover:bg-purple border border-gray-custom hover:border-purple text-sm py-2 rounded-lg transition-all"
+                            >
+                              {displayTime}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}

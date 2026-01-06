@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { FiCheckCircle, FiMail, FiDownload, FiCalendar, FiMapPin, FiClock } from 'react-icons/fi'
-import { getTicketDetails } from '../services/api'
+import { getTicketById } from '../services/api'
 
 export default function BookingSuccessPage() {
   const { ticketId } = useParams()
 
   const { data: ticket, isLoading } = useQuery({
     queryKey: ['ticket', ticketId],
-    queryFn: () => getTicketDetails(ticketId),
+    queryFn: () => getTicketById(ticketId),
     enabled: !!ticketId
   })
 

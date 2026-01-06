@@ -9,6 +9,7 @@ import {
   FiStar,
   FiFilm,
   FiUsers,
+  FiLogOut,
 } from 'react-icons/fi';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
@@ -18,9 +19,11 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const searchRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   const { data: movies } = useQuery({
     queryKey: ['movies'],
@@ -73,6 +76,9 @@ export default function Header() {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSuggestions(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -295,13 +301,40 @@ export default function Header() {
 
             {/* Auth Buttons */}
             {user ? (
-              <Link
-                to="/profile"
-                className="flex items-center space-x-2 bg-purple/10 hover:bg-purple text-white px-4 py-2 rounded-lg transition-all duration-300 border border-purple/30 hover:border-purple font-semibold"
-              >
-                <FiUser className="w-5 h-5" />
-                <span>{user.username}</span>
-              </Link>
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-2 bg-purple/10 hover:bg-purple text-white px-4 py-2 rounded-lg transition-all duration-300 border border-purple/30 hover:border-purple font-semibold"
+                >
+                  <FiUser className="w-5 h-5" />
+                  <span>{user.username}</span>
+                </button>
+                
+                {/* Dropdown Menu */}
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-dark-light border border-gray-custom rounded-lg shadow-xl overflow-hidden z-50">
+                    <Link
+                      to="/profile"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center space-x-3 px-4 py-3 hover:bg-purple/10 transition-colors"
+                    >
+                      <FiUser className="w-5 h-5 text-purple" />
+                      <span className="text-white font-medium">Thông tin cá nhân</span>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setShowUserMenu(false);
+                        navigate('/');
+                      }}
+                      className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-500/10 transition-colors text-left border-t border-gray-custom/30"
+                    >
+                      <FiLogOut className="w-5 h-5 text-red-500" />
+                      <span className="text-red-500 font-medium">Đăng xuất</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex items-center space-x-4">
                 <Link

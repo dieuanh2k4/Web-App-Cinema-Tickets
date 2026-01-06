@@ -9,7 +9,7 @@ import { useAuthStore } from '../store/authStore'
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const setAuth = useAuthStore((state) => state.setAuth)
+  const { setAuth } = useAuthStore()
   const { register, handleSubmit, formState: { errors } } = useForm()
 
   // Lấy trang người dùng định vào trước khi bị redirect
@@ -18,8 +18,35 @@ export default function LoginPage() {
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      if (data.isSuccess) {
-        setAuth(data.data, data.data.token)
+      console.log('Login Response Full Data:', data);
+      
+      if (data.isSuccess || data.token) {
+        const userData = {
+          username: data.username || data.data?.username,
+          role: data.role || data.data?.role,
+          userId: data.userId || data.data?.userId,
+          customerId: data.customerId || data.data?.customerId, // Thêm customerId
+        };
+        const token = data.token || data.data?.token;
+        
+        console.log('Extracted userData:', userData);
+        
+        // Debug: Log JWT token structure
+        if (token) {
+          try {
+            const parts = token.split('.');
+            if (parts.length === 3) {
+              const base64Url = parts[1];
+              const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+              const decoded = JSON.parse(atob(base64));
+              console.log('JWT Token Payload:', decoded);
+            }
+          } catch (e) {
+            console.log('Could not decode token:', e);
+          }
+        }
+        
+        setAuth(userData, token);
         toast.success('Đăng nhập thành công!')
         // Redirect về trang người dùng định vào
         navigate(from, { replace: true })
@@ -28,7 +55,10 @@ export default function LoginPage() {
       }
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || 'Đăng nhập thất bại')
+      const errorMessage = error.response?.data?.message || 
+                          error.message ||
+                          'Đăng nhập thất bại'
+      toast.error(errorMessage)
     }
   })
 

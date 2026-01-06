@@ -11,9 +11,11 @@ import {
   FiMonitor,
 } from 'react-icons/fi';
 import { register as registerUser } from '../services/api';
+import { useAuthStore } from '../store/authStore';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const {
@@ -27,23 +29,37 @@ export default function RegisterPage() {
   const registerMutation = useMutation({
     mutationFn: registerUser,
     onSuccess: (data) => {
-      if (data.isSuccess) {
-        toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
+      toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
+      // Auto redirect to login after 1.5 seconds
+      setTimeout(() => {
         navigate('/login');
-      } else {
-        toast.error(data.message || 'Đăng ký thất bại');
-      }
+      }, 1500);
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || 'Đăng ký thất bại');
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          'Đăng ký thất bại';
+      toast.error(errorMessage);
     },
   });
 
   const onSubmit = (data) => {
+    // Validate birth date
+    if (!data.birth) {
+      toast.error('Vui lòng nhập ngày sinh');
+      return;
+    }
+
     registerMutation.mutate({
+      name: data.fullName || '',
       username: data.username,
       email: data.email,
       password: data.password,
+      phoneNumber: data.phoneNumber || '',
+      gender: data.gender || '',
+      birth: data.birth,
+      address: data.address || '',
+      imageFile: data.imageFile?.[0] || null,
     });
   };
 
@@ -114,6 +130,30 @@ export default function RegisterPage() {
           </div>
 
           <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
+            {/* Full Name */}
+            <div>
+              <label
+                htmlFor="fullName"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Họ và tên
+              </label>
+              <input
+                id="fullName"
+                type="text"
+                {...register('fullName', {
+                  required: 'Vui lòng nhập họ và tên',
+                })}
+                className="w-full px-4 py-3 bg-dark-light border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white placeholder-gray-500"
+                placeholder="Nhập họ và tên"
+              />
+              {errors.fullName && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.fullName.message}
+                </p>
+              )}
+            </div>
+
             {/* Username */}
             <div>
               <label
@@ -168,6 +208,111 @@ export default function RegisterPage() {
                   {errors.email.message}
                 </p>
               )}
+            </div>
+
+            {/* Phone Number */}
+            <div>
+              <label
+                htmlFor="phoneNumber"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Số điện thoại
+              </label>
+              <input
+                id="phoneNumber"
+                type="tel"
+                {...register('phoneNumber', {
+                  required: 'Vui lòng nhập số điện thoại',
+                  pattern: {
+                    value: /^[0-9]{10,11}$/,
+                    message: 'Số điện thoại không hợp lệ',
+                  },
+                })}
+                className="w-full px-4 py-3 bg-dark-light border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white placeholder-gray-500"
+                placeholder="Nhập số điện thoại"
+              />
+              {errors.phoneNumber && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.phoneNumber.message}
+                </p>
+              )}
+            </div>
+
+            {/* Birth Date */}
+            <div>
+              <label
+                htmlFor="birth"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Ngày sinh
+              </label>
+              <input
+                id="birth"
+                type="date"
+                {...register('birth', {
+                  required: 'Vui lòng chọn ngày sinh',
+                })}
+                className="w-full px-4 py-3 bg-dark-light border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white placeholder-gray-500"
+              />
+              {errors.birth && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.birth.message}
+                </p>
+              )}
+            </div>
+
+            {/* Gender */}
+            <div>
+              <label
+                htmlFor="gender"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Giới tính
+              </label>
+              <select
+                id="gender"
+                {...register('gender')}
+                className="w-full px-4 py-3 bg-dark-light border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white"
+              >
+                <option value="">Chọn giới tính</option>
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+                <option value="Khác">Khác</option>
+              </select>
+            </div>
+
+            {/* Address */}
+            <div>
+              <label
+                htmlFor="address"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Địa chỉ
+              </label>
+              <input
+                id="address"
+                type="text"
+                {...register('address')}
+                className="w-full px-4 py-3 bg-dark-light border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white placeholder-gray-500"
+                placeholder="Nhập địa chỉ"
+              />
+            </div>
+
+            {/* Avatar */}
+            <div>
+              <label
+                htmlFor="imageFile"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Ảnh đại diện (tùy chọn)
+              </label>
+              <input
+                id="imageFile"
+                type="file"
+                accept="image/*"
+                {...register('imageFile')}
+                className="w-full px-4 py-3 bg-dark-light border border-gray-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-purple/50 text-white"
+              />
             </div>
 
             {/* Password */}

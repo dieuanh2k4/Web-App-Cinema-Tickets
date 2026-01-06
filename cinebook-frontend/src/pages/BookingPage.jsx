@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { FiClock, FiMapPin, FiFilm, FiCalendar, FiUser, FiMail, FiPhone, FiCreditCard, FiCheck, FiAlertCircle } from 'react-icons/fi'
-import { toast } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import SeatMap from '../components/SeatMap'
-import { getSeatsByShowtime, createBooking, createVNPayPayment } from '../services/api'
+import { getSeatsByShowtime, holdSeats, createVNPayPayment, getShowtimeById, getTicketPrices } from '../services/api'
 import { useAuthStore } from '../store/authStore'
 
 export default function BookingPage() {
@@ -13,29 +13,70 @@ export default function BookingPage() {
   const { user } = useAuthStore()
   
   const [selectedSeats, setSelectedSeats] = useState([])
+  const [holdId, setHoldId] = useState(null)
   const [customerInfo, setCustomerInfo] = useState({
     customerName: user?.username || '',
     phoneNumber: '',
     email: user?.email || ''
   })
   const [paymentMethod, setPaymentMethod] = useState('VNPay')
-  const [timeLeft, setTimeLeft] = useState(5 * 60) // 5 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(10 * 60) // 10 minutes in seconds
   const [hasStartedTimer, setHasStartedTimer] = useState(false)
 
-  // Fetch showtime and seats
-  const { data: seatData, isLoading } = useQuery({
+  // Fetch showtime details
+  const { data: showtimeData } = useQuery({
+    queryKey: ['showtime', showtimeId],
+    queryFn: () => getShowtimeById(showtimeId),
+    enabled: !!showtimeId,
+  })
+
+  // Fetch seats
+  const { data: seatData, isLoading, refetch: refetchSeats } = useQuery({
     queryKey: ['seats', showtimeId],
     queryFn: () => getSeatsByShowtime(showtimeId),
     enabled: !!showtimeId,
-    staleTime: 30 * 1000, // 30 seconds (seats data should be fresh)
-    gcTime: 60 * 1000, // 1 minute
-    refetchOnWindowFocus: false,
-    refetchInterval: 30000, // Auto-refresh every 30s for real-time seat availability
+    staleTime: 10 * 1000,
+    refetchInterval: 15000, // Auto-refresh every 15s for real-time seat availability
   })
 
-  // Countdown timer - 5 minutes to hold seats
+  // Fetch ticket prices
+  const { data: ticketPrices } = useQuery({
+    queryKey: ['ticket-prices'],
+    queryFn: getTicketPrices,
+    staleTime: 60 * 60 * 1000,
+  })
+
+  // Hold seats mutation
+  const holdSeatsMutation = useMutation({
+    mutationFn: (seatsToHold) => {
+      console.log('=== HOLD SEATS MUTATION ===');
+      console.log('seatsToHold param:', seatsToHold);
+      console.log('showtimeId from params:', showtimeId);
+      console.log('seatsToHold type:', Array.isArray(seatsToHold) ? 'array' : typeof seatsToHold);
+      console.log('seatsToHold length:', seatsToHold?.length);
+      
+      if (!seatsToHold || seatsToHold.length === 0) {
+        throw new Error('No seats to hold');
+      }
+      
+      return holdSeats(showtimeId, seatsToHold);
+    },
+    onSuccess: (data) => {
+      console.log('✅ Hold success:', data);
+      setHoldId(data.holdId)
+      setHasStartedTimer(true)
+      toast.success(`Đã giữ ${selectedSeats.length} ghế thành công!`)
+    },
+    onError: (error) => {
+      console.error('❌ Hold error:', error);
+      toast.error(error.response?.data?.message || error.message || 'Lỗi khi giữ ghế')
+      setSelectedSeats([])
+    }
+  })
+
+  // Countdown timer
   useEffect(() => {
-    if (!hasStartedTimer || selectedSeats.length === 0) return
+    if (!hasStartedTimer || !holdId) return
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -43,13 +84,14 @@ export default function BookingPage() {
           clearInterval(timer)
           toast.error('Hết thời gian giữ ghế! Vui lòng chọn lại.')
           setSelectedSeats([])
+          setHoldId(null)
           setHasStartedTimer(false)
-          return 5 * 60
+          refetchSeats()
+          return 10 * 60
         }
         
-        // Warning at 1 minute left
         if (prev === 60) {
-          toast.warning('Còn 1 phút! Vui lòng hoàn tất đặt vé.', {
+          toast.warning('Còn 1 phút! Vui lòng hoàn tất thanh toán.', {
             duration: 5000,
             icon: '⏰'
           })
@@ -60,49 +102,34 @@ export default function BookingPage() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [hasStartedTimer, selectedSeats.length])
+  }, [hasStartedTimer, holdId, refetchSeats])
 
-  // Format time display
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Create booking mutation
-  const createBookingMutation = useMutation({
-    mutationFn: createBooking,
-    onSuccess: async (data) => {
-      const totalAmount = calculateTotal()
-      
-      // Check payment method
-      if (paymentMethod === 'VNPay') {
-        try {
-          // Create VNPay payment URL
-          const paymentResponse = await createVNPayPayment({
-            ticketId: data.ticketId,
-            amount: totalAmount,
-            orderInfo: `Thanh toan ve phim - Ma ve: ${data.bookingCode}`
-          })
-          
-          if (paymentResponse.isSuccess && paymentResponse.paymentUrl) {
-            // Redirect to VNPay
-            window.location.href = paymentResponse.paymentUrl
-          } else {
-            toast.error('Không thể tạo link thanh toán')
-          }
-        } catch (error) {
-          console.error('Payment error:', error)
-          toast.error('Lỗi tạo thanh toán VNPay')
-        }
+  // Create payment mutation
+  const createPaymentMutation = useMutation({
+    mutationFn: async () => {
+      const seatTotal = calculateTotal()
+      return createVNPayPayment({
+        ticketId: `TMP_${holdId}`, // Tạm thời sử dụng holdId
+        amount: seatTotal,
+        orderInfo: `Đặt vé xem phim - Suất ${showtimeId}`
+      })
+    },
+    onSuccess: (data) => {
+      if (data.paymentUrl) {
+        // Redirect to VNPay
+        window.location.href = data.paymentUrl
       } else {
-        // For other payment methods (Momo, Banking)
-        toast.success('Đặt vé thành công!')
-        navigate(`/booking-success/${data.ticketId}`)
+        toast.error('Lỗi tạo link thanh toán')
       }
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || 'Đặt vé thất bại!')
+      toast.error(error.response?.data?.message || 'Lỗi thanh toán')
     }
   })
 
@@ -112,20 +139,21 @@ export default function BookingPage() {
         ? prev.filter(id => id !== seatId)
         : [...prev, seatId]
       
-      // Start timer when first seat is selected
-      if (newSeats.length > 0 && !hasStartedTimer) {
-        setHasStartedTimer(true)
-        setTimeLeft(5 * 60)
-        toast.success('Ghế đã được giữ trong 5 phút!', {
-          icon: '⏱️',
-          duration: 3000
-        })
+      console.log('Seat selected:', seatId);
+      console.log('Updated seats:', newSeats);
+      
+      // Start hold process when first seat is selected
+      if (newSeats.length > 0 && !holdId) {
+        // Hold seats first - pass newSeats directly to mutation
+        console.log('Calling holdSeatsMutation with newSeats:', newSeats);
+        holdSeatsMutation.mutate(newSeats);
       }
       
-      // Reset timer if all seats deselected
+      // Clear if all seats deselected
       if (newSeats.length === 0) {
+        setHoldId(null)
         setHasStartedTimer(false)
-        setTimeLeft(5 * 60)
+        setTimeLeft(10 * 60)
       }
       
       return newSeats
@@ -134,15 +162,51 @@ export default function BookingPage() {
 
   const calculateTotal = () => {
     if (!seatData?.seats) return 0
+    
+    // Map seatType to price: Normal=100k, VIP=150k
+    const priceMap = {
+      'Normal': 100000,
+      'normal': 100000,
+      'VIP': 150000,
+      'vip': 150000,
+      'Standard': 100000,
+      'Premium': 150000,
+    }
+    
     return selectedSeats.reduce((total, seatId) => {
-      const seat = seatData.seats.find(s => s.seatId === seatId)
-      // Giá ghế: VIP = 100,000₫, Thường = 70,000₫
-      const price = seat?.seatType?.toLowerCase().includes('vip') ? 100000 : 70000
+      const seat = seatData.seats.find(s => s.seatId === seatId || s.Id === seatId)
+      if (!seat) return total
+      
+      console.log('Calculating price for seat:', {
+        seatId,
+        seatObject: seat,
+        seatType: seat.seatType || seat.Type || 'Unknown',
+        price: seat.price || seat.Price,
+      })
+      
+      // Try multiple field names for price
+      let price = seat.Price || seat.price
+      
+      // If no price field, use seatType
+      if (!price && (seat.seatType || seat.Type)) {
+        const type = seat.seatType || seat.Type
+        price = priceMap[type] || 100000
+      }
+      
+      // Fallback
+      if (!price) price = 100000
+      
+      console.log('Final price for seat:', seatId, price)
       return total + price
     }, 0)
   }
 
   const handleBooking = () => {
+    if (!holdId) {
+      toast.error('Vui lòng chọn ghế trước!')
+      return
+    }
+
     if (selectedSeats.length === 0) {
       toast.error('Vui lòng chọn ghế!')
       return
@@ -153,16 +217,8 @@ export default function BookingPage() {
       return
     }
 
-    const bookingData = {
-      showtimeId: parseInt(showtimeId),
-      seatIds: selectedSeats,
-      customerName: customerInfo.customerName,
-      phoneNumber: customerInfo.phoneNumber,
-      email: customerInfo.email,
-      paymentMethod: paymentMethod
-    }
-
-    createBookingMutation.mutate(bookingData)
+    // Redirect to payment
+    createPaymentMutation.mutate()
   }
 
   if (isLoading) {
@@ -436,10 +492,10 @@ export default function BookingPage() {
 
                 <button
                   onClick={handleBooking}
-                  disabled={selectedSeats.length === 0 || createBookingMutation.isPending}
+                  disabled={selectedSeats.length === 0 || createPaymentMutation.isPending || holdSeatsMutation.isPending}
                   className="w-full bg-purple hover:bg-purple-dark text-white font-bold py-4 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-purple/50 flex items-center justify-center space-x-2 text-lg"
                 >
-                  {createBookingMutation.isPending ? (
+                  {createPaymentMutation.isPending || holdSeatsMutation.isPending ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Đang xử lý...</span>
@@ -447,7 +503,7 @@ export default function BookingPage() {
                   ) : (
                     <>
                       <FiCheck className="w-6 h-6" />
-                      <span>Mua vé</span>
+                      <span>Thanh toán ({totalAmount.toLocaleString('vi-VN')}₫)</span>
                     </>
                   )}
                 </button>
