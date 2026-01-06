@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaSyncAlt, FaTimes, FaFilm } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaSyncAlt, FaTimes, FaFilm, FaEye } from 'react-icons/fa';
 import { formatDate } from '../utils/helpers';
 import showtimeService from '../services/showtimeService';
 import movieService from '../services/movieService';
 import roomService from '../services/roomService';
+import { useAuth } from '../hooks/useAuth';
 
 const Showtimes = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const [showtimes, setShowtimes] = useState([]);
   const [movies, setMovies] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -238,13 +241,15 @@ const Showtimes = () => {
             <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
-          <button
-            onClick={handleAdd}
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-accent to-purple-600 hover:from-accent/90 hover:to-purple-700 text-white rounded-lg transition-all shadow-lg shadow-accent/25 font-medium"
-          >
-            <FaPlus />
-            <span>Thêm suất chiếu</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={handleAdd}
+              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-accent to-purple-600 hover:from-accent/90 hover:to-purple-700 text-white rounded-lg transition-all shadow-lg shadow-accent/25 font-medium"
+            >
+              <FaPlus />
+              <span>Thêm suất chiếu</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -317,20 +322,24 @@ const Showtimes = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => handleEdit(showtime)}
-                        className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all"
-                        title="Cập nhật"
-                      >
-                        <FaEdit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(showtime.id)}
-                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
-                        title="Xóa"
-                      >
-                        <FaTrash size={18} />
-                      </button>
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={() => handleEdit(showtime)}
+                            className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all"
+                            title="Cập nhật"
+                          >
+                            <FaEdit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(showtime.id)}
+                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
+                            title="Xóa"
+                          >
+                            <FaTrash size={18} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

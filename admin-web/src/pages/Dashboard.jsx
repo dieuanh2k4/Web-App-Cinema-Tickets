@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaMoneyBillWave, FaTicketAlt, FaDollarSign, FaUserPlus, FaSyncAlt } from 'react-icons/fa';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { dashboardStats, movies } from '../data/mockData';
+import dashboardService from '../services/dashboardService';
 import { formatCurrency } from '../utils/helpers';
 
 // StatCard Component
@@ -39,21 +39,60 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 const Dashboard = () => {
-  const stats = dashboardStats;
+  const [stats, setStats] = useState(null);
+  const [revenueData, setRevenueData] = useState([]);
+  const [topMovies, setTopMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     start: '2024-04-01',
     end: '2024-04-15'
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    // TODO: Load data from DB
-    setTimeout(() => {
-      setIsRefreshing(false);
-      console.log('Data refreshed');
-    }, 1000);
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [statsData, revenueByMonth, topMoviesData] = await Promise.all([
+        dashboardService.getStatistics(),
+        dashboardService.getRevenueByMonth(),
+        dashboardService.getTopMovies()
+      ]);
+      
+      setStats(statsData);
+      setRevenueData(revenueByMonth);
+      setTopMovies(topMoviesData);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await loadDashboardData();
+    setIsRefreshing(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-white text-xl">Đang tải dữ liệu...</div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-white text-xl">Không có dữ liệu</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10">
@@ -124,11 +163,11 @@ const Dashboard = () => {
         {/* Top Movies Bar Chart */}
         <div className="bg-secondary rounded-lg p-8 border border-gray-700">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-white">Top bài viết dược xem nhiều nhất</h2>
-            <span className="text-sm text-gray-400">Lượt xem</span>
+            <h2 className="text-xl font-bold text-white">Top phim bán chạy nhất</h2>
+            <span className="text-sm text-gray-400">Số vé bán ra</span>
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={stats.topMovies}>
+            <BarChart data={topMovies}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="title" stroke="#9ca3af" tick={{ fill: '#9ca3af', fontSize: 12 }} angle={-15} textAnchor="end" height={80} />
               <YAxis stroke="#9ca3af" tick={{ fill: '#9ca3af' }} />
@@ -146,7 +185,7 @@ const Dashboard = () => {
             <span className="text-sm text-gray-400">Doanh thu</span>
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={stats.revenueByMonth}>
+            <LineChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="month" stroke="#9ca3af" tick={{ fill: '#9ca3af' }} />
               <YAxis stroke="#9ca3af" tick={{ fill: '#9ca3af' }} />
@@ -174,16 +213,13 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
-              {stats.topMovies.map((movie) => (
+              {topMovies.map((movie) => (
                 <tr key={movie.movieId} className="hover:bg-primary/50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-12 w-8 bg-gray-700 rounded"></div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-white">{movie.title}</div>
-                        <div className="text-sm text-gray-400">
-                          {movies.find(m => m.id === movie.movieId)?.director}
-                        </div>
                       </div>
                     </div>
                   </td>

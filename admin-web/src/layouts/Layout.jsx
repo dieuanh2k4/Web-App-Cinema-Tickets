@@ -22,7 +22,6 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
   const location = useLocation();
 
   const menuItems = [
-    { path: '/', icon: FaHome, label: 'Tổng quan' },
     { path: '/movies', icon: FaFilm, label: 'Quản lý phim' },
     { path: '/theaters', icon: FaCouch, label: 'Quản lý rạp chiếu' },
     { path: '/rooms', icon: FaDoorOpen, label: 'Quản lý phòng chiếu' },

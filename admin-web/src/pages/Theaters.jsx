@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaTimes, FaSyncAlt } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaTimes, FaSyncAlt, FaEye } from 'react-icons/fa';
 import theaterService from '../services/theaterService';
+import { useAuth } from '../hooks/useAuth';
 
 const Theaters = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const [theaters, setTheaters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -155,13 +158,15 @@ const Theaters = () => {
             <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
-          <button
-            onClick={handleAdd}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            <FaPlus />
-            <span>Tạo rạp chiếu</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={handleAdd}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              <FaPlus />
+              <span>Tạo rạp chiếu</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -191,20 +196,24 @@ const Theaters = () => {
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => handleEdit(theater)}
-                        className="p-2 text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors"
-                        title="Sửa"
-                      >
-                        <FaEdit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(theater.id)}
-                        className="p-2 text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
-                        title="Xóa"
-                      >
-                        <FaTrash size={18} />
-                      </button>
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={() => handleEdit(theater)}
+                            className="p-2 text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors"
+                            title="Sửa"
+                          >
+                            <FaEdit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(theater.id)}
+                            className="p-2 text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
+                            title="Xóa"
+                          >
+                            <FaTrash size={18} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

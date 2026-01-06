@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaTimes, FaSyncAlt } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaTimes, FaSyncAlt, FaEye } from 'react-icons/fa';
 import { formatCurrency } from '../utils/helpers';
 import ticketPriceService from '../services/ticketPriceService';
+import { useAuth } from '../hooks/useAuth';
 
 const TicketPrices = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const [prices, setPrices] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
@@ -182,13 +185,15 @@ const TicketPrices = () => {
             <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
-          <button
-            onClick={handleAdd}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl transition-all shadow-lg shadow-blue-600/25 font-medium"
-          >
-            <FaPlus />
-            <span>Tạo giá vé</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={handleAdd}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl transition-all shadow-lg shadow-blue-600/25 font-medium"
+            >
+              <FaPlus />
+              <span>Tạo giá vé</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -226,20 +231,24 @@ const TicketPrices = () => {
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => handleEdit(price)}
-                        className="p-2 text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors"
-                        title="Sửa"
-                      >
-                        <FaEdit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(price.id)}
-                        className="p-2 text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
-                        title="Xóa"
-                      >
-                        <FaTrash size={18} />
-                      </button>
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={() => handleEdit(price)}
+                            className="p-2 text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors"
+                            title="Sửa"
+                          >
+                            <FaEdit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(price.id)}
+                            className="p-2 text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
+                            title="Xóa"
+                          >
+                            <FaTrash size={18} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

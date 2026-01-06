@@ -122,12 +122,36 @@ namespace Server.src.Controllers
                 var holdDataJson = System.Text.Json.JsonSerializer.Serialize(holdData);
                 await db.StringSetAsync(holdKey, holdDataJson, TimeSpan.FromMinutes(ttlMinutes));
 
-                // Đánh dấu từng ghế đang được hold
+                // Đánh dấu từng ghế đang được hold trong Redis
                 foreach (var seatId in dto.SeatIds)
                 {
                     var seatKey = $"CineBook:seat:{dto.ShowtimeId}:{seatId}";
                     await db.StringSetAsync(seatKey, holdId, TimeSpan.FromMinutes(ttlMinutes));
                 }
+
+                // Tạo StatusSeat với Status = "Pending" trong DB
+                foreach (var seatId in dto.SeatIds)
+                {
+                    var statusSeat = await _context.StatusSeat
+                        .FirstOrDefaultAsync(ss => ss.ShowtimeId == dto.ShowtimeId && ss.SeatId == seatId);
+
+                    if (statusSeat == null)
+                    {
+                        statusSeat = new Server.src.Models.StatusSeat
+                        {
+                            ShowtimeId = dto.ShowtimeId,
+                            SeatId = seatId,
+                            Status = "Pending"
+                        };
+                        _context.StatusSeat.Add(statusSeat);
+                    }
+                    else
+                    {
+                        statusSeat.Status = "Pending";
+                        _context.StatusSeat.Update(statusSeat);
+                    }
+                }
+                await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Staff {StaffId} held {Count} seats for showtime {ShowtimeId}", 
                     staffId, dto.SeatIds.Count, dto.ShowtimeId);
@@ -242,6 +266,70 @@ namespace Server.src.Controllers
                 return ReturnException(ex);
             }
         }
+
+        /// <summary>
+        /// ❌ Hủy hold ghế (xóa cả Redis và StatusSeat)
+        /// </summary>
+        [Authorize(Roles = "Staff,Admin")]
+        [HttpPost("cancel-hold")]
+        public async Task<IActionResult> CancelHold([FromBody] CancelHoldDto dto)
+        {
+            try
+            {
+                var db = _redis.GetDatabase();
+                var holdKey = $"CineBook:hold:{dto.HoldId}";
+
+                // Lấy hold data từ Redis
+                var holdDataJson = await db.StringGetAsync(holdKey);
+                if (holdDataJson.IsNullOrEmpty)
+                {
+                    return BadRequest(new { message = "Hold không tồn tại hoặc đã hết hạn" });
+                }
+
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                var holdData = System.Text.Json.JsonSerializer.Deserialize<StaffHoldDataModel>(holdDataJson!, options);
+
+                if (holdData == null)
+                {
+                    return BadRequest(new { message = "Không thể parse hold data" });
+                }
+
+                // Xóa Redis keys
+                await db.KeyDeleteAsync(holdKey);
+                foreach (var seatId in holdData.SeatIds)
+                {
+                    var seatKey = $"CineBook:seat:{holdData.ShowtimeId}:{seatId}";
+                    await db.KeyDeleteAsync(seatKey);
+                }
+
+                // Xóa hoặc đặt lại Status trong StatusSeat
+                var statusSeats = await _context.StatusSeat
+                    .Where(ss => holdData.SeatIds.Contains(ss.SeatId) 
+                              && ss.ShowtimeId == holdData.ShowtimeId 
+                              && ss.Status == "Pending")
+                    .ToListAsync();
+
+                _context.StatusSeat.RemoveRange(statusSeats);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Cancelled hold {HoldId} with {Count} seats", 
+                    dto.HoldId, holdData.SeatIds.Count);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Đã hủy hold ghế",
+                    cancelledSeats = holdData.SeatIds.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                return ReturnException(ex);
+            }
+        }
     }
 
     // DTOs cho Staff Booking
@@ -259,6 +347,11 @@ namespace Server.src.Controllers
         public string HoldId { get; set; } = string.Empty;
         public string PaymentMethod { get; set; } = "Cash";
         public decimal PaidAmount { get; set; }
+    }
+
+    public class CancelHoldDto
+    {
+        public string HoldId { get; set; } = string.Empty;
     }
 
     public class StaffHoldDataModel

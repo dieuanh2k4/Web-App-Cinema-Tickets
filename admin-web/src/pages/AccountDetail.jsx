@@ -3,8 +3,11 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaSave, FaTimes, FaUserCircle, FaEdit, FaHistory } from 'react-icons/fa';
 import userService from '../services/userService';
 import { formatDate } from '../utils/helpers';
+import { useAuth } from '../hooks/useAuth';
 
 const AccountDetail = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -239,6 +242,19 @@ const AccountDetail = () => {
     );
   }
 
+  // Check if user is Admin
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-400 text-6xl mb-4">⛔</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Không có quyền truy cập</h2>
+          <p className="text-gray-400">Chỉ Admin mới có quyền quản lý tài khoản</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10">
       {/* Header */}
@@ -292,6 +308,27 @@ const AccountDetail = () => {
               <span className={`px-4 py-2 text-sm font-medium rounded-full border ${getStatusBadge(account.status)}`}>
                 {getStatusLabel(account.status)}
               </span>
+              <span className={`px-4 py-2 text-sm font-medium rounded-full border ${getStatusBadge(account.status)}`}>
+                {getStatusLabel(account.status)}
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Info */}
+          <div className="bg-secondary rounded-lg p-6 border border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <FaHistory className="text-accent" />
+              Thông tin hệ thống
+            </h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Ngày tạo:</span>
+                <span className="text-white">{formatDate(account.createdDate)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Đăng nhập lần cuối:</span>
+                <span className="text-white">{formatDate(account.lastLogin)}</span>
+              </div>
             </div>
           </div>
 
