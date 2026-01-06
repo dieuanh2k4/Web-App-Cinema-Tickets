@@ -220,7 +220,8 @@ builder.Services.AddScoped<EmailService>();
 // Chat AI service
 builder.Services.AddScoped<IChatService, ChatService>();
 
-
+// ⭐ RAG: Cinema RAG service
+builder.Services.AddScoped<ICinemaRagService, CinemaRagService>();
 // Dashboard service
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
