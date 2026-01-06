@@ -30,14 +30,6 @@ export default function SelectSeatScreen() {
     date,
   } = params;
 
-  console.log("📽️ Select Seat Screen - Params:", {
-    movieTitle,
-    theaterName,
-    format,
-    showtime,
-    date,
-  });
-
   const [loading, setLoading] = useState(true);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [holdId, setHoldId] = useState(null);

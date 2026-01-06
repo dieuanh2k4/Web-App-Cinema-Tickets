@@ -45,9 +45,9 @@ export default function MovieDetailScreen() {
   const handleBookTicket = () => {
     if (!movie) return;
 
-    console.log("🎬 Movie object:", movie);
-    console.log("🎬 Movie title:", movie.title);
-    console.log("🎬 Movie poster:", movie.thumbnail);
+    console.log("Movie object:", movie);
+    console.log("Movie title:", movie.title);
+    console.log("Movie poster:", movie.thumbnail);
 
     // Chuyển đến màn hình chọn rạp với thông tin phim
     router.push({

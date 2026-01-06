@@ -36,29 +36,29 @@ export const showtimeService = {
       const allShowtimes = await showtimeService.getAllShowtimes();
 
       console.log(
-        "📡 API getAllShowtimes response:",
+        "API getAllShowtimes response:",
         allShowtimes?.length,
         "showtimes"
       );
-      console.log("🔍 Filtering for movieId:", movieId, "date:", formattedDate);
+      console.log("Filtering for movieId:", movieId, "date:", formattedDate);
 
       const filtered = allShowtimes.filter((st) => {
         const showtimeDate = st.date?.split("T")[0] || st.date;
         const matches =
           st.movieId === parseInt(movieId) && showtimeDate === formattedDate;
         if (matches) {
-          console.log("✅ Match found:", st);
+          console.log("Match found:", st);
         }
         return matches;
       });
 
-      console.log("🎯 Filtered showtimes:", filtered.length);
+      console.log("Filtered showtimes:", filtered.length);
 
       const grouped = showtimeService.groupShowtimesByTheater(
         filtered,
         theaters
       );
-      console.log("🏢 Grouped by theater:", grouped);
+      console.log("Grouped by theater:", grouped);
 
       return grouped;
     } catch (error) {

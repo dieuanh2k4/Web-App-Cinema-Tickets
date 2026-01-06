@@ -73,12 +73,12 @@ export default function SelectCinemaScreen() {
 
       const formattedDate = formatDateForBackend(selectedDate);
 
-      console.log("🎬 Loading showtimes with:", {
+      console.log("Loading showtimes with:", {
         movieTitle,
         selectedDate: formattedDate,
         selectedCity,
       });
-      console.log("🎞️ All showtimes:", allShowtimes);
+      console.log("All showtimes:", allShowtimes);
 
       // Lọc showtimes theo phim và ngày
       const relevantShowtimes = allShowtimes.filter((st) => {
@@ -95,7 +95,7 @@ export default function SelectCinemaScreen() {
         return matchMovie && matchDate;
       });
 
-      console.log("✅ Filtered showtimes:", relevantShowtimes);
+      console.log("Filtered showtimes:", relevantShowtimes);
 
       // Nhóm showtimes theo rạp
       const theatersWithShowtimes = theatersData.map((theater) => {
@@ -120,7 +120,7 @@ export default function SelectCinemaScreen() {
         (t) => t.city === selectedCity && t.showtimeCount > 0
       );
 
-      console.log("🏢 Final theaters to show:", filteredTheaters);
+      console.log("Final theaters to show:", filteredTheaters);
 
       setTheaters(filteredTheaters);
       setLoading(false);

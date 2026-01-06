@@ -70,7 +70,7 @@ export default function TicketsScreen() {
   if (loading) {
     return (
       <LinearGradient
-        colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
+        colors={["#0F0F0F", "#0F0F0F", "#260d71ff"]}
         locations={[0, 0.7, 1]}
         style={styles.gradient}
       >
@@ -89,8 +89,8 @@ export default function TicketsScreen() {
   if (bookings.length === 0) {
     return (
       <LinearGradient
-        colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
-        locations={[0, 0.7, 1]}
+        colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.3)"]}
+        locations={[0, 0.5, 1]}
         style={styles.gradient}
       >
         <View style={styles.container}>
@@ -284,8 +284,8 @@ export default function TicketsScreen() {
 
   return (
     <LinearGradient
-      colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.15)"]}
-      locations={[0, 0.7, 1]}
+      colors={["#0F0F0F", "#0F0F0F", "rgba(108, 71, 219, 0.3)"]}
+      locations={[0, 0.5, 1]}
       style={styles.gradient}
     >
       <View style={styles.container}>
