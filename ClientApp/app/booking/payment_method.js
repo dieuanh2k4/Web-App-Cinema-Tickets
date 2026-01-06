@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   Alert,
   Linking,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -17,6 +20,11 @@ export default function PaymentMethodScreen() {
   const params = useLocalSearchParams();
   const [selectedMethod, setSelectedMethod] = useState("vnpay");
   const [processing, setProcessing] = useState(false);
+
+  // Form data
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
 
   const totalAmount = parseInt(params.totalAmount || 0);
   const finalAmount = totalAmount;
@@ -36,17 +44,72 @@ export default function PaymentMethodScreen() {
       return;
     }
 
+    // Validate form
+    if (!customerName.trim()) {
+      Alert.alert("Thông báo", "Vui lòng nhập họ tên");
+      return;
+    }
+
+    if (!customerPhone.trim()) {
+      Alert.alert("Thông báo", "Vui lòng nhập số điện thoại");
+      return;
+    }
+
+    // Validate phone number (10-11 digits)
+    const phoneRegex = /^[0-9]{10,11}$/;
+    if (!phoneRegex.test(customerPhone.trim())) {
+      Alert.alert("Thông báo", "Số điện thoại không hợp lệ (10-11 chữ số)");
+      return;
+    }
+
     try {
       setProcessing(true);
 
-      const booking = await bookingService.createBooking({
-        ShowtimeId: parseInt(params.showtimeId),
-        SeatIds: params.seats.split(", ").map((s) => parseInt(s)),
-        TotalAmount: finalAmount,
-      });
+      // Kiểm tra holdId từ params
+      if (!params.holdId) {
+        Alert.alert(
+          "Lỗi",
+          "Phiên giữ ghế không hợp lệ. Vui lòng chọn lại ghế."
+        );
+        router.back();
+        return;
+      }
 
+      console.log("🔍 Confirming booking with holdId:", params.holdId);
+      console.log("🔍 Showtime ID:", params.showtimeId);
+
+      // Bước 1: Confirm booking với holdId
+      const bookingResult = await bookingService.confirmBooking(params.holdId);
+
+      if (!bookingResult.success) {
+        Alert.alert(
+          "Lỗi",
+          bookingResult.message || "Không thể xác nhận đặt vé"
+        );
+        return;
+      }
+
+      // Lấy ticketId từ response
+      const ticketId =
+        bookingResult.ticketId ||
+        bookingResult.booking?.ticketId ||
+        bookingResult.booking?.ticket?.id ||
+        bookingResult.booking?.id;
+
+      console.log("✅ Booking confirmed, ticketId:", ticketId);
+      console.log(
+        "✅ Full booking result:",
+        JSON.stringify(bookingResult, null, 2)
+      );
+
+      if (!ticketId) {
+        Alert.alert("Lỗi", "Không thể lấy thông tin vé");
+        return;
+      }
+
+      // Bước 2: Tạo VNPay payment URL
       const paymentData = {
-        TicketId: booking.ticketId,
+        TicketId: ticketId,
         Amount: finalAmount,
         OrderInfo: `Thanh toán vé ${params.movieTitle}`,
       };
@@ -56,11 +119,28 @@ export default function PaymentMethodScreen() {
       );
 
       if (paymentResult.paymentUrl) {
-        await Linking.openURL(paymentResult.paymentUrl);
+        // Chuyển sang màn hiển thị QR thanh toán
+        router.replace({
+          pathname: "/booking/payment_result",
+          params: {
+            ticketId: ticketId,
+            paymentUrl: paymentResult.paymentUrl,
+            amount: finalAmount,
+            orderId: ticketId,
+            status: "pending",
+            movieTitle: params.movieTitle,
+            movieThumbnail: params.movieThumbnail,
+            date: params.date,
+            showtime: params.showtime,
+            seats: params.seats,
+            roomName: params.roomName,
+          },
+        });
       } else {
-        Alert.alert("Lỗi", "Không thể tạo thanh toán");
+        Alert.alert("Lỗi", "Không thể tạo liên kết thanh toán");
       }
     } catch (error) {
+      console.error("Payment error:", error);
       Alert.alert("Lỗi", error.message || "Không thể xử lý thanh toán");
     } finally {
       setProcessing(false);
@@ -68,7 +148,10 @@ export default function PaymentMethodScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -78,7 +161,10 @@ export default function PaymentMethodScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Ticket Summary */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
@@ -106,6 +192,49 @@ export default function PaymentMethodScreen() {
             <MaterialCommunityIcons name="seat" size={20} color="#6C47DB" />
             <Text style={styles.summaryLabel}>Ghế:</Text>
             <Text style={styles.summaryValue}>{params.seats}</Text>
+          </View>
+        </View>
+
+        {/* Customer Info Form */}
+        <View style={styles.formSection}>
+          <Text style={styles.sectionTitle}>Thông tin khách hàng</Text>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Họ tên *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nhập họ tên"
+              placeholderTextColor="#666"
+              value={customerName}
+              onChangeText={setCustomerName}
+              autoCapitalize="words"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Số điện thoại *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nhập số điện thoại"
+              placeholderTextColor="#666"
+              value={customerPhone}
+              onChangeText={setCustomerPhone}
+              keyboardType="phone-pad"
+              maxLength={11}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Email (không bắt buộc)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nhập email"
+              placeholderTextColor="#666"
+              value={customerEmail}
+              onChangeText={setCustomerEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
           </View>
         </View>
 
@@ -169,12 +298,26 @@ export default function PaymentMethodScreen() {
             {finalAmount.toLocaleString("vi-VN")}đ
           </Text>
         </View>
-        <TouchableOpacity style={styles.payBtn} onPress={handlePayment}>
-          <Text style={styles.payBtnText}>Thanh toán ngay</Text>
-          <MaterialCommunityIcons name="arrow-right" size={20} color="#FFF" />
+        <TouchableOpacity
+          style={[styles.payBtn, processing && styles.payBtnDisabled]}
+          onPress={handlePayment}
+          disabled={processing}
+        >
+          {processing ? (
+            <Text style={styles.payBtnText}>Đang xử lý...</Text>
+          ) : (
+            <>
+              <Text style={styles.payBtnText}>Thanh toán ngay</Text>
+              <MaterialCommunityIcons
+                name="arrow-right"
+                size={20}
+                color="#FFF"
+              />
+            </>
+          )}
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -361,6 +504,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 8,
+  },
+  payBtnDisabled: {
+    backgroundColor: "#4A4A4A",
+    opacity: 0.7,
+  },
+  formSection: {
+    marginHorizontal: 16,
+    marginBottom: 20,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFF",
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: "#1E1E1E",
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    color: "#FFF",
   },
   payBtnText: {
     fontSize: 16,

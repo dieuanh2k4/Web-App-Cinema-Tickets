@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { authService, userService } from "../../../services";
+import { authService, userService, customerService } from "../../../services";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAuth } from "../../../contexts/AuthContext";
 
@@ -18,12 +18,19 @@ export default function AccountScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [profile, setProfile] = useState(null);
+  const [customerInfo, setCustomerInfo] = useState(null);
 
   const userName =
-    user?.user?.name || user?.user?.email || profile?.fullName || "Phong Pham";
+    customerInfo?.name ||
+    profile?.username ||
+    profile?.email ||
+    user?.username ||
+    profile?.fullName ||
+    "Người dùng";
 
   useEffect(() => {
     loadProfile();
+    loadCustomerInfo();
   }, []);
 
   const loadProfile = async () => {
@@ -32,6 +39,15 @@ export default function AccountScreen() {
       setProfile(data);
     } catch (error) {
       console.error("Error loading profile:", error);
+    }
+  };
+
+  const loadCustomerInfo = async () => {
+    try {
+      const data = await customerService.getProfile();
+      setCustomerInfo(data);
+    } catch (error) {
+      console.error("Error loading customer info:", error);
     }
   };
 
@@ -83,7 +99,12 @@ export default function AccountScreen() {
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
             <Image
-              source={{ uri: "https://i.pravatar.cc/200" }}
+              source={{
+                uri:
+                  customerInfo?.avatar ||
+                  profile?.avatar ||
+                  "https://i.pravatar.cc/200",
+              }}
               style={styles.avatar}
             />
             <View style={styles.editBadge}>
@@ -91,30 +112,50 @@ export default function AccountScreen() {
             </View>
           </View>
           <Text style={styles.userName}>{userName}</Text>
+          {customerInfo?.email && (
+            <Text style={styles.userEmail}>{customerInfo.email}</Text>
+          )}
+          {customerInfo?.phone && (
+            <Text style={styles.userPhone}>{customerInfo.phone}</Text>
+          )}
         </View>
 
         {/* Menu Items */}
         <View style={styles.menuContainer}>
           <MenuItem
-            icon="square-edit-outline"
-            label="Cập nhật thông tin"
-            onPress={() =>
-              Alert.alert("Thông báo", "Chức năng đang phát triển")
-            }
-          />
-          <MenuItem
-            icon="lock-outline"
-            label="Thay đổi mật khẩu"
-            onPress={() =>
-              Alert.alert("Thông báo", "Chức năng đang phát triển")
-            }
+            icon="account-circle-outline"
+            label="Thông tin cá nhân"
+            onPress={() => router.push("/account/edit-profile")}
+            iconColor="#6C47DB"
           />
           <MenuItem
             icon="ticket-outline"
-            label="Vé của tôi"
+            label="Lịch sử đặt vé"
             onPress={() => router.push("/(tabs)/tickets")}
+            iconColor="#FFA500"
           />
-          <MenuItem icon="logout" label="Đăng xuất" onPress={handleLogout} />
+          <MenuItem
+            icon="lock-outline"
+            label="Đổi mật khẩu"
+            onPress={() =>
+              Alert.alert("Thông báo", "Chức năng đang phát triển")
+            }
+            iconColor="#2196F3"
+          />
+          <MenuItem
+            icon="cog-outline"
+            label="Cài đặt"
+            onPress={() =>
+              Alert.alert("Thông báo", "Chức năng đang phát triển")
+            }
+            iconColor="#9E9E9E"
+          />
+          <MenuItem
+            icon="logout"
+            label="Đăng xuất"
+            onPress={handleLogout}
+            iconColor="#F44336"
+          />
         </View>
       </View>
     </LinearGradient>
@@ -171,6 +212,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.7)",
+    marginBottom: 2,
+  },
+  userPhone: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.7)",
   },
   menuContainer: {
     marginTop: 20,

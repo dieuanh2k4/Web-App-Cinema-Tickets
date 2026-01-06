@@ -12,7 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { MovieCard } from "../../components/MovieCard";
-import { movieService } from "../../services/movieService";
+import { movieService } from "../../services";
 
 const { width: windowWidth } = Dimensions.get("window");
 
