@@ -1,39 +1,36 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Server.src.Services.Interfaces;
 
 namespace Server.src.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class ChatController : ApiControllerBase
     {
         private readonly IChatService _chatService;
 
-        public ChatController(IChatService chatService, ILogger<ChatController> logger) : base(logger)
+        public ChatController(
+            IChatService chatService,
+            ILogger<ChatController> logger
+        ) : base(logger)   // ✅ QUAN TRỌNG
         {
             _chatService = chatService;
         }
 
-        [AllowAnonymous]
-        [HttpPost("send-message")]
-        public async Task<IActionResult> SendMessage([FromBody] ChatMessageRequest request)
+        [HttpPost("ai")]
+        public async Task<IActionResult> ChatAI([FromBody] ChatAiRequest request)
         {
-            try
-            {
-                var response = await _chatService.ProcessMessage(request.Message, request.UserId);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return ReturnException(ex);
-            }
+            if (string.IsNullOrWhiteSpace(request.Message))
+                return BadRequest("Message is required");
+
+            var reply = await _chatService.ChatWithAIAsync(request.Message);
+            return Ok(new { reply });
         }
     }
 
-    public class ChatMessageRequest
+    public class ChatAiRequest
     {
         public string Message { get; set; } = string.Empty;
-        public string? UserId { get; set; }
     }
 }

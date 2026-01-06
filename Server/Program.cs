@@ -15,6 +15,8 @@ using StackExchange.Redis;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Minio;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -219,6 +221,8 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 // builder.Services.AddScoped<IGeminiService, GeminiService>(); // Commented out - service not implemented
 
+// ⭐ RAG: Cinema RAG service
+builder.Services.AddScoped<ICinemaRagService, CinemaRagService>();
 // Dashboard service
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
@@ -258,6 +262,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
         };
     });
+
+builder.Services.AddHttpClient("Groq", client =>
+{
+    var groqConfig = builder.Configuration.GetSection("Groq");
+
+    client.BaseAddress = new Uri(groqConfig["BaseUrl"]!);
+    client.DefaultRequestHeaders.Authorization =
+        new AuthenticationHeaderValue(
+            "Bearer",
+            groqConfig["ApiKey"]
+        );
+});
+
+
 
 // ==========================
 // Cấu hình CORS: cho phép frontend được gọi API
