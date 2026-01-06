@@ -1,5 +1,5 @@
 // API Base URL - CHANGE THIS TO YOUR BACKEND URL
-export const BASE_URL = "http://localhost:5001/api";
+export const BASE_URL = "https://d7edd2051d9f.ngrok-free.app/api";
 
 export const API_ENDPOINTS = {
   // Authentication
@@ -24,27 +24,27 @@ export const API_ENDPOINTS = {
     GET_ALL_STAFF: "/Admin/get-all-staff",
     GET_ALL_CUSTOMER: "/Admin/get-all-customer",
     GET_ALL: "/User/get-all-user", // Legacy endpoint, trả về tất cả
-    
+
     // GET by ID endpoints
     GET_ADMIN_BY_ID: (id) => `/Admin/get-info-admin?id=${id}`,
     GET_STAFF_BY_ID: (id) => `/Staff/get-info-staff?id=${id}`,
     GET_CUSTOMER_BY_ID: (id) => `/Customer/get-info-customer?id=${id}`,
-    
+
     // CREATE endpoints by role
     CREATE_ADMIN: "/Admin/create-admin",
     CREATE_STAFF: "/Admin/create-staff",
     CREATE_CUSTOMER: "/Auth/customer-register", // Customer register endpoint
-    
+
     // UPDATE endpoints by role
     UPDATE_ADMIN: (id) => `/Admin/update-admin/${id}`,
     UPDATE_STAFF: (id) => `/Admin/update-staff/${id}`,
     UPDATE_CUSTOMER: (id) => `/Customer/update-info-customer/${id}`,
-    
+
     // DELETE endpoints by role
     DELETE_ADMIN: (id) => `/Admin/delete-admin/${id}`,
     DELETE_STAFF: (id) => `/Admin/delete-staff/${id}`,
     DELETE_CUSTOMER: (id) => `/Admin/delete-customer/${id}`,
-    
+
     PROFILE: "/User/profile",
   },
 

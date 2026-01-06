@@ -5,7 +5,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Tạo axios instance với base URL
 const apiClient = axios.create({
   baseURL: API_CONFIG.BASE_URL,
-  headers: API_CONFIG.HEADERS,
+  // headers: API_CONFIG.HEADERS,
+  headers: {
+    ...API_CONFIG.HEADERS,
+    "ngrok-skip-browser-warning": "true", // Required for ngrok free tier
+  },
   timeout: 10000,
 });
 
