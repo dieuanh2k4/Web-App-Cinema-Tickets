@@ -36,11 +36,19 @@ export default function TheaterDetailScreen() {
       const theaterData = await theaterService.getTheaterById(theaterId);
       setTheater(theaterData);
 
+      console.log("🏢 Theater data:", theaterData);
+
       // Load all showtimes for this theater
       const allShowtimes = await showtimeService.getAllShowtimes();
+      console.log("🎞️ All showtimes:", allShowtimes);
+
+      // Match by theater name instead of theaterId
       const theaterShowtimes = allShowtimes.filter((st) => {
-        return st.theaterId === parseInt(theaterId);
+        return st.theaterName === theaterData.name;
       });
+
+      console.log("✅ Filtered showtimes for this theater:", theaterShowtimes);
+
       setShowtimes(theaterShowtimes);
 
       // Load movies for poster and details
@@ -117,7 +125,7 @@ export default function TheaterDetailScreen() {
       const movie = movies.find((m) => m.id === movieId);
       const movieTitle =
         movie?.title || showtime.movieTitle || `Phim ${movieId}`;
-      const moviePoster = movie?.thumbnail || null;
+      const moviePoster = movie?.posterUrl || null;
       const ageRating = movie?.ageRating || "P";
 
       if (!acc[movieId]) {

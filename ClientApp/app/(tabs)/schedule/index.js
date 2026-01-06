@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 60,
   },
   loadingContainer: {
     flex: 1,
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
     color: "#FFFFFF",
-    paddingTop: 32,
+    marginTop: 30,
   },
   screenSubtitle: {
     color: "#9CA3AF",

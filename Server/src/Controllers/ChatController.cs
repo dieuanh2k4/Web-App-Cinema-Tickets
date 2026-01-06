@@ -13,7 +13,7 @@ namespace Server.src.Controllers
         public ChatController(
             IChatService chatService,
             ILogger<ChatController> logger
-        ) : base(logger)   // ✅ QUAN TRỌNG
+        ) : base(logger)   // QUAN TRỌNG
         {
             _chatService = chatService;
         }

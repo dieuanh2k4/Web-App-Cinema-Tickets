@@ -194,40 +194,48 @@ Server/
 ## 📄 Program.cs
 
 ### Overview
+
 Entry point của ứng dụng ASP.NET Core. Cấu hình services, middleware, và dependency injection.
 
 ### Key Features
 
 #### 1. **Hostname Placeholder Replacement**
+
 ```csharp
 var hostname = Environment.GetEnvironmentVariable("HOSTNAME") ?? Environment.MachineName;
 // Thay thế {HOSTNAME} trong config với hostname thật
 ```
+
 - Hỗ trợ deploy multi-environment
 - Tự động replace `{HOSTNAME}` trong Jwt:Issuer, Minio:PublicEndpoint, etc.
 
 #### 2. **Kestrel Configuration**
+
 ```csharp
 options.ListenAnyIP(8080); // HTTP only
 ```
+
 - Container chạy port 8080
 - Nginx reverse proxy xử lý HTTPS
 - Map ra host: `localhost:5000`
 
 #### 3. **Database (PostgreSQL)**
+
 ```csharp
-options.UseNpgsql(connectionString, npgsqlOptions => 
+options.UseNpgsql(connectionString, npgsqlOptions =>
     npgsqlOptions.EnableRetryOnFailure(
         maxRetryCount: 3,
         maxRetryDelay: TimeSpan.FromSeconds(10)
     )
 );
 ```
+
 - Connection string: Supabase PostgreSQL
 - Auto-retry khi connection failed
 - UTC timestamp enabled
 
 #### 4. **Redis Configuration**
+
 ```csharp
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp => {
     var configOptions = ConfigurationOptions.Parse(redisConfig["ConnectionString"]!);
@@ -235,21 +243,25 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp => {
     return ConnectionMultiplexer.Connect(configOptions);
 });
 ```
+
 - Distributed cache
 - Seat hold với TTL 10 phút
 - Instance name: `CineBook_`
 
 #### 5. **Hangfire (Background Jobs)**
+
 ```csharp
 builder.Services.AddHangfire(config => config
     .UsePostgreSqlStorage(connectionString)
 );
 ```
+
 - Dashboard: `/hangfire`
 - Recurring job: Cleanup seat holds mỗi 1 phút
 - Timezone: GMT+7 (SE Asia Standard Time)
 
 #### 6. **JWT Authentication**
+
 ```csharp
 options.TokenValidationParameters = new TokenValidationParameters
 {
@@ -264,6 +276,7 @@ options.TokenValidationParameters = new TokenValidationParameters
 ```
 
 #### 7. **Swagger with JWT**
+
 ```csharp
 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
 {
@@ -273,20 +286,24 @@ options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     In = ParameterLocation.Header
 });
 ```
+
 - Auto-generate API docs
 - JWT authorization UI
 - Available: `/swagger`
 
 #### 8. **CORS Policy**
+
 ```csharp
 policy.AllowAnyOrigin()
       .AllowAnyMethod()
       .AllowAnyHeader();
 ```
+
 - Cho phép mọi origin (dev mode)
 - Production: nên restrict origins
 
 #### 9. **Dependency Injection**
+
 ```csharp
 // Services
 builder.Services.AddScoped<IMovieService, MovieService>();
@@ -305,6 +322,7 @@ builder.Services.AddSingleton<JwtTokenHelper>();
 ```
 
 #### 10. **Auto Migrations**
+
 ```csharp
 using (var scope = app.Services.CreateScope())
 {
@@ -315,6 +333,7 @@ using (var scope = app.Services.CreateScope())
 ```
 
 #### 11. **Middleware Pipeline**
+
 ```
 Request
   ↓
@@ -334,9 +353,11 @@ Response
 ```
 
 #### 12. **Health Checks**
+
 ```
 GET /health
 ```
+
 - Check PostgreSQL connection
 - Check Redis connection
 - Return: Healthy/Unhealthy status
@@ -348,6 +369,7 @@ GET /health
 ### Configuration Sections
 
 #### 1. **Cloudinary (Image Storage)**
+
 ```json
 {
   "CloudinarySettings": {
@@ -357,11 +379,13 @@ GET /health
   }
 }
 ```
+
 - Upload movie posters
 - CDN delivery
 - Service: cloudinary.com
 
 #### 2. **Logging**
+
 ```json
 {
   "Logging": {
@@ -372,10 +396,12 @@ GET /health
   }
 }
 ```
+
 - Console logging
 - Production: log vào file/monitoring service
 
 #### 3. **JWT Authentication**
+
 ```json
 {
   "Jwt": {
@@ -385,11 +411,13 @@ GET /health
   }
 }
 ```
+
 - `{HOSTNAME}` auto-replaced khi startup
 - Key: 64+ characters (HS256)
 - Token expiry: 7 days (defined in JwtTokenHelper)
 
 #### 4. **Database Connection**
+
 ```json
 {
   "ConnectionStrings": {
@@ -397,11 +425,13 @@ GET /health
   }
 }
 ```
+
 - Provider: Supabase (PostgreSQL)
 - Connection pooling: Min=0, Max=100
 - Region: AWS Singapore (ap-southeast-1)
 
 #### 5. **Minio (S3-compatible Storage)**
+
 ```json
 {
   "Minio": {
@@ -415,12 +445,14 @@ GET /health
   }
 }
 ```
+
 - Container endpoint: `minio:9000` (internal)
 - Public endpoint: `localhost:9004` (external access)
 - Không dùng SSL trong dev
 - Production: enable SSL
 
 #### 6. **VNPay (Payment Gateway) - DISABLED**
+
 ```json
 {
   "VNPay": {
@@ -431,11 +463,13 @@ GET /health
   }
 }
 ```
+
 - Tạm thời skip (dùng mock payment)
 - Sandbox URL cho test
 - Callback để receive payment result
 
 #### 7. **Frontend URL**
+
 ```json
 {
   "Frontend": {
@@ -443,10 +477,12 @@ GET /health
   }
 }
 ```
+
 - React app URL
 - Dùng cho CORS, redirects
 
 #### 8. **Email (SMTP)**
+
 ```json
 {
   "Email": {
@@ -459,11 +495,13 @@ GET /health
   }
 }
 ```
+
 - Send booking confirmations
 - Send OTP cho forgot password
 - Gmail SMTP (cần enable App Password)
 
 #### 9. **Redis (Cache & Distributed Lock)**
+
 ```json
 {
   "Redis": {
@@ -474,20 +512,23 @@ GET /health
   }
 }
 ```
+
 - Container endpoint: `redis:6379`
 - Key prefix: `CineBook_`
 - Seat hold expires sau 10 phút
 - Không crash nếu Redis down
 
 #### 10. **Groq AI (Experimental - Unused)**
+
 ```json
 {
   "Groq": {
-    "ApiKey": "gsk_xxx",
+    "ApiKey": "your-groq-api-key-here",
     "BaseUrl": "https://api.groq.com/openai/v1"
   }
 }
 ```
+
 - Alternative AI API
 - Hiện tại chưa dùng
 - ChatService dùng pattern matching
@@ -497,20 +538,24 @@ GET /health
 ## 🔐 Security Features
 
 1. **JWT Bearer Authentication**
+
    - Token-based auth
    - Role-based authorization (Admin, Staff, Customer)
    - 7-day expiration
 
 2. **Password Hashing**
+
    - BCrypt algorithm
    - Salt rounds: 12
 
 3. **RBAC (Role-Based Access Control)**
+
    - Fine-grained permissions
    - Role-Permission mapping
    - Seeded via RbacSeeder
 
 4. **SQL Injection Protection**
+
    - EF Core parameterized queries
    - LINQ queries
 
@@ -523,6 +568,7 @@ GET /health
 ## 📊 Database Schema
 
 ### Core Tables
+
 - **Users** → UserRole → **Roles** → RolePermission → **Permissions**
 - **Movies** → **Showtimes** → StatusSeat → **Seats** ← **Rooms** ← **Theater**
 - **Customer** → **Ticket** → TicketSeat → **Seats**
@@ -530,6 +576,7 @@ GET /health
 - **User** → **OTPCode** (forgot password)
 
 ### Key Relationships
+
 - User : Role (Many-to-Many)
 - Role : Permission (Many-to-Many)
 - Ticket : Seat (Many-to-Many via TicketSeat)
@@ -540,24 +587,26 @@ GET /health
 ## 🚀 Deployment
 
 ### Docker Compose Services
+
 ```yaml
 services:
   backend:
     image: server-backend
     ports: ["5000:8080"]
-  
+
   postgres:
     image: postgres:15
-  
+
   redis:
     image: redis:7-alpine
-  
+
   minio:
     image: minio/minio
     ports: ["9000:9000", "9004:9000"]
 ```
 
 ### Build & Run
+
 ```bash
 cd Server
 docker-compose build backend
@@ -565,6 +614,7 @@ docker-compose up -d
 ```
 
 ### Access Points
+
 - **API**: http://localhost:5000
 - **Swagger**: http://localhost:5000/swagger
 - **Hangfire Dashboard**: http://localhost:5000/hangfire
@@ -576,22 +626,26 @@ docker-compose up -d
 ## 📦 NuGet Packages
 
 ### Core Packages
+
 - `Microsoft.EntityFrameworkCore` (8.0.11)
 - `Npgsql.EntityFrameworkCore.PostgreSQL` (8.0.10)
 - `Microsoft.AspNetCore.Authentication.JwtBearer` (8.0.10)
 - `Swashbuckle.AspNetCore` (6.6.2)
 
 ### Storage & Cache
+
 - `StackExchange.Redis` (2.10.1)
 - `Microsoft.Extensions.Caching.StackExchangeRedis` (8.0.4)
 - `Minio` (7.0.0)
 - `CloudinaryDotNet` (1.27.7)
 
 ### Background Jobs
+
 - `Hangfire.AspNetCore` (1.8.22)
 - `Hangfire.PostgreSql` (1.20.13)
 
 ### Utilities
+
 - `QRCoder` (1.6.0) - QR code generation
 - `RedLock.net` (2.3.2) - Distributed locking
 - `SixLabors.ImageSharp` (3.1.6) - Image processing
@@ -601,6 +655,7 @@ docker-compose up -d
 ## 🎯 Current Status
 
 ### ✅ Implemented Features
+
 - User authentication (Login, Register, Forgot Password)
 - Movie management (CRUD + Cloudinary upload)
 - Theater & Room management
@@ -616,9 +671,11 @@ docker-compose up -d
 - Background job: Seat hold cleanup
 
 ### ⏳ In Progress
+
 - Gemini AI chatbot integration (discussing RAG vs Function Calling)
 
 ### 🚫 Disabled Features
+
 - VNPay payment gateway (using mock payment instead)
 
 ---
@@ -626,6 +683,7 @@ docker-compose up -d
 ## 📝 Notes for AI Chatbot Development
 
 ### Current Chatbot (ChatService.cs)
+
 - **Type**: Pattern matching (keyword-based)
 - **Responses**: 10 predefined categories
 - **Data Source**: Hard-coded + Database queries
@@ -635,6 +693,7 @@ docker-compose up -d
 ### Proposed AI Chatbot Options
 
 #### Option 1: RAG (Retrieval-Augmented Generation) ⭐
+
 1. User asks question
 2. Backend searches database for relevant data
 3. Build context from DB results
@@ -642,11 +701,13 @@ docker-compose up -d
 5. Gemini generates natural answer
 
 **Use case**: "Phim Avatar giá vé bao nhiêu?"
+
 - Query DB: Movie "Avatar" + TicketPrices
 - Context: `{title: "Avatar", prices: {VIP: 100k, Regular: 70k}}`
 - Gemini response: "Phim Avatar có 2 loại vé: VIP 100.000đ và Thường 70.000đ"
 
 #### Option 2: Function Calling (Gemini 1.5+) 🔥
+
 1. Define functions: `getMovies()`, `getTheaters()`, `getTicketPrices()`
 2. User asks → Gemini decides which function to call
 3. Backend executes function → Returns data
@@ -655,11 +716,13 @@ docker-compose up -d
 **Advantage**: Gemini auto-detects user intent
 
 #### Option 3: Hybrid (Pattern + Gemini) 💡
+
 - Fast answers for common questions (pattern matching)
 - Complex questions fallback to Gemini
 - Cost-effective
 
 ### Required for AI Chatbot
+
 - [ ] Add Gemini API package
 - [ ] Implement intent detection OR function definitions
 - [ ] Create DB query builders for each entity type

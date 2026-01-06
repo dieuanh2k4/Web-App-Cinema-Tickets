@@ -12,7 +12,7 @@ services:
       - ConnectionStrings__DefaultConnection=Host=database;Port=5432;Database=postgres;Username=Cinebook;Password=${DB_PASSWORD}
       - ASPNETCORE_URLS=http://+:8080
       - HOSTNAME=${HOSTNAME}
-      - Groq__ApiKey=gsk_xxx
+      - Groq__ApiKey=${GROQ_API_KEY}
       - Groq__BaseUrl=https://api.groq.com/openai/v1/
     depends_on:
       database:

@@ -5,7 +5,34 @@ export const movieService = {
   getAllMovies: async () => {
     try {
       const res = await apiClient.get(API_CONFIG.ENDPOINTS.MOVIES.GET_ALL);
-      return res.data || [];
+      const movies = res.data || [];
+      // Map backend fields (PascalCase) to frontend expected fields (camelCase)
+      return movies.map((movie) => {
+        // Decode URL-encoded characters in thumbnail URLs
+        let posterUrl = movie.Thumbnail || movie.thumbnail || movie.posterUrl;
+        if (posterUrl && posterUrl.includes("%")) {
+          posterUrl = decodeURIComponent(posterUrl);
+        }
+
+        return {
+          id: movie.Id || movie.id,
+          title: movie.Title || movie.title,
+          posterUrl: posterUrl,
+          backdropUrl: posterUrl,
+          duration: movie.Duration || movie.duration,
+          genre: movie.Genre || movie.genre,
+          language: movie.Language || movie.language,
+          ageLimit: movie.AgeLimit || movie.ageLimit,
+          startDate: movie.StartDate || movie.startDate,
+          endDate: movie.EndDate || movie.endDate,
+          description: movie.Description || movie.description,
+          director: movie.Director || movie.director,
+          actors: movie.Actors || movie.actors,
+          rating: movie.Rating || movie.rating,
+          trailer: movie.Trailer || movie.trailer,
+          status: movie.Status || movie.status,
+        };
+      });
     } catch (error) {
       console.error("Error fetching all movies:", error);
       return [];
@@ -17,7 +44,28 @@ export const movieService = {
       const res = await apiClient.get(
         API_CONFIG.ENDPOINTS.MOVIES.GET_BY_ID(id)
       );
-      return res.data || null;
+      const movie = res.data || null;
+      if (!movie) return null;
+
+      // Map backend fields (PascalCase) to frontend expected fields (camelCase)
+      return {
+        id: movie.Id || movie.id,
+        title: movie.Title || movie.title,
+        posterUrl: movie.Thumbnail || movie.thumbnail || movie.posterUrl,
+        backdropUrl: movie.Thumbnail || movie.thumbnail || movie.backdropUrl,
+        duration: movie.Duration || movie.duration,
+        genre: movie.Genre || movie.genre,
+        language: movie.Language || movie.language,
+        ageLimit: movie.AgeLimit || movie.ageLimit,
+        startDate: movie.StartDate || movie.startDate,
+        endDate: movie.EndDate || movie.endDate,
+        description: movie.Description || movie.description,
+        director: movie.Director || movie.director,
+        actors: movie.Actors || movie.actors,
+        rating: movie.Rating || movie.rating,
+        trailer: movie.Trailer || movie.trailer,
+        status: movie.Status || movie.status,
+      };
     } catch (error) {
       console.error("Error fetching movie by id:", error);
       throw error;

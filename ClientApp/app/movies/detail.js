@@ -35,7 +35,6 @@ export default function MovieDetailScreen() {
       setLoading(true);
       const movieData = await movieService.getMovieById(id);
       setMovie(movieData);
-      await loadShowtimes(movieData.id);
       setLoading(false);
     } catch (error) {
       console.error("Error loading movie detail:", error);
@@ -43,39 +42,19 @@ export default function MovieDetailScreen() {
     }
   };
 
-  const loadShowtimes = async (movieId) => {
-    try {
-      const [allShowtimes, allTheaters] = await Promise.all([
-        showtimeService.getAllShowtimes(),
-        theaterService.getAllTheaters(),
-      ]);
-
-      const movieShowtimes = allShowtimes.filter(
-        (st) => st.movieId === parseInt(movieId)
-      );
-      setShowtimes(movieShowtimes);
-
-      // Group với theater data để có đầy đủ thông tin
-      const groupedByTheater = showtimeService.groupShowtimesByTheater(
-        movieShowtimes,
-        allTheaters
-      );
-      setTheaters(groupedByTheater);
-    } catch (error) {
-      console.error("Error loading showtimes:", error);
-    }
-  };
-
   const handleBookTicket = () => {
     if (!movie) return;
+
+    console.log("🎬 Movie object:", movie);
+    console.log("🎬 Movie title:", movie.title);
+    console.log("🎬 Movie name:", movie.name);
 
     // Chuyển đến màn hình chọn rạp với thông tin phim
     router.push({
       pathname: "/booking/select_cinema",
       params: {
         movieId: movie.id,
-        movieTitle: movie.title,
-        thumbnail: movie.thumbnail,
+        movieTitle: movie.title || movie.name || "Phim",
       },
     });
   };
@@ -96,7 +75,7 @@ export default function MovieDetailScreen() {
       >
         <View style={styles.headerContainer}>
           <Image
-            source={{ uri: movie.thumbnail }}
+            source={{ uri: movie.backdropUrl || movie.posterUrl }}
             style={styles.backdropImage}
             resizeMode="cover"
           />
@@ -117,7 +96,7 @@ export default function MovieDetailScreen() {
           <View style={styles.movieInfoOverlay}>
             <View style={styles.posterContainer}>
               <Image
-                source={{ uri: movie.thumbnail }}
+                source={{ uri: movie.posterUrl }}
                 style={styles.posterImage}
                 resizeMode="cover"
               />
@@ -151,7 +130,6 @@ export default function MovieDetailScreen() {
             </View>
           </View>
         </View>
-
         {/* Thông tin chi tiết */}
         <View style={styles.detailsContainer}>
           <View style={styles.section}>

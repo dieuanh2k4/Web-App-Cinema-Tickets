@@ -7,14 +7,18 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useAuth } from "../../../contexts/AuthContext";
 import { userService } from "../../../services";
 
 export default function TicketsScreen() {
+  const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadBookings();
@@ -23,14 +27,44 @@ export default function TicketsScreen() {
   const loadBookings = async () => {
     try {
       setLoading(true);
+      if (!user) {
+        setBookings([]);
+        return;
+      }
+
       const data = await userService.getMyTickets();
-      setBookings(data);
-      setLoading(false);
+      const normalized = (data || []).map((t) => {
+        const showtimeValue = t.showtime || t.bookingDate || null;
+        return {
+          ticketId: t.ticketId,
+          bookingCode: t.bookingCode,
+          movieTitle: t.movieTitle,
+          movieImage: t.movieThumbnail,
+          poster: t.movieThumbnail,
+          theaterName: t.theaterName,
+          room: t.roomName,
+          showtimeDate: showtimeValue,
+          showtimeTime: showtimeValue,
+          date: showtimeValue,
+          time: showtimeValue,
+          totalAmount: t.totalPrice ?? 0,
+          status: "confirmed",
+        };
+      });
+
+      setBookings(normalized);
     } catch (error) {
       console.error("Error loading bookings:", error);
       setBookings([]);
+    } finally {
       setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadBookings();
+    setRefreshing(false);
   };
 
   if (loading) {
@@ -61,20 +95,20 @@ export default function TicketsScreen() {
       >
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Vé của tôi</Text>
+            <Text style={styles.headerTitle}>Lịch sử đặt vé</Text>
           </View>
 
           <View style={styles.emptyContainer}>
             <View style={styles.trashIconWrapper}>
               <MaterialCommunityIcons
-                name="delete-empty-outline"
+                name="ticket-outline"
                 size={120}
                 color="#3A3A3A"
               />
             </View>
-            <Text style={styles.emptyTitle}>Chưa có giao dịch</Text>
+            <Text style={styles.emptyTitle}>Chưa có lịch sử đặt vé</Text>
             <Text style={styles.emptySubtitle}>
-              Lịch sử đặt vé của bạn sẽ xuất hiện ở đây
+              Đặt vé xem phim ngay để không bỏ lỡ những bộ phim hay!
             </Text>
           </View>
         </View>
@@ -83,10 +117,20 @@ export default function TicketsScreen() {
   }
 
   const getStatusInfo = (status) => {
-    switch (status) {
+    const statusLower = status?.toLowerCase() || "";
+    switch (statusLower) {
+      case "confirmed":
+      case "paid":
       case "upcoming":
-        return { label: "Sắp tới", color: "#4CAF50", icon: "clock-outline" };
+        return {
+          label: "Đã xác nhận",
+          color: "#4CAF50",
+          icon: "check-circle-outline",
+        };
+      case "pending":
+        return { label: "Chờ xử lý", color: "#FFA500", icon: "clock-outline" };
       case "used":
+      case "completed":
         return {
           label: "Đã sử dụng",
           color: "#888888",
@@ -100,7 +144,7 @@ export default function TicketsScreen() {
         };
       default:
         return {
-          label: "Unknown",
+          label: status || "Không rõ",
           color: "#888888",
           icon: "help-circle-outline",
         };
@@ -110,19 +154,41 @@ export default function TicketsScreen() {
   const TicketCard = ({ booking }) => {
     const statusInfo = getStatusInfo(booking.status);
 
+    // Format date and time
+    const formatDate = (dateString) => {
+      if (!dateString) return "";
+      const date = new Date(dateString);
+      return date.toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    };
+
+    const formatTime = (dateString) => {
+      if (!dateString) return "";
+      const date = new Date(dateString);
+      return date.toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    };
+
     return (
       <TouchableOpacity style={styles.ticketCard} activeOpacity={0.7}>
         <View style={styles.ticketContent}>
-          <Image
-            source={{ uri: booking.poster }}
-            style={styles.posterImage}
-            resizeMode="cover"
-          />
+          {booking.movieImage && (
+            <Image
+              source={{ uri: booking.movieImage || booking.poster }}
+              style={styles.posterImage}
+              resizeMode="cover"
+            />
+          )}
 
           <View style={styles.ticketInfo}>
             <View style={styles.ticketHeader}>
               <Text style={styles.movieTitle} numberOfLines={1}>
-                {booking.movieTitle}
+                {booking.movieTitle || "Tên phim"}
               </Text>
               <View
                 style={[
@@ -147,17 +213,21 @@ export default function TicketsScreen() {
                 size={16}
                 color="#888888"
               />
-              <Text style={styles.detailText}>{booking.theater}</Text>
+              <Text style={styles.detailText}>
+                {booking.theaterName || booking.theater || "Rạp chiếu"}
+              </Text>
             </View>
 
-            <View style={styles.detailRow}>
-              <MaterialCommunityIcons
-                name="door-open"
-                size={16}
-                color="#888888"
-              />
-              <Text style={styles.detailText}>{booking.room}</Text>
-            </View>
+            {booking.room && (
+              <View style={styles.detailRow}>
+                <MaterialCommunityIcons
+                  name="door-open"
+                  size={16}
+                  color="#888888"
+                />
+                <Text style={styles.detailText}>{booking.room}</Text>
+              </View>
+            )}
 
             <View style={styles.timeSeatsRow}>
               <View style={styles.detailRow}>
@@ -167,29 +237,37 @@ export default function TicketsScreen() {
                   color="#888888"
                 />
                 <Text style={styles.detailText}>
-                  {booking.date} - {booking.time}
+                  {formatDate(booking.showtimeDate || booking.date)} -{" "}
+                  {formatTime(booking.showtimeTime || booking.time)}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.seatsRow}>
-              <MaterialCommunityIcons
-                name="seat-outline"
-                size={16}
-                color="#888888"
-              />
-              <Text style={styles.detailText}>
-                Ghế: {booking.seats.join(", ")}
-              </Text>
-            </View>
+            {(booking.seats || booking.seatNumbers) && (
+              <View style={styles.seatsRow}>
+                <MaterialCommunityIcons
+                  name="seat-outline"
+                  size={16}
+                  color="#888888"
+                />
+                <Text style={styles.detailText}>
+                  Ghế:{" "}
+                  {Array.isArray(booking.seats)
+                    ? booking.seats.join(", ")
+                    : booking.seatNumbers || "N/A"}
+                </Text>
+              </View>
+            )}
 
             <View style={styles.ticketFooter}>
-              <View style={styles.bookingCodeContainer}>
-                <Text style={styles.bookingCodeLabel}>Mã đặt vé:</Text>
-                <Text style={styles.bookingCode}>{booking.bookingCode}</Text>
-              </View>
+              {booking.bookingCode && (
+                <View style={styles.bookingCodeContainer}>
+                  <Text style={styles.bookingCodeLabel}>Mã:</Text>
+                  <Text style={styles.bookingCode}>{booking.bookingCode}</Text>
+                </View>
+              )}
               <Text style={styles.priceText}>
-                {booking.totalAmount.toLocaleString("vi-VN")}đ
+                {(booking.totalAmount || 0).toLocaleString("vi-VN")}₫
               </Text>
             </View>
           </View>
@@ -212,7 +290,7 @@ export default function TicketsScreen() {
     >
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Vé của tôi</Text>
+          <Text style={styles.headerTitle}>Lịch sử đặt vé</Text>
           <Text style={styles.headerSubtitle}>{bookings.length} vé</Text>
         </View>
 
@@ -220,9 +298,16 @@ export default function TicketsScreen() {
           style={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#6C47DB"
+            />
+          }
         >
-          {bookings.map((booking) => (
-            <TicketCard key={booking.id} booking={booking} />
+          {bookings.map((booking, index) => (
+            <TicketCard key={booking.id || index} booking={booking} />
           ))}
         </ScrollView>
       </View>

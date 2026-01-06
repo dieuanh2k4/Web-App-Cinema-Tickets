@@ -219,9 +219,8 @@ builder.Services.AddScoped<EmailService>();
 
 // Chat AI service
 builder.Services.AddScoped<IChatService, ChatService>();
-// builder.Services.AddScoped<IGeminiService, GeminiService>(); // Commented out - service not implemented
 
-// ⭐ RAG: Cinema RAG service
+// RAG: Cinema RAG service
 builder.Services.AddScoped<ICinemaRagService, CinemaRagService>();
 // Dashboard service
 builder.Services.AddScoped<IDashboardService, DashboardService>();
@@ -232,6 +231,7 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IStaffService, StaffService>();
+
 
 // Phase 2: Customer repository
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();

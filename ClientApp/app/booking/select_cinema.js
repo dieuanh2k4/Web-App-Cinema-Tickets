@@ -16,14 +16,54 @@ import { showtimeService } from "../../services/showtimeService";
 export default function SelectCinemaScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { movieId, movieTitle, thumbnail } = params;
+  const { movieId, movieTitle } = params;
 
   const [theaters, setTheaters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedCity, setSelectedCity] = useState("Hà Nội");
+  const [dates, setDates] = useState([]);
+  const [cities, setCities] = useState([]);
 
   useEffect(() => {
-    loadTheaters();
+    generateDates();
+    loadCities();
   }, []);
+
+  useEffect(() => {
+    if (selectedDate) {
+      loadTheaters();
+    }
+  }, [selectedDate, selectedCity]);
+
+  const generateDates = () => {
+    const dateList = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dateList.push(date);
+    }
+    setDates(dateList);
+    setSelectedDate(dateList[0]);
+  };
+
+  const loadCities = async () => {
+    try {
+      const citiesData = await theaterService.getCities();
+      setCities(citiesData);
+      if (!selectedCity && citiesData.length > 0) {
+        setSelectedCity(citiesData[0]);
+      }
+    } catch (error) {
+      const defaultCities = ["Hà Nội", "TPHCM", "Huế", "Đà Nẵng"];
+      setCities(defaultCities);
+    }
+  };
+
+  const formatDateForBackend = (date) => {
+    return date.toISOString().split("T")[0];
+  };
 
   const loadTheaters = async () => {
     try {
@@ -31,18 +71,43 @@ export default function SelectCinemaScreen() {
       const theatersData = await theaterService.getAllTheaters();
       const allShowtimes = await showtimeService.getAllShowtimes();
 
-      // Backend trả về theaterName, không có theaterId
-      const relevantShowtimes = movieId
-        ? allShowtimes.filter(
-            (st) => st.movieId?.toString() === movieId?.toString()
-          )
-        : allShowtimes;
+      const formattedDate = formatDateForBackend(selectedDate);
 
+      console.log("🎬 Loading showtimes with:", {
+        movieTitle,
+        selectedDate: formattedDate,
+        selectedCity,
+      });
+      console.log("🎞️ All showtimes:", allShowtimes);
+
+      // Lọc showtimes theo phim và ngày
+      const relevantShowtimes = allShowtimes.filter((st) => {
+        const matchMovie =
+          st.movieTitle?.toLowerCase() === movieTitle?.toLowerCase();
+        const matchDate = st.date === formattedDate;
+        console.log(`Checking showtime ${st.id}:`, {
+          movieTitle: st.movieTitle,
+          matchMovie,
+          date: st.date,
+          formattedDate,
+          matchDate,
+        });
+        return matchMovie && matchDate;
+      });
+
+      console.log("✅ Filtered showtimes:", relevantShowtimes);
+
+      // Nhóm showtimes theo rạp
       const theatersWithShowtimes = theatersData.map((theater) => {
-        // Match bằng theater.name với showtime.theaterName
-        const theaterShowtimes = relevantShowtimes.filter(
-          (st) => st.theaterName === theater.name
-        );
+        const theaterShowtimes = relevantShowtimes
+          .filter((st) => st.theaterName === theater.name)
+          .sort((a, b) => a.start.localeCompare(b.start));
+
+        console.log(`Theater ${theater.name}:`, {
+          city: theater.city,
+          showtimes: theaterShowtimes.length,
+        });
+
         return {
           ...theater,
           showtimes: theaterShowtimes,
@@ -50,9 +115,12 @@ export default function SelectCinemaScreen() {
         };
       });
 
-      const filteredTheaters = movieId
-        ? theatersWithShowtimes.filter((t) => t.showtimeCount > 0)
-        : theatersWithShowtimes;
+      // Lọc theo city và chỉ hiển thị rạp có suất chiếu
+      const filteredTheaters = theatersWithShowtimes.filter(
+        (t) => t.city === selectedCity && t.showtimeCount > 0
+      );
+
+      console.log("🏢 Final theaters to show:", filteredTheaters);
 
       setTheaters(filteredTheaters);
       setLoading(false);
@@ -62,28 +130,36 @@ export default function SelectCinemaScreen() {
     }
   };
 
-  const handleCinemaSelect = (theater) => {
-    // Nếu đang đặt vé cho phim cụ thể, chuyển đến select_showtime
-    if (movieId && movieTitle) {
-      router.push({
-        pathname: "/booking/select_showtime",
-        params: {
-          theaterId: theater.id.toString(),
-          theaterName: theater.name,
-          movieId: movieId,
-          movieTitle: movieTitle,
-          thumbnail: thumbnail,
-        },
-      });
-    } else {
-      // Ngược lại, xem chi tiết rạp
-      router.push({
-        pathname: "/(theaters)/theater_detail",
-        params: {
-          theaterId: theater.id.toString(),
-        },
-      });
-    }
+  const handleShowtimeSelect = (theater, showtime) => {
+    router.push({
+      pathname: "/booking/select_seat",
+      params: {
+        showtimeId: showtime.id,
+        movieId: movieId,
+        movieTitle: movieTitle,
+        theaterId: theater.id,
+        theaterName: theater.name,
+        showtime: showtime.start,
+        format: showtime.format || "2D",
+        roomName: showtime.roomName,
+        date: formatDateForBackend(selectedDate),
+      },
+    });
+  };
+
+  const formatTime = (timeString) => {
+    return timeString.substring(0, 5); // "14:30:00" -> "14:30"
+  };
+
+  const formatDateDisplay = (date) => {
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    return `${day}-${month}`;
+  };
+
+  const getDayOfWeek = (date) => {
+    const days = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+    return days[date.getDay()];
   };
 
   return (
@@ -101,64 +177,128 @@ export default function SelectCinemaScreen() {
             <Text style={styles.headerSubtitle}>{movieTitle}</Text>
           )}
         </View>
-        <View style={styles.backButton} />
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentGap}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.section}>
-          <Text style={styles.sectionSubtitle}>Chọn rạp để xem lịch chiếu</Text>
-        </View>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Chọn ngày */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.dateScroll}
+          contentContainerStyle={styles.dateScrollContent}
+        >
+          {dates.map((date, index) => {
+            const isSelected =
+              selectedDate &&
+              date.toDateString() === selectedDate.toDateString();
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.dateButton,
+                  isSelected && styles.dateButtonActive,
+                ]}
+                onPress={() => setSelectedDate(date)}
+              >
+                <Text
+                  style={[styles.dateDay, isSelected && styles.dateDayActive]}
+                >
+                  {formatDateDisplay(date)}
+                </Text>
+                <Text
+                  style={[
+                    styles.dateDayOfWeek,
+                    isSelected && styles.dateDayOfWeekActive,
+                  ]}
+                >
+                  {getDayOfWeek(date)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* Chọn thành phố */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.cityScroll}
+          contentContainerStyle={styles.cityScrollContent}
+        >
+          {cities.map((city, index) => {
+            const isSelected = city === selectedCity;
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.cityButton,
+                  isSelected && styles.cityButtonActive,
+                ]}
+                onPress={() => setSelectedCity(city)}
+              >
+                <Text
+                  style={[styles.cityText, isSelected && styles.cityTextActive]}
+                >
+                  {city}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
 
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#6C47DB" />
           </View>
-        ) : (
-          theaters.map((theater) => (
-            <TouchableOpacity
-              key={theater.id || theater.theaterId}
-              style={styles.cinemaItem}
-              onPress={() => handleCinemaSelect(theater)}
-              activeOpacity={0.85}
-            >
-              <View style={styles.cinemaIcon}>
-                <MaterialCommunityIcons
-                  name="movie-open"
-                  size={24}
-                  color="#6C47DB"
-                />
-              </View>
-              <View style={styles.cinemaInfo}>
-                <View style={styles.cinemaHeader}>
-                  <Text style={styles.cinemaName}>{theater.name}</Text>
-                  <MaterialCommunityIcons
-                    name="chevron-right"
-                    size={22}
-                    color="#666666"
-                  />
+        ) : theaters.length > 0 ? (
+          <View style={styles.theatersContainer}>
+            {theaters.map((theater) => (
+              <View key={theater.id} style={styles.theaterCard}>
+                <View style={styles.theaterHeader}>
+                  <Text style={styles.theaterName}>{theater.name}</Text>
+                  <View style={styles.theaterBadge}>
+                    <Text style={styles.theaterBadgeText}>2D SUB</Text>
+                  </View>
                 </View>
-                <Text style={styles.cinemaAddress}>{theater.address}</Text>
-                <View style={styles.metaRow}>
+                <View style={styles.theaterMeta}>
                   <MaterialCommunityIcons
                     name="map-marker"
                     size={14}
-                    color="#999999"
+                    color="#999"
                   />
-                  <Text style={styles.metaText}>
-                    {theater.city || "TP.HCM"}
-                  </Text>
-                  <View style={styles.dot} />
-                  <Text style={styles.metaText}>
-                    {theater.showtimeCount || 0} suất
-                  </Text>
+                  <Text style={styles.theaterDistance}>2.0 km</Text>
+                </View>
+
+                {/* Khung giờ chiếu */}
+                <View style={styles.showtimesContainer}>
+                  {theater.showtimes.map((showtime) => (
+                    <TouchableOpacity
+                      key={showtime.id}
+                      style={styles.showtimeButton}
+                      onPress={() => handleShowtimeSelect(theater, showtime)}
+                    >
+                      <Text style={styles.showtimeText}>
+                        {formatTime(showtime.start)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
-            </TouchableOpacity>
-          ))
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons
+              name="calendar-remove"
+              size={64}
+              color="#444"
+            />
+            <Text style={styles.emptyText}>Không có suất chiếu</Text>
+            <Text style={styles.emptySubtext}>
+              Vui lòng chọn ngày hoặc rạp khác
+            </Text>
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -177,7 +317,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#3D3457",
+    borderBottomColor: "#1A1A1A",
+    marginTop: 30,
   },
   backButton: {
     width: 40,
@@ -193,133 +334,155 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: "#FFFFFF",
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
   },
   headerSubtitle: {
-    color: "#9CA3AF",
-    fontSize: 14,
+    color: "#888",
+    fontSize: 13,
     marginTop: 2,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: 100,
   },
   content: {
     flex: 1,
-    padding: 20,
   },
-  contentGap: {
-    gap: 16,
-    paddingBottom: 40,
+  dateScroll: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1A1A1A",
   },
-  section: {
-    gap: 4,
+  dateScrollContent: {
+    paddingHorizontal: 20,
+    gap: 12,
   },
-  sectionTitle: {
+  dateButton: {
+    backgroundColor: "#1A1A1A",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    minWidth: 80,
+    alignItems: "center",
+  },
+  dateButtonActive: {
+    backgroundColor: "#6C47DB",
+  },
+  dateDay: {
     color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "600",
   },
-  sectionSubtitle: {
-    color: "#9CA3AF",
-    fontSize: 15,
+  dateDayActive: {
+    color: "#FFFFFF",
   },
-  cinemaItem: {
-    flexDirection: "row",
+  dateDayOfWeek: {
+    color: "#888",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  dateDayOfWeekActive: {
+    color: "#FFFFFF",
+  },
+  cityScroll: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1A1A1A",
+  },
+  cityScrollContent: {
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  cityButton: {
+    backgroundColor: "#1A1A1A",
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  cityButtonActive: {
+    backgroundColor: "#6C47DB",
+  },
+  cityText: {
+    color: "#888",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  cityTextActive: {
+    color: "#FFFFFF",
+  },
+  loadingContainer: {
+    paddingTop: 100,
+    alignItems: "center",
+  },
+  theatersContainer: {
+    padding: 20,
+    gap: 16,
+  },
+  theaterCard: {
     backgroundColor: "#1A1A1A",
     borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
-    borderColor: "#2A2A2A",
-    alignItems: "center",
   },
-  cinemaIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: "#2A2A2A",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  cinemaInfo: {
-    flex: 1,
-  },
-  cinemaHeader: {
+  theaterHeader: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-  },
-  cinemaName: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
-    flex: 1,
-    marginRight: 8,
-  },
-  cinemaAddress: {
-    color: "#9CA3AF",
-    fontSize: 14,
-    marginVertical: 6,
-  },
-  metaRow: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    marginBottom: 8,
   },
-  metaText: {
-    color: "#9CA3AF",
-    fontSize: 13,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#444",
-  },
-  showtimesScroll: {
-    marginTop: 12,
-  },
-  showtimeChip: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: "#3A3A3A",
-    minWidth: 90,
-  },
-  showtimeTime: {
-    color: "#6C47DB",
+  theaterName: {
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+    flex: 1,
   },
-  showtimeMovie: {
-    color: "#9CA3AF",
+  theaterBadge: {
+    backgroundColor: "#2A2A2A",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  theaterBadgeText: {
+    color: "#6C47DB",
     fontSize: 11,
-    marginTop: 4,
+    fontWeight: "600",
   },
-  badgeRow: {
+  theaterMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 12,
+  },
+  theaterDistance: {
+    color: "#888",
+    fontSize: 13,
+  },
+  showtimesContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    marginTop: 10,
+    gap: 10,
   },
-  badge: {
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: "#1F1F1F",
+  showtimeButton: {
+    backgroundColor: "#2A2A2A",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: "#333",
   },
-  badgeText: {
+  showtimeText: {
     color: "#FFFFFF",
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: "600",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    paddingTop: 100,
+    gap: 12,
+  },
+  emptyText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  emptySubtext: {
+    color: "#888",
+    fontSize: 14,
   },
 });
