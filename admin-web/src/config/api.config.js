@@ -1,5 +1,5 @@
 // API Base URL - CHANGE THIS TO YOUR BACKEND URL
-export const BASE_URL = "http://192.168.102.5:5001/api";
+export const BASE_URL = "http://desktop-qedcej1:5001/api";
 
 export const API_ENDPOINTS = {
   // Authentication

@@ -1,15 +1,22 @@
-import { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaTimes, FaSyncAlt, FaEye } from 'react-icons/fa';
-import theaterService from '../services/theaterService';
-import { useAuth } from '../hooks/useAuth';
+import { useState, useEffect } from "react";
+import {
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaTimes,
+  FaSyncAlt,
+  FaEye,
+} from "react-icons/fa";
+import theaterService from "../services/theaterService";
+import { useAuth } from "../hooks/useAuth";
 
 const Theaters = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role?.toLowerCase() === 'admin';
+  const isAdmin = user?.role?.toLowerCase() === "admin";
   const [theaters, setTheaters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
+  const [modalMode, setModalMode] = useState("add"); // 'add' or 'edit'
   const [selectedTheater, setSelectedTheater] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -26,8 +33,8 @@ const Theaters = () => {
       const data = await theaterService.getAllTheaters();
       setTheaters(data || []);
     } catch (error) {
-      console.error('Error loading theaters:', error);
-      alert('Không thể tải danh sách rạp chiếu. Vui lòng thử lại sau.');
+      console.error("Error loading theaters:", error);
+      alert("Không thể tải danh sách rạp chiếu. Vui lòng thử lại sau.");
       setTheaters([]);
     } finally {
       setLoading(false);
@@ -42,9 +49,9 @@ const Theaters = () => {
 
   // Form state - BE has: name, address, city
   const [formData, setFormData] = useState({
-    name: '',
-    address: '',
-    city: ''
+    name: "",
+    address: "",
+    city: "",
   });
 
   // Pagination
@@ -53,35 +60,35 @@ const Theaters = () => {
   const currentTheaters = theaters.slice(startIndex, startIndex + itemsPerPage);
 
   const handleAdd = () => {
-    setModalMode('add');
+    setModalMode("add");
     setFormData({
-      name: '',
-      address: '',
-      city: ''
+      name: "",
+      address: "",
+      city: "",
     });
     setShowModal(true);
   };
 
   const handleEdit = (theater) => {
-    setModalMode('edit');
+    setModalMode("edit");
     setSelectedTheater(theater);
     setFormData({
-      name: theater.name || '',
-      address: theater.address || '',
-      city: theater.city || ''
+      name: theater.name || "",
+      address: theater.address || "",
+      city: theater.city || "",
     });
     setShowModal(true);
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa rạp chiếu này?')) {
+    if (window.confirm("Bạn có chắc chắn muốn xóa rạp chiếu này?")) {
       try {
         await theaterService.deleteTheater(id);
         await loadTheaters();
-        alert('Xóa rạp chiếu thành công!');
+        alert("Xóa rạp chiếu thành công!");
       } catch (error) {
-        console.error('Error deleting theater:', error);
-        alert('Không thể xóa rạp chiếu. Vui lòng thử lại sau.');
+        console.error("Error deleting theater:", error);
+        alert("Không thể xóa rạp chiếu. Vui lòng thử lại sau.");
       }
     }
   };
@@ -90,7 +97,7 @@ const Theaters = () => {
     e.preventDefault();
 
     if (!formData.name || !formData.address || !formData.city) {
-      alert('Vui lòng điền đầy đủ thông tin!');
+      alert("Vui lòng điền đầy đủ thông tin!");
       return;
     }
 
@@ -98,35 +105,42 @@ const Theaters = () => {
       const theaterData = {
         name: formData.name,
         address: formData.address,
-        city: formData.city
+        city: formData.city,
       };
 
-      console.log('Saving theater:', modalMode, theaterData);
+      console.log("Saving theater:", modalMode, theaterData);
 
-      if (modalMode === 'add') {
+      if (modalMode === "add") {
         const result = await theaterService.createTheater(theaterData);
-        console.log('Theater created:', result);
+        console.log("Theater created:", result);
       } else {
-        console.log('Updating theater ID:', selectedTheater.id);
-        const result = await theaterService.updateTheater(selectedTheater.id, theaterData);
-        console.log('Theater updated:', result);
+        console.log("Updating theater ID:", selectedTheater.id);
+        const result = await theaterService.updateTheater(
+          selectedTheater.id,
+          theaterData
+        );
+        console.log("Theater updated:", result);
       }
 
       await loadTheaters();
       setShowModal(false);
-      alert(modalMode === 'add' ? 'Thêm rạp chiếu thành công!' : 'Cập nhật rạp chiếu thành công!');
+      alert(
+        modalMode === "add"
+          ? "Thêm rạp chiếu thành công!"
+          : "Cập nhật rạp chiếu thành công!"
+      );
     } catch (error) {
-      console.error('Error saving theater:', error);
-      console.error('Error details:', error.message, error.status);
-      alert('Không thể lưu rạp chiếu. Vui lòng thử lại sau.');
+      console.error("Error saving theater:", error);
+      console.error("Error details:", error.message, error.status);
+      alert("Không thể lưu rạp chiếu. Vui lòng thử lại sau.");
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -146,7 +160,9 @@ const Theaters = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Quản lý rạp chiếu</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Quản lý rạp chiếu
+          </h1>
           <p className="text-gray-400">Quản lý thông tin các rạp chiếu</p>
         </div>
         <div className="flex gap-3">
@@ -155,7 +171,7 @@ const Theaters = () => {
             disabled={isRefreshing}
             className="flex items-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FaSyncAlt className={isRefreshing ? 'animate-spin' : ''} />
+            <FaSyncAlt className={isRefreshing ? "animate-spin" : ""} />
             <span>Refresh</span>
           </button>
           {isAdmin && (
@@ -176,17 +192,30 @@ const Theaters = () => {
           <table className="w-full">
             <thead className="bg-primary/50">
               <tr>
-                <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Tên rạp</th>
-                <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Địa chỉ</th>
-                <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Thành phố</th>
-                <th className="px-8 py-5 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Thao tác</th>
+                <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Tên rạp
+                </th>
+                <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Địa chỉ
+                </th>
+                <th className="px-8 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Thành phố
+                </th>
+                <th className="px-8 py-5 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Thao tác
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700/50">
               {currentTheaters.map((theater) => (
-                <tr key={theater.id} className="hover:bg-primary/30 transition-colors group">
+                <tr
+                  key={theater.id}
+                  className="hover:bg-primary/30 transition-colors group"
+                >
                   <td className="px-8 py-5">
-                    <span className="text-white font-medium">{theater.name}</span>
+                    <span className="text-white font-medium">
+                      {theater.name}
+                    </span>
                   </td>
                   <td className="px-8 py-5">
                     <span className="text-gray-300">{theater.address}</span>
@@ -226,11 +255,13 @@ const Theaters = () => {
         {totalPages > 1 && (
           <div className="px-8 py-5 border-t border-gray-700/50 flex items-center justify-between">
             <div className="text-sm text-gray-400">
-              Hiển thị {startIndex + 1} - {Math.min(startIndex + itemsPerPage, theaters.length)} trong {theaters.length} rạp
+              Hiển thị {startIndex + 1} -{" "}
+              {Math.min(startIndex + itemsPerPage, theaters.length)} trong{" "}
+              {theaters.length} rạp
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent transition-colors"
               >
@@ -242,15 +273,17 @@ const Theaters = () => {
                   onClick={() => setCurrentPage(i + 1)}
                   className={`px-4 py-2 rounded-lg transition-colors ${
                     currentPage === i + 1
-                      ? 'bg-gradient-to-r from-accent to-purple-600 text-white shadow-lg shadow-accent/25'
-                      : 'bg-primary text-white hover:bg-accent'
+                      ? "bg-gradient-to-r from-accent to-purple-600 text-white shadow-lg shadow-accent/25"
+                      : "bg-primary text-white hover:bg-accent"
                   }`}
                 >
                   {i + 1}
                 </button>
               ))}
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent transition-colors"
               >
@@ -268,7 +301,7 @@ const Theaters = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
               <h2 className="text-xl font-bold text-white">
-                {modalMode === 'add' ? 'Tạo rạp chiếu' : 'Cập nhật rạp chiếu'}
+                {modalMode === "add" ? "Tạo rạp chiếu" : "Cập nhật rạp chiếu"}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -282,7 +315,9 @@ const Theaters = () => {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {/* Tên rạp */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Tên rạp</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Tên rạp
+                </label>
                 <input
                   type="text"
                   name="name"
@@ -296,7 +331,9 @@ const Theaters = () => {
 
               {/* Địa chỉ */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Địa chỉ</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Địa chỉ
+                </label>
                 <input
                   type="text"
                   name="address"
@@ -310,7 +347,9 @@ const Theaters = () => {
 
               {/* Thành phố */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Thành phố</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Thành phố
+                </label>
                 <input
                   type="text"
                   name="city"
@@ -335,7 +374,7 @@ const Theaters = () => {
                   type="submit"
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl transition-all shadow-lg shadow-blue-600/25 font-medium"
                 >
-                  {modalMode === 'add' ? 'Lưu' : 'Cập nhật'}
+                  {modalMode === "add" ? "Lưu" : "Cập nhật"}
                 </button>
               </div>
             </form>
